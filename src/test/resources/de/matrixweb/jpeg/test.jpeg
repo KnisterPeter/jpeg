@@ -1,0 +1,62 @@
+Start :
+  Sequence
+;
+
+Sequence :
+  StringChoice OneOrMore Optional NotPredicateAndAnyChar #
+;
+
+EOITest:
+ 'a' #
+;
+
+StringChoice :
+  'Hallo' | 'Hello'
+;
+
+MultiChoice:
+  'a' 'b' | 'c' 'd' | 'e' 'f'
+;
+
+OneOrMore :
+  ZeroOrMoreAndWelt+
+;
+
+OneOrMore2 :
+  SpaceTerminal+
+;
+
+ZeroOrMoreAndWelt :
+  SpaceTerminal* 'Welt'
+;
+SpaceTerminal :
+  ' '
+;
+
+Optional :
+  AndPredicateAndT?
+;
+
+Optional2 :
+  SpaceTerminal?
+;
+
+AndPredicateAndT :
+  &ExclamationMarkTerminal 't'
+;
+
+ExclamationMarkTerminal :
+  '!'
+;
+
+NotPredicateAndAnyChar:
+  !DoubleQuoteTerminal .
+;
+
+SomeDoubleQuotes:
+  DoubleQuoteTerminal DoubleQuoteTerminal DoubleQuoteTerminal
+;
+
+DoubleQuoteTerminal:
+  '"'
+;

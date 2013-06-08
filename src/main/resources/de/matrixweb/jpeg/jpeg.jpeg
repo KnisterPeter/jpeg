@@ -1,0 +1,24 @@
+JPEG :
+  Rule+
+;
+
+Rule :
+  Name ':' Body ';'
+;
+
+Name :
+  NameChar+
+;
+NameChar :
+  !COLON .
+;
+
+Body :
+  BodyChar+
+;
+BodyChar :
+  !SEMI .
+;
+
+COLON : ':';
+SEMI  : ';';
