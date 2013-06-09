@@ -1,14 +1,4 @@
-package de.matrixweb.jpeg.internal.java;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import de.matrixweb.jpeg.internal.java.JavaGenerator.JavaParser;
-
-/**
- * @author markusw
- */
-public class RuleMatchingContext {
+class RuleMatchingContext {
 
   private final JavaParser parser;
 

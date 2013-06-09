@@ -1,0 +1,8 @@
+start
+{{$abc}}
+middle
+{{for item in list}}
+  output {{$item.value}}
+{{/for}}
+end
+// {{reference include.template}}

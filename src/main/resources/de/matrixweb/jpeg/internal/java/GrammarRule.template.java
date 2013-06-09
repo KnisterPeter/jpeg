@@ -1,11 +1,3 @@
-package de.matrixweb.jpeg.internal.java;
-
-import de.matrixweb.jpeg.internal.java.JavaGenerator.JavaParser;
-import de.matrixweb.jpeg.internal.java.matcher.GrammarNodeMatcher;
-
-/**
- * @author markusw
- */
 class GrammarRule {
 
   private final String name;

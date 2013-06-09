@@ -17,7 +17,7 @@ import static org.hamcrest.CoreMatchers.*;
  */
 public class JPEGTest {
 
-  private JPEG parser;
+  private Parser parser;
 
   /**
    * @throws IOException
@@ -28,7 +28,8 @@ public class JPEGTest {
         JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"),
         "UTF-8");
     try {
-      this.parser = JPEG.createParser(reader);
+      this.parser = JPEG.createParser(reader,
+          new Java("de.matrixweb.jpeg.Test"));
     } finally {
       reader.close();
     }
@@ -87,7 +88,7 @@ public class JPEGTest {
   /** */
   @Test(expected = JPEGParserException.class)
   public void testInputReadFailure() {
-    JPEG.createParser(new Reader() {
+    final Reader reader = new Reader() {
       @Override
       public int read(final char[] cbuf, final int off, final int len)
           throws IOException {
@@ -97,7 +98,8 @@ public class JPEGTest {
       @Override
       public void close() throws IOException {
       }
-    });
+    };
+    JPEG.createParser(reader, new Java("de.matrixweb.jpeg.JPEG"));
   }
 
   /** */
@@ -117,7 +119,8 @@ public class JPEGTest {
         JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
         "UTF-8");
     try {
-      final ParsingResult result = JPEG.createParser(reader).parse(
+      final ParsingResult result = JPEG.createParser(reader,
+          new Java("de.matrixweb.jpeg.JPEG")).parse(
           "JPEG",
           IOUtils.toString(JPEGTest.class
               .getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"), "UTF-8"));

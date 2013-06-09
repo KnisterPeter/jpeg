@@ -2,6 +2,7 @@ package de.matrixweb.jpeg.internal;
 
 import org.junit.Test;
 
+import de.matrixweb.jpeg.RuleDescription;
 import de.matrixweb.jpeg.internal.GrammarParser.Context;
 
 import static org.junit.Assert.*;

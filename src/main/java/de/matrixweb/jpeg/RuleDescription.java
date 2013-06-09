@@ -1,11 +1,35 @@
-package de.matrixweb.jpeg.internal;
-
-import de.matrixweb.jpeg.internal.GrammarRuleFactory.MatcherName;
+package de.matrixweb.jpeg;
 
 /**
  * @author markusw
  */
 public class RuleDescription {
+
+  /**
+   * @author markusw
+   */
+  public enum MatcherName {
+    /** */
+    TERMINAL,
+    /** */
+    CHOICE,
+    /** */
+    ONE_OR_MORE,
+    /** */
+    ZERO_OR_MORE,
+    /** */
+    OPTIONAL,
+    /** */
+    ANY_CHAR,
+    /** */
+    EOI,
+    /** */
+    AND_PREDICATE,
+    /** */
+    NOT_PREDICATE,
+    /** */
+    RULE
+  }
 
   private final String name;
 
@@ -58,12 +82,20 @@ public class RuleDescription {
     }
 
     /**
+     * TODO: Remove if parser is removed
+     * 
      * @return the value
      */
-    public String getValue() {
+    public String getPlainValue() {
       return this.value;
     }
 
+    /**
+     * @return the value
+     */
+    public String getValue() {
+      return this.value != null ? this.value.replaceAll("\"", "\\\\\"") : "";
+    }
   }
 
 }

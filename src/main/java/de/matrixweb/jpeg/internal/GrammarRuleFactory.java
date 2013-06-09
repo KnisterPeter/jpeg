@@ -3,36 +3,15 @@ package de.matrixweb.jpeg.internal;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.matrixweb.jpeg.RuleDescription;
+import de.matrixweb.jpeg.RuleDescription.MatcherName;
+import de.matrixweb.jpeg.RuleDescription.NodeDescription;
 import de.matrixweb.jpeg.internal.GrammarParser.Context.RuleContext;
-import de.matrixweb.jpeg.internal.RuleDescription.NodeDescription;
 
 /**
  * @author markusw
  */
 class GrammarRuleFactory {
-
-  enum MatcherName {
-    /** */
-    TERMINAL,
-    /** */
-    CHOICE,
-    /** */
-    ONE_OR_MORE,
-    /** */
-    ZERO_OR_MORE,
-    /** */
-    OPTIONAL,
-    /** */
-    ANY_CHAR,
-    /** */
-    EOI,
-    /** */
-    AND_PREDICATE,
-    /** */
-    NOT_PREDICATE,
-    /** */
-    RULE
-  }
 
   static RuleDescription create(final RuleContext context) {
     RuleDescription rule = null;
