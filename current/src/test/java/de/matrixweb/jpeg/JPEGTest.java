@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,7 +14,7 @@ import static org.hamcrest.CoreMatchers.*;
 /**
  * @author markusw
  */
-public class JPEGTest {
+public class JPEGTest extends AbstractParserTests {
 
   private Parser parser;
 
@@ -35,71 +34,28 @@ public class JPEGTest {
     }
   }
 
-  /** */
-  @Test
-  public void test1() {
-    assertThat(this.parser.parse("Start", "Hallo Welt!").matches(), is(true));
-    assertThat(this.parser.parse("Start", "Hallo  Welt!").matches(), is(true));
-    assertThat(this.parser.parse("Start", "Hallo   Welt!").matches(), is(true));
-    assertThat(this.parser.parse("Start", "Hallo Welt\"").matches(), is(false));
-    assertThat(this.parser.parse("Start", "Hello Welt!").matches(), is(true));
-    assertThat(this.parser.parse("Start", "HelloWelt").matches(), is(false));
-    assertThat(this.parser.parse("Start", "Hello Welt Welt!").matches(),
-        is(true));
+  /**
+   * @see de.matrixweb.jpeg.AbstractParserTests#createParser()
+   */
+  @Override
+  protected ParserDelegate createParser() {
+    return new ParserDelegateImpl(this.parser);
   }
 
-  /** */
-  @Test
-  public void testMultiChoiceWithMultipleTokensPerChoice() {
-    assertThat(this.parser.parse("MultiChoice", "cd").matches(), is(true));
+  /**
+   * @see de.matrixweb.jpeg.AbstractParserTests#createParser(java.lang.String)
+   */
+  @Override
+  protected ParserDelegate createParser(final String grammarPath) {
+    return new ParserDelegateImpl(this.parser);
   }
 
-  /** */
-  @Test
-  public void testNotMatchOneOrMore() {
-    assertThat(this.parser.parse("OneOrMore2", "a").matches(), is(false));
-  }
-
-  /** */
-  @Test
-  public void testOptionalMatch() {
-    assertThat(this.parser.parse("Optional2", " ").matches(), is(true));
-  }
-
-  /** */
-  @Test
-  public void testEndOfInputFails() {
-    assertThat(this.parser.parse("EOITest", "abc").matches(), is(false));
-  }
-
-  /** */
-  @Test
-  public void testTestParsingPartialInput() {
-    assertThat(this.parser.parse("SomeDoubleQuotes", "\"\"\"\"\"").matches(),
-        is(true));
-  }
-
-  /** */
-  @Test(expected = JPEGParserException.class)
-  public void testUnknownRule() {
-    this.parser.parse("UnknownRule", "abc");
-  }
-
-  /** */
-  @Test(expected = JPEGParserException.class)
-  public void testInputReadFailure() {
-    final Reader reader = new Reader() {
-      @Override
-      public int read(final char[] cbuf, final int off, final int len)
-          throws IOException {
-        throw new IOException("Failed");
-      }
-
-      @Override
-      public void close() throws IOException {
-      }
-    };
-    JPEG.createParser(reader, new Java("de.matrixweb.jpeg.JPEG"));
+  /**
+   * @see de.matrixweb.jpeg.AbstractParserTests#createParser(java.io.Reader)
+   */
+  @Override
+  protected ParserDelegate createParser(final Reader grammar) {
+    return new ParserDelegateImpl(JPEG.createParser(grammar, new Java("")));
   }
 
   /** */
@@ -110,25 +66,27 @@ public class JPEGTest {
     System.out.println(Utils.formatParsingTree(result));
   }
 
-  /**
-   * @throws IOException
-   */
-  @Test
-  public void testParseJpegGrammar() throws IOException {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-        "UTF-8");
-    try {
-      final ParsingResult result = JPEG.createParser(reader,
-          new Java("de.matrixweb.jpeg.JPEG")).parse(
-          "JPEG",
-          IOUtils.toString(JPEGTest.class
-              .getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"), "UTF-8"));
-      assertThat(result.matches(), is(true));
-      System.out.println(Utils.formatParsingTree(result));
-    } finally {
-      reader.close();
+  protected static class ParserDelegateImpl implements ParserDelegate {
+
+    private final Parser parser;
+
+    /**
+     * @param parser
+     */
+    public ParserDelegateImpl(final Parser parser) {
+      this.parser = parser;
     }
+
+    /**
+     * @see de.matrixweb.jpeg.AbstractParserTests.ParserDelegate#parse(java.lang.String,
+     *      java.lang.String, boolean)
+     */
+    @Override
+    public void parse(final String rule, final String input,
+        final boolean result) {
+      assertThat(this.parser.parse(rule, input).matches(), is(result));
+    }
+
   }
 
 }

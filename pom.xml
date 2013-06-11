@@ -13,9 +13,8 @@
 
   <name>JPEG</name>
   <description>
-    Smaller is a minification library. It could be embedded as servlet, OSGi 
-    bundle or be used from ant or maven. Currently it supports CoffeeScript, 
-    Google Closure-Compiler, UglifyJs, LessJs, CssEmbedd and YUICompressor.
+    JPEG is a packrat parser written in Java generating parsers for different
+    target languages. The first supported target language is Java.
   </description>
   <url>https://github.com/KnisterPeter/Smaller</url>
 
@@ -49,6 +48,21 @@
   <properties>
     <mavenVersion>2.0</mavenVersion>
   </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>jpeg</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>jpeg</artifactId>
+        <version>${project.version}</version>
+        <type>test-jar</type>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
