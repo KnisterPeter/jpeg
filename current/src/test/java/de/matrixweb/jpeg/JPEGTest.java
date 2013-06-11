@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,12 +51,21 @@ public class JPEGTest extends AbstractParserTests {
     return new ParserDelegateImpl(this.parser);
   }
 
-  /**
-   * @see de.matrixweb.jpeg.AbstractParserTests#createParser(java.io.Reader)
-   */
-  @Override
-  protected ParserDelegate createParser(final Reader grammar) {
-    return new ParserDelegateImpl(JPEG.createParser(grammar, new Java("")));
+  /** */
+  @Test(expected = JPEGParserException.class)
+  public void testInputReadFailure() {
+    final Reader reader = new Reader() {
+      @Override
+      public int read(final char[] cbuf, final int off, final int len)
+          throws IOException {
+        throw new IOException("Failed");
+      }
+
+      @Override
+      public void close() throws IOException {
+      }
+    };
+    JPEG.createParser(reader, new Java(""));
   }
 
   /** */
@@ -64,6 +74,29 @@ public class JPEGTest extends AbstractParserTests {
     final ParsingResult result = this.parser.parse("Start", "Hallo Welt!");
     assertThat(result.matches(), is(true));
     System.out.println(Utils.formatParsingTree(result));
+  }
+
+  /**
+   * @throws IOException
+   */
+  @Test
+  public void testParseJpegGrammar() throws IOException {
+    final InputStreamReader reader = new InputStreamReader(
+        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
+        "UTF-8");
+    try {
+      final Parser parser = JPEG.createParser(reader, new Java(
+          "de.matrixweb.jpeg.JPEG"));
+      assertThat(
+          parser
+              .parse(
+                  "JPEG",
+                  IOUtils.toString(JPEGTest.class
+                      .getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"),
+                      "UTF-8")).matches(), is(true));
+    } finally {
+      reader.close();
+    }
   }
 
   protected static class ParserDelegateImpl implements ParserDelegate {

@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
@@ -26,7 +27,9 @@ public class GenerateAndTestParser {
       final String source = JPEG.createParser2(reader, java);
 
       final File target = new File("../next/src/main/java");
-      new File(target, "jpeg").mkdirs();
+      final File subtarget = new File(target, "jpeg");
+      FileUtils.deleteDirectory(subtarget);
+      subtarget.mkdirs();
       target.mkdirs();
       IOUtils.write(source, new FileOutputStream(new File(target,
           "jpeg/TestParser.java")));

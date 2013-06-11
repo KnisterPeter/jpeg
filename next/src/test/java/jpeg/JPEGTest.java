@@ -1,6 +1,5 @@
 package jpeg;
 
-import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -32,14 +31,6 @@ public class JPEGTest extends AbstractParserTests {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * @see de.matrixweb.jpeg.AbstractParserTests#createParser(java.io.Reader)
-   */
-  @Override
-  protected ParserDelegate createParser(final Reader grammar) {
-    throw new UnsupportedOperationException();
-  }
-
   protected static class TestParserDelegateImpl implements ParserDelegate {
 
     private final TestParser parser;
@@ -67,6 +58,10 @@ public class JPEGTest extends AbstractParserTests {
       } catch (final IllegalAccessException e) {
         throw new RuntimeException(e);
       } catch (final InvocationTargetException e) {
+        final Throwable t = e.getTargetException();
+        if (t instanceof RuntimeException) {
+          throw (RuntimeException) t;
+        }
         throw new RuntimeException(e);
       }
     }
