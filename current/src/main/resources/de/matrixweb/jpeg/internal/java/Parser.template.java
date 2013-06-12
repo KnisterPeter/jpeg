@@ -27,7 +27,7 @@ public class {{$name}} {
    * @return ...
    */
   ParsingNode parse(final String startRule, final Input input) {
-    final GrammarRule rule = TestParser.rules.get(startRule);
+    final GrammarRule rule = {{$name}}.rules.get(startRule);
     if (rule == null) {
       throw new JPEGParserException("Rule '" + startRule + "' is unknown");
     }

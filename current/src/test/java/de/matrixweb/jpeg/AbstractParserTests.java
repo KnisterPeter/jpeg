@@ -1,5 +1,6 @@
 package de.matrixweb.jpeg;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -13,7 +14,7 @@ public abstract class AbstractParserTests {
 
   protected abstract ParserDelegate createParser();
 
-  protected abstract ParserDelegate createParser(String grammarPath);
+  protected abstract ParserDelegate createJPEGParser() throws Exception;
 
   /** */
   @Test
@@ -66,6 +67,18 @@ public abstract class AbstractParserTests {
     } catch (final Exception e) {
       assertThat(e.getClass().getSimpleName(), is("JPEGParserException"));
     }
+  }
+
+  /**
+   * @throws Exception
+   */
+  @Test
+  public void testJpegGrammar() throws Exception {
+    createJPEGParser().parse(
+        "JPEG",
+        IOUtils.toString(
+            JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"),
+            "UTF-8"), true);
   }
 
   protected static interface ParserDelegate {

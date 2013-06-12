@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,11 +43,19 @@ public class JPEGTest extends AbstractParserTests {
   }
 
   /**
-   * @see de.matrixweb.jpeg.AbstractParserTests#createParser(java.lang.String)
+   * @see de.matrixweb.jpeg.AbstractParserTests#createJPEGParser()
    */
   @Override
-  protected ParserDelegate createParser(final String grammarPath) {
-    return new ParserDelegateImpl(this.parser);
+  protected ParserDelegate createJPEGParser() throws Exception {
+    final InputStreamReader reader = new InputStreamReader(
+        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
+        "UTF-8");
+    try {
+      return new ParserDelegateImpl(JPEG.createParser(reader, new Java(
+          "de.matrixweb.jpeg.JPEG")));
+    } finally {
+      reader.close();
+    }
   }
 
   /** */
@@ -74,29 +81,6 @@ public class JPEGTest extends AbstractParserTests {
     final ParsingResult result = this.parser.parse("Start", "Hallo Welt!");
     assertThat(result.matches(), is(true));
     System.out.println(Utils.formatParsingTree(result));
-  }
-
-  /**
-   * @throws IOException
-   */
-  @Test
-  public void testParseJpegGrammar() throws IOException {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-        "UTF-8");
-    try {
-      final Parser parser = JPEG.createParser(reader, new Java(
-          "de.matrixweb.jpeg.JPEG"));
-      assertThat(
-          parser
-              .parse(
-                  "JPEG",
-                  IOUtils.toString(JPEGTest.class
-                      .getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"),
-                      "UTF-8")).matches(), is(true));
-    } finally {
-      reader.close();
-    }
   }
 
   protected static class ParserDelegateImpl implements ParserDelegate {

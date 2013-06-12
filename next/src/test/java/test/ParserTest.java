@@ -1,10 +1,10 @@
-package jpeg;
+package test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import jpeg.TestParser.ParsingResult;
 import de.matrixweb.jpeg.AbstractParserTests;
+import de.matrixweb.jpeg.JPEGParser;
 
 import static org.junit.Assert.*;
 
@@ -13,32 +13,32 @@ import static org.hamcrest.CoreMatchers.*;
 /**
  * @author markusw
  */
-public class JPEGTest extends AbstractParserTests {
+public class ParserTest extends AbstractParserTests {
 
   /**
    * @see de.matrixweb.jpeg.AbstractParserTests#createParser()
    */
   @Override
   protected ParserDelegate createParser() {
-    return new TestParserDelegateImpl(new TestParser());
+    return new ParserDelegateImpl(new TestParser());
   }
 
   /**
-   * @see de.matrixweb.jpeg.AbstractParserTests#createParser(java.lang.String)
+   * @see de.matrixweb.jpeg.AbstractParserTests#createJPEGParser()
    */
   @Override
-  protected ParserDelegate createParser(final String grammarPath) {
-    throw new UnsupportedOperationException();
+  protected ParserDelegate createJPEGParser() throws Exception {
+    return new ParserDelegateImpl(new JPEGParser());
   }
 
-  protected static class TestParserDelegateImpl implements ParserDelegate {
+  protected static class ParserDelegateImpl implements ParserDelegate {
 
-    private final TestParser parser;
+    private final Object parser;
 
     /**
      * @param parser
      */
-    public TestParserDelegateImpl(final TestParser parser) {
+    public ParserDelegateImpl(final Object parser) {
       this.parser = parser;
     }
 
@@ -51,8 +51,9 @@ public class JPEGTest extends AbstractParserTests {
         final boolean result) {
       try {
         final Method m = this.parser.getClass().getMethod(rule, String.class);
-        final ParsingResult res = (ParsingResult) m.invoke(this.parser, input);
-        assertThat(res.matches(), is(result));
+        final Object res = m.invoke(this.parser, input);
+        assertThat((Boolean) res.getClass().getMethod("matches").invoke(res),
+            is(result));
       } catch (final NoSuchMethodException e) {
         throw new RuntimeException(e);
       } catch (final IllegalAccessException e) {
