@@ -32,6 +32,8 @@ class GrammarRule {
   }
 
   public ParsingNode match(final JavaParser parser, final Input input) {
+    // System.out.println("Matches " + this.name + " << '"
+    // + input.getChars().substring(0, 20).replaceAll("\n", "\\\\n") + "...'");
     final RuleMatchingContext context = new RuleMatchingContext(parser);
     String tail = input.getChars();
     while (hasNodes(context.getGrammarRuleIndex(), this.grammarNodes)) {

@@ -94,7 +94,8 @@ public class RuleDescription {
      * @return the value
      */
     public String getValue() {
-      return this.value != null ? this.value.replaceAll("\"", "\\\\\"") : "";
+      return this.value != null ? this.value.replaceAll("\\\\", "\\\\\\\\")
+          .replaceAll("\"", "\\\\\"") : "";
     }
   }
 

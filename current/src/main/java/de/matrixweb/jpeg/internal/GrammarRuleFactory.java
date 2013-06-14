@@ -40,7 +40,7 @@ class GrammarRuleFactory {
         done = true;
       } else {
         sb.append(part);
-        done = countChar(sb, '\'') % 2 == 0;
+        done = areAllTerminalsClosed(sb);
         if (!done) {
           part = context.readUntil(';');
         }
@@ -49,14 +49,22 @@ class GrammarRuleFactory {
     return sb.length() > 0 ? sb.toString() : null;
   }
 
-  private static int countChar(final StringBuilder sb, final char c) {
-    int index = sb.indexOf(String.valueOf(c), 0);
-    int count = 0;
-    while (index != -1) {
-      count++;
-      index = sb.indexOf(String.valueOf(c), index + 1);
+  private static boolean areAllTerminalsClosed(final StringBuilder sb) {
+    int n = 0;
+    boolean inTerminal = false;
+    boolean escape = false;
+    for (int i = 0; i < sb.length(); i++) {
+      final char c = sb.charAt(i);
+      if (inTerminal && escape) {
+        escape = false;
+      } else if (inTerminal && c == '\\') {
+        escape = true;
+      } else if (c == '\'') {
+        n++;
+        inTerminal = true;
+      }
     }
-    return count;
+    return n % 2 == 0;
   }
 
   private static NodeDescription[] parseGrammarNodes(final String body) {
@@ -120,7 +128,7 @@ class GrammarRuleFactory {
         case ' ':
           if (inToken) {
             addGrammarNode(list, matcher != null ? matcher : MatcherName.RULE,
-                sb.toString());
+                sb.toString().trim());
             matcher = null;
             sb.setLength(0);
           }
@@ -130,7 +138,7 @@ class GrammarRuleFactory {
         default:
           if (wasSpace) {
             wasSpace = false;
-            addGrammarNode(list, MatcherName.RULE, sb.toString());
+            addGrammarNode(list, MatcherName.RULE, sb.toString().trim());
             sb.setLength(0);
           }
           inToken = true;
@@ -140,7 +148,7 @@ class GrammarRuleFactory {
       }
     }
     if (sb.length() > 0) {
-      addGrammarNode(list, MatcherName.RULE, sb.toString());
+      addGrammarNode(list, MatcherName.RULE, sb.toString().trim());
     }
 
     return list.toArray(new NodeDescription[list.size()]);

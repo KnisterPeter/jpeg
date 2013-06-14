@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,6 +82,26 @@ public class JPEGTest extends AbstractParserTests {
     final ParsingResult result = this.parser.parse("Start", "Hallo Welt!");
     assertThat(result.matches(), is(true));
     System.out.println(Utils.formatParsingTree(result));
+  }
+
+  /**
+   * @throws IOException
+   */
+  @Test
+  public void testJpegParseTree() throws IOException {
+    final InputStreamReader reader = new InputStreamReader(
+        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
+        "UTF-8");
+    try {
+      final Parser jpeg = JPEG.createParser(reader, new Java(
+          "de.matrixweb.jpeg.JPEG"));
+      final ParsingResult result = jpeg.parse("JPEG", IOUtils.toString(
+          JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
+          "UTF-8"));
+      System.out.println(Utils.formatParsingTree(result));
+    } finally {
+      reader.close();
+    }
   }
 
   protected static class ParserDelegateImpl implements ParserDelegate {

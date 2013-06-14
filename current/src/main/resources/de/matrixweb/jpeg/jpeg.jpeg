@@ -3,22 +3,94 @@ JPEG :
 ;
 
 Rule :
-  Name ':' Body ';'
+  Name WS* COLON Body SEMI
 ;
 
 Name :
   NameChar+
 ;
 NameChar :
-  !COLON .
+  !WS .
 ;
 
 Body :
-  BodyChar+
+  BodyPart+ WS*
 ;
-BodyChar :
-  !SEMI .
+BodyPart :
+  WS* ChoiceExpression
 ;
 
+ChoiceExpression :
+  SequenceExpression ChoiceExpressionPart*
+;
+ChoiceExpressionPart :
+  '|' SequenceExpression
+;
+
+SequenceExpression :
+  SequenceExpressionPart1+
+;
+SequenceExpressionPart1 :
+  SequenceExpressionPart2 WS*
+;
+SequenceExpressionPart2 :
+  Terminal
+  | AndPredicateExpression
+  | NotPredicateExpression
+  | OneOrMoreExpression
+  | ZeroOrMoreExpression
+  | OptionalExpression
+  | AnyCharExpression
+  | EndOfInputExpression
+  | RuleReferenceExpression
+;
+
+OneOrMoreExpression :
+  RuleReferenceExpression '+'
+;
+
+ZeroOrMoreExpression :
+  RuleReferenceExpression '*'
+;
+
+OptionalExpression :
+  RuleReferenceExpression '?'
+;
+
+AnyCharExpression :
+  '.'
+;
+
+EndOfInputExpression :
+  '#'
+;
+
+RuleReferenceExpression :
+  RuleReferenceChar+
+;
+RuleReferenceChar :
+  !RuleReferenceEnd .
+;
+RuleReferenceEnd :
+ '+' | '*' | '?' | '|' | QUOTE | '&' | '!' | SEMI | WS
+;
+
+AndPredicateExpression :
+  '&' RuleReferenceExpression
+;
+
+NotPredicateExpression :
+  '!' RuleReferenceExpression
+;
+
+Terminal :
+ QUOTE InTerminalChar* QUOTE
+;
+InTerminalChar :
+  !QUOTE .
+;
+
+WS : ' ' | '\n' | '\t' | '\r';
+QUOTE : '\'';
 COLON : ':';
 SEMI  : ';';

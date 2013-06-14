@@ -50,6 +50,7 @@ public class GenerateAndTestParser {
     try {
       final Java java = new Java("de.matrixweb.jpeg.JPEGParser");
       final String source = JPEG.createParser2(reader, java);
+      System.out.println(source);
       final File target = new File("../next/src/main/java");
       target.mkdirs();
       final File subtarget = new File(target, "de/matrixweb/jpeg");
