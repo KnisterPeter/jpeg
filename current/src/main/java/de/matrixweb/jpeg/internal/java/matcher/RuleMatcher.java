@@ -9,6 +9,7 @@ import de.matrixweb.jpeg.internal.java.RuleMatchingContext;
  */
 public class RuleMatcher implements GrammarNodeMatcher {
 
+  @Override
   public boolean matches(final RuleMatchingContext context, final String rule,
       final Input input) {
     final ParsingNode result = context.getParser().parse(rule, input);

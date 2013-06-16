@@ -9,11 +9,12 @@ import de.matrixweb.jpeg.internal.java.RuleMatchingContext;
  */
 public class TerminalMatcher implements GrammarNodeMatcher {
 
+  @Override
   public boolean matches(final RuleMatchingContext context,
       final String terminal, final Input input) {
     final boolean match = input.getChars().startsWith(terminal);
     if (match) {
-      context.addParsingNode(new ParsingNode('\'' + terminal + '\'', null));
+      context.addParsingNode(new ParsingNode(terminal, null));
       input.setChars(input.getChars().substring(terminal.length()));
     }
     return match;

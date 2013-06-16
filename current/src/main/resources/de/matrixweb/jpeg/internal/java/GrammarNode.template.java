@@ -20,15 +20,13 @@ class GrammarNode {
     return this.matcher;
   }
 
-  /**
-   * @return the value
-   */
-  public String getValue() {
-    return this.value;
+  boolean matches(final RuleMatchingContext context, final Input input) {
+    return this.matcher.matches(context, this.value, input);
   }
 
-  boolean matches(final RuleMatchingContext context, final Input input) {
-    return getMatcher().matches(context, getValue(), input);
+  @Override
+  public String toString() {
+    return this.matcher.getClass().getSimpleName() + '[' + this.value + ']';
   }
 
 }

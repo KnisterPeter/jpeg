@@ -114,7 +114,7 @@ public class JavaGenerator implements CodeGenerator {
     parameters.put("name", className);
     parameters.put("rules", rules);
     return tmpl.render("de/matrixweb/jpeg/internal/java",
-        "Parser.template.java", parameters).replaceAll("JavaParser", className);
+        "Parser.template.java", parameters).replace("JavaParser", className);
   }
 
   /**

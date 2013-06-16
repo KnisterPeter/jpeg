@@ -98,6 +98,77 @@ public class JPEGTest extends AbstractParserTests {
       final ParsingResult result = jpeg.parse("JPEG", IOUtils.toString(
           JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
           "UTF-8"));
+      assertThat(result.matches(), is(true));
+      System.out.println(Utils.formatParsingTree(result));
+    } finally {
+      reader.close();
+    }
+  }
+
+  /**
+   * @throws IOException
+   */
+  @Test
+  public void testWhiteSpaces() throws IOException {
+    final InputStreamReader reader = new InputStreamReader(
+        JPEGTest.class.getResourceAsStream("/whitespace.jpeg"), "UTF-8");
+    final Parser parser = JPEG.createParser(reader, new Java("WhiteSpace"));
+    assertThat(parser.parse("WS", "\n").matches(), is(true));
+    assertThat(parser.parse("WS", "\t").matches(), is(true));
+    assertThat(parser.parse("WS", "\r").matches(), is(true));
+
+    final ParsingResult res = parser.parse("WS", "\n");
+    System.out.println(Utils.formatParsingTree(res));
+    assertThat(res.getParseTree().getChildren().length, is(1));
+    assertThat(res.getParseTree().getChildren()[0].getValue(), is("\n"));
+  }
+
+  /**
+   * @throws IOException
+   */
+  @Test
+  public void testNewlines() throws IOException {
+    final InputStreamReader reader = new InputStreamReader(
+        JPEGTest.class.getResourceAsStream("/newlines.jpeg"), "UTF-8");
+    final Parser parser = JPEG.createParser(reader, new Java("Newlines"));
+    assertThat(parser.parse("rule1", "a\nb").matches(), is(true));
+    assertThat(parser.parse("rule1", "a b").matches(), is(false));
+  }
+
+  /**
+   * @throws IOException
+   */
+  @Test
+  public void testEscapesParseTree() throws IOException {
+    final InputStreamReader reader = new InputStreamReader(
+        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
+        "UTF-8");
+    try {
+      final Parser parser = JPEG.createParser(reader, new Java(
+          "de.matrixweb.jpeg.JPEG"));
+
+      ParsingResult result = parser.parse("Terminal",
+          String.valueOf(new char[] { '\'', '\\', 'n', '\'' }));
+      assertThat(result.matches(), is(true));
+      assertThat(result.getParseTree().getChildren().length, is(4));
+      System.out.println(Utils.formatParsingTree(result));
+
+      result = parser.parse("Terminal",
+          String.valueOf(new char[] { '\'', '\\', '\\', '\'' }));
+      assertThat(result.matches(), is(true));
+      assertThat(result.getParseTree().getChildren().length, is(3));
+      System.out.println(Utils.formatParsingTree(result));
+
+      result = parser.parse("Terminal",
+          String.valueOf(new char[] { '\'', '\\', '\'', '\'' }));
+      assertThat(result.matches(), is(true));
+      assertThat(result.getParseTree().getChildren().length, is(3));
+      System.out.println(Utils.formatParsingTree(result));
+
+      result = parser.parse("Terminal",
+          String.valueOf(new char[] { '\'', '\n', '\'' }));
+      assertThat(result.matches(), is(true));
+      assertThat(result.getParseTree().getChildren().length, is(3));
       System.out.println(Utils.formatParsingTree(result));
     } finally {
       reader.close();

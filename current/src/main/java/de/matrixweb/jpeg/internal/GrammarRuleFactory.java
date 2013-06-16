@@ -46,7 +46,8 @@ class GrammarRuleFactory {
         }
       }
     }
-    return sb.length() > 0 ? sb.toString() : null;
+    return sb.length() > 0 ? sb.toString().replace("\\n", "\n")
+        .replace("\\r", "\r").replace("\\t", "\t") : null;
   }
 
   private static boolean areAllTerminalsClosed(final StringBuilder sb) {
@@ -74,16 +75,24 @@ class GrammarRuleFactory {
     int n = 0;
     boolean wasSpace = false;
     boolean inTerminal = false;
+    boolean escape = false;
     boolean inToken = false;
     MatcherName matcher = null;
     while (n < body.length()) {
       final char c = body.charAt(n++);
       if (inTerminal) {
         sb.append(c);
-        if (c == '\'') {
+        if (escape && (c == '\\' || c == '\'')) {
+          escape = false;
+        } else if (c == '\\') {
+          escape = true;
+        } else if (!escape && c == '\'') {
           inTerminal = false;
-          addGrammarNode(list, MatcherName.TERMINAL,
-              sb.substring(1, sb.length() - 1));
+          addGrammarNode(
+              list,
+              MatcherName.TERMINAL,
+              sb.substring(1, sb.length() - 1).replace("\\'", "'")
+                  .replace("\\\\", "\\"));
           sb.setLength(0);
         }
       } else {

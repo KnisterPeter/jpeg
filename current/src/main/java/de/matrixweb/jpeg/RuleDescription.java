@@ -94,8 +94,10 @@ public class RuleDescription {
      * @return the value
      */
     public String getValue() {
-      return this.value != null ? this.value.replaceAll("\\\\", "\\\\\\\\")
-          .replaceAll("\"", "\\\\\"") : "";
+      // FIXME: This is a dirty hack
+      return this.value != null ? this.value.replace("\\", "\\\\")
+          .replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
+          .replace("\t", "\\t") : "";
     }
   }
 

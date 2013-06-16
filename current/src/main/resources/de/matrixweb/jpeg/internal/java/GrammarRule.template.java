@@ -28,10 +28,12 @@ class GrammarRule {
     String tail = input.getChars();
     while (hasNodes(context.getGrammarRuleIndex(), this.grammarNodes)) {
       final Input newInput = new Input(tail);
-      context.setMatch(getNextNode(context).matches(context, newInput));
+      GrammarNode next = getNextNode(context);
+      context.setMatch(next.matches(context, newInput));
       if (context.isMatch()) {
         tail = newInput.getChars();
       } else if (hasNodes(context.getGrammarRuleIndex(), this.grammarNodes)) {
+        tail = input.getChars();
         context.setGrammarRuleIndex(nextChoiceNode(this.grammarNodes,
             context.getGrammarRuleIndex()));
         context.clearParsingNodes();
@@ -61,6 +63,11 @@ class GrammarRule {
     }
     return grammarNode.getMatcher() == GrammarNodeMatcher.CHOICE ? n
         : grammarNodes.length;
+  }
+
+  @Override
+  public String toString() {
+    return getName() + '{' + Arrays.toString(getGrammarNodes()) + '}';
   }
 
 }

@@ -56,4 +56,30 @@ public class GrammarRuleFactoryTest {
     assertThat(rule.getNodes().length, is(3));
   }
 
+  /** */
+  @Test
+  public void readTerminalRuleWithEscapedQuote() {
+    final Context context = new GrammarParser.Context(
+        "name:'\\\'';".toCharArray());
+    final RuleDescription rule = GrammarRuleFactory.create(context
+        .getRuleContext());
+    assertThat(rule, is(not(nullValue())));
+    assertThat(rule.getName(), is("name"));
+    assertThat(rule.getNodes().length, is(1));
+    assertThat(rule.getNodes()[0].getPlainValue(), is("'"));
+  }
+
+  /** */
+  @Test
+  public void readTerminalRuleWithEscapedEscape() {
+    final Context context = new GrammarParser.Context(
+        "name:'\\\\';".toCharArray());
+    final RuleDescription rule = GrammarRuleFactory.create(context
+        .getRuleContext());
+    assertThat(rule, is(not(nullValue())));
+    assertThat(rule.getName(), is("name"));
+    assertThat(rule.getNodes().length, is(1));
+    assertThat(rule.getNodes()[0].getPlainValue(), is("\\"));
+  }
+
 }

@@ -1,5 +1,7 @@
 package de.matrixweb.jpeg.internal.java;
 
+import java.util.Arrays;
+
 import de.matrixweb.jpeg.internal.java.JavaGenerator.JavaParser;
 import de.matrixweb.jpeg.internal.java.matcher.GrammarNodeMatcher;
 
@@ -7,6 +9,9 @@ import de.matrixweb.jpeg.internal.java.matcher.GrammarNodeMatcher;
  * @author markusw
  */
 class GrammarRule {
+
+  @Deprecated
+  private static int indent = 0;
 
   private final String name;
 
@@ -32,16 +37,23 @@ class GrammarRule {
   }
 
   public ParsingNode match(final JavaParser parser, final Input input) {
-    // System.out.println("Matches " + this.name + " << '"
-    // + input.getChars().substring(0, 20).replaceAll("\n", "\\\\n") + "...'");
+    indent++;
+    // System.out.println("Matches "
+    // + this.name
+    // + " << '"
+    // + input.getChars()
+    // .substring(0, Math.min(20, input.getChars().length()))
+    // .replace("\n", "\\n") + "...'");
     final RuleMatchingContext context = new RuleMatchingContext(parser);
     String tail = input.getChars();
     while (hasNodes(context.getGrammarRuleIndex(), this.grammarNodes)) {
       final Input newInput = new Input(tail);
-      context.setMatch(getNextNode(context).matches(context, newInput));
+      final GrammarNode next = getNextNode(context);
+      context.setMatch(next.matches(context, newInput));
       if (context.isMatch()) {
         tail = newInput.getChars();
       } else if (hasNodes(context.getGrammarRuleIndex(), this.grammarNodes)) {
+        tail = input.getChars();
         context.setGrammarRuleIndex(nextChoiceNode(this.grammarNodes,
             context.getGrammarRuleIndex()));
         context.clearParsingNodes();
@@ -49,10 +61,26 @@ class GrammarRule {
     }
     ParsingNode result = null;
     if (context.isMatch()) {
+      // System.out.println(getIndent()
+      // + "Matched "
+      // + this.name
+      // + " <= \""
+      // + input.getChars()
+      // .substring(0, input.getChars().length() - tail.length())
+      // .replace("\n", "\\n") + "\"");
       result = new ParsingNode(this.name, context.getParsingNodes());
       input.setChars(tail);
     }
+    indent--;
     return result;
+  }
+
+  private String getIndent() {
+    final StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < indent; i++) {
+      sb.append("  ");
+    }
+    return sb.toString();
   }
 
   private GrammarNode getNextNode(final RuleMatchingContext context) {
@@ -71,6 +99,14 @@ class GrammarRule {
     }
     return grammarNode.getMatcher() == GrammarNodeMatcher.CHOICE ? n
         : grammarNodes.length;
+  }
+
+  /**
+   * @see java.lang.Object#toString()
+   */
+  @Override
+  public String toString() {
+    return getName() + '{' + Arrays.toString(getGrammarNodes()) + '}';
   }
 
 }

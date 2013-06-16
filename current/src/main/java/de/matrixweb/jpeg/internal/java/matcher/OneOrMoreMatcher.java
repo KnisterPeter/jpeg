@@ -12,6 +12,7 @@ import de.matrixweb.jpeg.internal.java.RuleMatchingContext;
  */
 public class OneOrMoreMatcher implements GrammarNodeMatcher {
 
+  @Override
   public boolean matches(final RuleMatchingContext context, final String rule,
       final Input input) {
     final List<ParsingNode> parsingNodes = new ArrayList<ParsingNode>();
@@ -29,8 +30,11 @@ public class OneOrMoreMatcher implements GrammarNodeMatcher {
       }
     }
     if (parsingNodes.size() > 0) {
-      context.addParsingNode(new ParsingNode(rule, parsingNodes
-          .toArray(new ParsingNode[parsingNodes.size()])));
+      for (final ParsingNode node : parsingNodes) {
+        context.addParsingNode(node);
+      }
+      // context.addParsingNode(new ParsingNode(rule, parsingNodes
+      // .toArray(new ParsingNode[parsingNodes.size()])));
     }
     input.setChars(newInput.getChars());
     return result != null;

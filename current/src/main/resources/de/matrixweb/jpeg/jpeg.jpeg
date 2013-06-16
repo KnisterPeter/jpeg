@@ -1,16 +1,19 @@
 JPEG :
-  Rule+
+  Rule+ #
 ;
 
 Rule :
-  Name WS* COLON Body SEMI
+  Name WS* COLON Body SEMI WS*
 ;
 
 Name :
   NameChar+
 ;
 NameChar :
-  !WS .
+  !NameEndChar .
+;
+NameEndChar :
+  WS | COLON
 ;
 
 Body :
@@ -24,7 +27,7 @@ ChoiceExpression :
   SequenceExpression ChoiceExpressionPart*
 ;
 ChoiceExpressionPart :
-  '|' SequenceExpression
+  '|' WS* SequenceExpression
 ;
 
 SequenceExpression :
@@ -87,10 +90,12 @@ Terminal :
  QUOTE InTerminalChar* QUOTE
 ;
 InTerminalChar :
-  !QUOTE .
+    '\\' '\''
+  | '\\' '\\'
+  | !QUOTE .
 ;
 
 WS : ' ' | '\n' | '\t' | '\r';
-QUOTE : '\'';
 COLON : ':';
 SEMI  : ';';
+QUOTE : '\'';

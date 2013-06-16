@@ -1,4 +1,4 @@
-class JPEGParserException extends RuntimeException {
+public static class JPEGParserException extends RuntimeException {
 
   private static final long serialVersionUID = 0;
 

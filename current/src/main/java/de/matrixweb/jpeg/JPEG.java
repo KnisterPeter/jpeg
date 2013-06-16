@@ -26,4 +26,9 @@ public class JPEG {
     return generator.build(GrammarParser.create(reader));
   }
 
+  public static String createParser3(final Reader reader,
+      final CodeGenerator generator) {
+    return generator.build(GrammarParser.create2(reader));
+  }
+
 }

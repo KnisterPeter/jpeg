@@ -17,8 +17,9 @@ class OneOrMoreMatcher implements GrammarNodeMatcher {
       }
     }
     if (parsingNodes.size() > 0) {
-      context.addParsingNode(new ParsingNode(rule, parsingNodes
-          .toArray(new ParsingNode[parsingNodes.size()])));
+      for (final ParsingNode node : parsingNodes) {
+        context.addParsingNode(node);
+      }
     }
     input.setChars(newInput.getChars());
     return result != null;

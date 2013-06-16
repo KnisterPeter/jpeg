@@ -1,6 +1,7 @@
 package {{$package}};
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,21 +36,21 @@ public class {{$name}} {
   }
 
   {{for rule in rules}}
-  public ParsingResult {{$rule.name}}(final String input) {
-    return new ParsingResult(parse("{{$rule.name}}", new Input(input)));
+  public static ParsingResult {{$rule.name}}(final String input) {
+    return new ParsingResult(new {{$name}}().parse("{{$rule.name}}", new Input(input)));
   }
   
   {{/for}}
 
   // {{reference ParsingResult.template.java}}
   // {{reference Utils.template.java}}
+  // {{reference JPEGParserException.template.java}}
 
 }
+// {{reference ParsingNode.template.java}}
 // {{reference GrammarNode.template.java}}
 // {{reference GrammarRule.template.java}}
 // {{reference Input.template.java}}
-// {{reference JPEGParserException.template.java}}
-// {{reference ParsingNode.template.java}}
 // {{reference RuleMatchingContext.template.java}}
 // {{reference matcher/AbstractPredicateMatcher.template.java}}
 // {{reference matcher/AndPredicateMatcher.template.java}}

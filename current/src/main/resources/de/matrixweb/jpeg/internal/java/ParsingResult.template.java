@@ -1,4 +1,4 @@
-public class ParsingResult {
+public static class ParsingResult {
 
   private final ParsingNode parseTree;
 
