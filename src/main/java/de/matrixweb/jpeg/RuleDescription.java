@@ -82,15 +82,6 @@ public class RuleDescription {
     }
 
     /**
-     * TODO: Remove if parser is removed
-     * 
-     * @return the value
-     */
-    public String getPlainValue() {
-      return this.value;
-    }
-
-    /**
      * @return the value
      */
     public String getValue() {
