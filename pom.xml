@@ -7,9 +7,8 @@
     <version>7</version>
   </parent>
   <groupId>de.matrixweb.jpeg</groupId>
-  <artifactId>jpeg-parent</artifactId>
+  <artifactId>jpeg</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <packaging>pom</packaging>
 
   <name>JPEG</name>
   <description>
@@ -40,29 +39,21 @@
     <url>https://github.com/KnisterPeter/Smaller</url>
   </scm>
 
-  <modules>
-    <module>current</module>
-  </modules>
-
   <properties>
     <mavenVersion>2.0</mavenVersion>
   </properties>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>jpeg</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>jpeg</artifactId>
-        <version>${project.version}</version>
-        <type>test-jar</type>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
   <dependencies>
+    <dependency>
+      <groupId>org.eclipse.jdt.core.compiler</groupId>
+      <artifactId>ecj</artifactId>
+      <version>4.2.2</version>
+    </dependency>
+    <dependency>
+      <!-- TODO: Remove -->
+      <groupId>org.apache.velocity</groupId>
+      <artifactId>velocity</artifactId>
+      <version>1.7</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
