@@ -42,7 +42,6 @@
 
   <modules>
     <module>current</module>
-    <module>next</module>
   </modules>
 
   <properties>

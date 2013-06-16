@@ -1,9 +1,15 @@
 package de.matrixweb.jpeg;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,48 +21,42 @@ import static org.hamcrest.CoreMatchers.*;
 /**
  * @author markusw
  */
-public class JPEGTest extends AbstractParserTests {
+public class JPEGTest {
 
-  private Parser parser;
+  private ParserDelegate testParser;
+
+  private ParserDelegate jpegParser;
 
   /**
-   * @throws IOException
+   * @throws Exception
    */
   @Before
-  public void setUp() throws IOException {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"),
-        "UTF-8");
-    try {
-      this.parser = JPEG.createParser(reader,
-          new Java("de.matrixweb.jpeg.Test"));
-    } finally {
-      reader.close();
-    }
+  public void setUp() throws Exception {
+    this.testParser = createParserDelegate("de/matrixweb/jpeg/test.jpeg",
+        "de.matrixweb.jpeg.TestParser");
+    this.jpegParser = createParserDelegate("de/matrixweb/jpeg/jpeg.jpeg",
+        "de.matrixweb.jpeg.JPEGParser");
   }
 
-  /**
-   * @see de.matrixweb.jpeg.AbstractParserTests#createParser()
-   */
-  @Override
-  protected ParserDelegate createParser() {
-    return new ParserDelegateImpl(this.parser);
+  @SuppressWarnings("resource")
+  private Object createParser(final String grammar, final String name)
+      throws Exception {
+    final Java java = new Java(name);
+    final String source = JPEG.createParser(new StringReader(grammar), java);
+
+    final File target = new File("target/" + name.replace('.', '-'));
+    FileUtils.deleteDirectory(target);
+    target.mkdirs();
+    java.compile(target, source);
+
+    return new URLClassLoader(new URL[] { target.toURI().toURL() }, null)
+        .loadClass(name).newInstance();
   }
 
-  /**
-   * @see de.matrixweb.jpeg.AbstractParserTests#createJPEGParser()
-   */
-  @Override
-  protected ParserDelegate createJPEGParser() throws Exception {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-        "UTF-8");
-    try {
-      return new ParserDelegateImpl(JPEG.createParser(reader, new Java(
-          "de.matrixweb.jpeg.JPEG")));
-    } finally {
-      reader.close();
-    }
+  private ParserDelegate createParserDelegate(final String grammarPath,
+      final String name) throws Exception {
+    return new ParserDelegate(createParser(IOUtils.toString(
+        JPEGTest.class.getResourceAsStream("/" + grammarPath), "UTF-8"), name));
   }
 
   /** */
@@ -76,124 +76,184 @@ public class JPEGTest extends AbstractParserTests {
     JPEG.createParser(reader, new Java(""));
   }
 
+  /**
+   * @throws Exception
+   */
+  @Test
+  public void testWhiteSpaces() throws Exception {
+    final ParserDelegate parser = createParserDelegate("whitespace.jpeg",
+        "white.SpaceParser");
+    parser.parse("WS", "\t", true);
+    parser.parse("WS", "\r", true);
+    final Object res = parser.parse("WS", "\n", true);
+    parser.validate(res, "{1}[0](\n)");
+  }
+
+  /**
+   * @throws Exception
+   */
+  @Test
+  public void testNewlines() throws Exception {
+    final ParserDelegate parser = createParserDelegate("newlines.jpeg",
+        "lines.Newlines");
+    parser.parse("rule1", "a\nb", true);
+    parser.parse("rule1", "a b", false);
+  }
+
+  /**
+   * @throws Exception
+   */
+  @Test
+  public void testEscapesParseTree() throws Exception {
+    Object result = this.jpegParser.parse("Terminal",
+        String.valueOf(new char[] { '\'', '\\', 'n', '\'' }), true);
+    this.jpegParser.validate(result, "{4}");
+
+    result = this.jpegParser.parse("Terminal",
+        String.valueOf(new char[] { '\'', '\\', '\\', '\'' }), true);
+    this.jpegParser.validate(result, "{3}");
+
+    result = this.jpegParser.parse("Terminal",
+        String.valueOf(new char[] { '\'', '\\', '\'', '\'' }), true);
+    this.jpegParser.validate(result, "{3}");
+
+    result = this.jpegParser.parse("Terminal",
+        String.valueOf(new char[] { '\'', '\n', '\'' }), true);
+    this.jpegParser.validate(result, "{3}");
+  }
+
   /** */
   @Test
-  public void testParseTree() {
-    final ParsingResult result = this.parser.parse("Start", "Hallo Welt!");
-    assertThat(result.matches(), is(true));
-    System.out.println(Utils.formatParsingTree(result));
+  public void test1() {
+    this.testParser.parse("Start", "Hallo Welt!", true);
+    this.testParser.parse("Start", "Hallo  Welt!", true);
+    this.testParser.parse("Start", "Hallo   Welt!", true);
+    this.testParser.parse("Start", "Hallo Welt\"", false);
+    this.testParser.parse("Start", "Hello Welt!", true);
+    this.testParser.parse("Start", "HelloWelt", false);
+    this.testParser.parse("Start", "Hello Welt Welt!", true);
   }
 
-  /**
-   * @throws IOException
-   */
+  /** */
   @Test
-  public void testJpegParseTree() throws IOException {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-        "UTF-8");
+  public void testMultiChoiceWithMultipleTokensPerChoice() {
+    this.testParser.parse("MultiChoice", "cd", true);
+  }
+
+  /** */
+  @Test
+  public void testNotMatchOneOrMore() {
+    this.testParser.parse("OneOrMore2", "a", false);
+  }
+
+  /** */
+  @Test
+  public void testOptionalMatch() {
+    this.testParser.parse("Optional2", " ", true);
+  }
+
+  /** */
+  @Test
+  public void testEndOfInputFails() {
+    this.testParser.parse("EOITest", "abc", false);
+  }
+
+  /** */
+  @Test
+  public void testTestParsingPartialInput() {
+    this.testParser.parse("SomeDoubleQuotes", "\"\"\"\"\"", true);
+  }
+
+  /** */
+  @Test
+  public void testUnknownRule() {
     try {
-      final Parser jpeg = JPEG.createParser(reader, new Java(
-          "de.matrixweb.jpeg.JPEG"));
-      final ParsingResult result = jpeg.parse("JPEG", IOUtils.toString(
-          JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-          "UTF-8"));
-      assertThat(result.matches(), is(true));
-      System.out.println(Utils.formatParsingTree(result));
-    } finally {
-      reader.close();
+      this.testParser.parse("UnknownRuleTest", "abc", true);
+      fail("Expected JPEGParserException");
+    } catch (final Exception e) {
+      assertThat(e.getClass().getSimpleName(), is("JPEGParserException"));
     }
   }
 
   /**
-   * @throws IOException
+   * @throws Exception
    */
   @Test
-  public void testWhiteSpaces() throws IOException {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/whitespace.jpeg"), "UTF-8");
-    final Parser parser = JPEG.createParser(reader, new Java("WhiteSpace"));
-    assertThat(parser.parse("WS", "\n").matches(), is(true));
-    assertThat(parser.parse("WS", "\t").matches(), is(true));
-    assertThat(parser.parse("WS", "\r").matches(), is(true));
-
-    final ParsingResult res = parser.parse("WS", "\n");
-    System.out.println(Utils.formatParsingTree(res));
-    assertThat(res.getParseTree().getChildren().length, is(1));
-    assertThat(res.getParseTree().getChildren()[0].getValue(), is("\n"));
+  public void testJpegGrammar() throws Exception {
+    this.jpegParser.parse("JPEG", IOUtils.toString(
+        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"),
+        "UTF-8"), true);
   }
 
-  /**
-   * @throws IOException
-   */
-  @Test
-  public void testNewlines() throws IOException {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/newlines.jpeg"), "UTF-8");
-    final Parser parser = JPEG.createParser(reader, new Java("Newlines"));
-    assertThat(parser.parse("rule1", "a\nb").matches(), is(true));
-    assertThat(parser.parse("rule1", "a b").matches(), is(false));
-  }
+  private static class ParserDelegate {
 
-  /**
-   * @throws IOException
-   */
-  @Test
-  public void testEscapesParseTree() throws IOException {
-    final InputStreamReader reader = new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-        "UTF-8");
-    try {
-      final Parser parser = JPEG.createParser(reader, new Java(
-          "de.matrixweb.jpeg.JPEG"));
-
-      ParsingResult result = parser.parse("Terminal",
-          String.valueOf(new char[] { '\'', '\\', 'n', '\'' }));
-      assertThat(result.matches(), is(true));
-      assertThat(result.getParseTree().getChildren().length, is(4));
-      System.out.println(Utils.formatParsingTree(result));
-
-      result = parser.parse("Terminal",
-          String.valueOf(new char[] { '\'', '\\', '\\', '\'' }));
-      assertThat(result.matches(), is(true));
-      assertThat(result.getParseTree().getChildren().length, is(3));
-      System.out.println(Utils.formatParsingTree(result));
-
-      result = parser.parse("Terminal",
-          String.valueOf(new char[] { '\'', '\\', '\'', '\'' }));
-      assertThat(result.matches(), is(true));
-      assertThat(result.getParseTree().getChildren().length, is(3));
-      System.out.println(Utils.formatParsingTree(result));
-
-      result = parser.parse("Terminal",
-          String.valueOf(new char[] { '\'', '\n', '\'' }));
-      assertThat(result.matches(), is(true));
-      assertThat(result.getParseTree().getChildren().length, is(3));
-      System.out.println(Utils.formatParsingTree(result));
-    } finally {
-      reader.close();
-    }
-  }
-
-  protected static class ParserDelegateImpl implements ParserDelegate {
-
-    private final Parser parser;
+    private final Object parser;
 
     /**
      * @param parser
      */
-    public ParserDelegateImpl(final Parser parser) {
+    public ParserDelegate(final Object parser) {
       this.parser = parser;
     }
 
-    /**
-     * @see de.matrixweb.jpeg.AbstractParserTests.ParserDelegate#parse(java.lang.String,
-     *      java.lang.String, boolean)
-     */
-    @Override
-    public void parse(final String rule, final String input,
+    public Object parse(final String rule, final String input,
         final boolean result) {
-      assertThat(this.parser.parse(rule, input).matches(), is(result));
+      try {
+        final Method m = this.parser.getClass().getMethod(rule, String.class);
+        final Object res = m.invoke(this.parser, input);
+        assertThat((Boolean) res.getClass().getMethod("matches").invoke(res),
+            is(result));
+        return res;
+      } catch (final NoSuchMethodException e) {
+        throw new RuntimeException(e);
+      } catch (final IllegalAccessException e) {
+        throw new RuntimeException(e);
+      } catch (final InvocationTargetException e) {
+        final Throwable t = e.getTargetException();
+        if (t instanceof RuntimeException) {
+          throw (RuntimeException) t;
+        }
+        throw new RuntimeException(e);
+      }
+    }
+
+    public void validate(final Object parseTree,
+        final String parseTreeExpression) throws Exception {
+      final Object node = parseTree.getClass().getMethod("getParseTree")
+          .invoke(parseTree);
+      final String expr = validate0(node, parseTreeExpression);
+      if (expr.length() > 0) {
+        fail(expr.replace("\n", "\\n"));
+      }
+    }
+
+    String validate0(final Object node, final String parseTreeExpression)
+        throws Exception {
+      String expr = parseTreeExpression;
+      if (expr.startsWith("{")) {
+        final int n = Integer.parseInt(expr.substring(1, expr.indexOf('}')));
+        final Method m = node.getClass().getMethod("getChildren");
+        m.setAccessible(true);
+        final Object[] children = (Object[]) m.invoke(node);
+        assertThat(children.length, is(n));
+        expr = expr.substring(expr.indexOf('}') + 1);
+      }
+      if (expr.startsWith("[")) {
+        final int n = Integer.parseInt(expr.substring(1, expr.indexOf(']')));
+        final Method m = node.getClass().getMethod("getChildren");
+        m.setAccessible(true);
+        final Object[] children = (Object[]) m.invoke(node);
+        expr = validate0(children[n], expr.substring(expr.indexOf(']') + 1));
+      }
+      if (expr.startsWith("(")) {
+        final String test = expr.substring(1, expr.indexOf(')'));
+        final Method m = node.getClass().getMethod("getValue");
+        m.setAccessible(true);
+        final String value = (String) m.invoke(node);
+        assertThat(value, is(test));
+        expr = expr.substring(expr.indexOf(')') + 1);
+      }
+      return expr;
     }
 
   }

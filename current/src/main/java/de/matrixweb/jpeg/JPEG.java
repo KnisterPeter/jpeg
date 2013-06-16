@@ -11,24 +11,14 @@ public class JPEG {
 
   /**
    * @param reader
-   *          A {@link Reader} to read the grammar from
+   *          The grammar to parse
    * @param generator
    *          The code generator to use
-   * @return Returns the parser defined in the given grammar
+   * @return Returns the source code of the created parser
    */
-  public static Parser createParser(final Reader reader,
-      final CodeGenerator generator) {
-    return generator.buildInterpreter(GrammarParser.create(reader));
-  }
-
-  public static String createParser2(final Reader reader,
+  public static String createParser(final Reader reader,
       final CodeGenerator generator) {
     return generator.build(GrammarParser.create(reader));
-  }
-
-  public static String createParser3(final Reader reader,
-      final CodeGenerator generator) {
-    return generator.build(GrammarParser.create2(reader));
   }
 
 }

@@ -7,8 +7,6 @@ import java.util.List;
  */
 public interface CodeGenerator {
 
-  Parser buildInterpreter(List<RuleDescription> rules);
-
   /**
    * @param rules
    *          The parsed rules to build into the parser

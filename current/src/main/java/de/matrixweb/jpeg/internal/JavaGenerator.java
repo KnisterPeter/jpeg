@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg.internal.java;
+package de.matrixweb.jpeg.internal;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,11 +23,7 @@ import org.eclipse.jdt.internal.compiler.tool.EclipseCompiler;
 
 import de.matrixweb.jpeg.CodeGenerator;
 import de.matrixweb.jpeg.JPEGParserException;
-import de.matrixweb.jpeg.Parser;
-import de.matrixweb.jpeg.ParsingResult;
 import de.matrixweb.jpeg.RuleDescription;
-import de.matrixweb.jpeg.internal.Template;
-import de.matrixweb.jpeg.internal.java.matcher.GrammarNodeMatcher;
 
 /**
  * @author markusw
@@ -41,61 +37,6 @@ public class JavaGenerator implements CodeGenerator {
    */
   public JavaGenerator(final String name) {
     this.name = name;
-  }
-
-  /**
-   * @see de.matrixweb.jpeg.CodeGenerator#buildInterpreter(java.util.List)
-   */
-  @Override
-  public Parser buildInterpreter(final List<RuleDescription> rules) {
-    final JavaParser parser = new JavaParser();
-    for (final RuleDescription descr : rules) {
-      final GrammarRule rule = create(descr);
-      parser.rules.put(rule.getName(), rule);
-    }
-    return parser;
-  }
-
-  private GrammarRule create(final RuleDescription description) {
-    final GrammarNode[] nodes = new GrammarNode[description.getNodes().length];
-    for (int i = 0; i < description.getNodes().length; i++) {
-      GrammarNodeMatcher matcher = null;
-      switch (description.getNodes()[i].getMatcher()) {
-      case AND_PREDICATE:
-        matcher = GrammarNodeMatcher.AND_PREDICATE;
-        break;
-      case ANY_CHAR:
-        matcher = GrammarNodeMatcher.ANY_CHAR;
-        break;
-      case CHOICE:
-        matcher = GrammarNodeMatcher.CHOICE;
-        break;
-      case EOI:
-        matcher = GrammarNodeMatcher.EOI;
-        break;
-      case NOT_PREDICATE:
-        matcher = GrammarNodeMatcher.NOT_PREDICATE;
-        break;
-      case ONE_OR_MORE:
-        matcher = GrammarNodeMatcher.ONE_OR_MORE;
-        break;
-      case OPTIONAL:
-        matcher = GrammarNodeMatcher.OPTIONAL;
-        break;
-      case RULE:
-        matcher = GrammarNodeMatcher.RULE;
-        break;
-      case TERMINAL:
-        matcher = GrammarNodeMatcher.TERMINAL;
-        break;
-      case ZERO_OR_MORE:
-        matcher = GrammarNodeMatcher.ZERO_OR_MORE;
-        break;
-      }
-      nodes[i] = new GrammarNode(matcher,
-          description.getNodes()[i].getPlainValue());
-    }
-    return new GrammarRule(description.getName(), nodes);
   }
 
   /**
@@ -177,33 +118,6 @@ public class JavaGenerator implements CodeGenerator {
         }
       };
     }
-  }
-
-  public static class JavaParser implements Parser {
-
-    private final Map<String, GrammarRule> rules = new HashMap<String, GrammarRule>();
-
-    /**
-     * @see de.matrixweb.jpeg.Parser#parse(java.lang.String, java.lang.String)
-     */
-    @Override
-    public ParsingResult parse(final String rule, final String input) {
-      return new ParsingResult(parse(rule, new Input(input)));
-    }
-
-    /**
-     * @param startRule
-     * @param input
-     * @return ...
-     */
-    public ParsingNode parse(final String startRule, final Input input) {
-      final GrammarRule rule = this.rules.get(startRule);
-      if (rule == null) {
-        throw new JPEGParserException("Rule '" + startRule + "' is unknown");
-      }
-      return rule.match(this, input);
-    }
-
   }
 
 }

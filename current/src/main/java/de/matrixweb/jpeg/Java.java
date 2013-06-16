@@ -3,7 +3,7 @@ package de.matrixweb.jpeg;
 import java.io.File;
 import java.util.List;
 
-import de.matrixweb.jpeg.internal.java.JavaGenerator;
+import de.matrixweb.jpeg.internal.JavaGenerator;
 
 /**
  * @author markusw
@@ -17,14 +17,6 @@ public class Java implements CodeGenerator {
    */
   public Java(final String name) {
     this.name = name;
-  }
-
-  /**
-   * @see de.matrixweb.jpeg.CodeGenerator#buildInterpreter(java.util.List)
-   */
-  @Override
-  public Parser buildInterpreter(final List<RuleDescription> rules) {
-    return new JavaGenerator(this.name).buildInterpreter(rules);
   }
 
   /**

@@ -4,19 +4,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import static org.hamcrest.CoreMatchers.*;
 
 /**
  * @author markusw
  */
+@Ignore("Check what to test for this")
 public class GenerateAndTestParser {
 
   /**
@@ -29,7 +26,7 @@ public class GenerateAndTestParser {
         "UTF-8");
     try {
       final Java java = new Java("test.TestParser");
-      final String source = JPEG.createParser2(reader, java);
+      final String source = JPEG.createParser(reader, java);
 
       final File target = new File("../next/src/main/java");
       target.mkdirs();
@@ -54,7 +51,7 @@ public class GenerateAndTestParser {
         "UTF-8");
     try {
       final Java java = new Java("de.matrixweb.jpeg.JPEGParser");
-      final String source = JPEG.createParser2(reader, java);
+      final String source = JPEG.createParser(reader, java);
       System.out.println(source);
       final File target = new File("../next/src/main/java");
       target.mkdirs();
@@ -67,19 +64,6 @@ public class GenerateAndTestParser {
     } finally {
       reader.close();
     }
-  }
-
-  /**
-   * @throws IOException
-   */
-  @Test
-  public void testGenerateJpegParser2() throws IOException {
-    final String input = IOUtils.toString(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-        "UTF-8");
-    final Java java = new Java("de.matrixweb.jpeg.JPEGParser");
-    assertThat(JPEG.createParser3(new StringReader(input), java),
-        is(JPEG.createParser2(new StringReader(input), java)));
   }
 
 }

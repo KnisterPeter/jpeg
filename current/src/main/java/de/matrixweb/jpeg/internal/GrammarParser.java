@@ -13,7 +13,13 @@ import de.matrixweb.jpeg.internal.JPEGParser.ParsingResult;
  */
 public class GrammarParser {
 
-  public static List<RuleDescription> create2(final Reader reader) {
+  /**
+   * @param reader
+   *          The grammar to read
+   * @return Returns a {@link List} of parsed {@link RuleDescription}s for code
+   *         generation
+   */
+  public static List<RuleDescription> create(final Reader reader) {
     final ParsingResult result = JPEGParser.JPEG(IOUtils
         .readStreamAsString(reader));
     if (!result.matches()) {
@@ -112,21 +118,6 @@ public class GrammarParser {
     }
 
     return nodes;
-  }
-
-  /**
-   * @param reader
-   * @return Returns the rules of the given grammar
-   */
-  public static List<RuleDescription> create(final Reader reader) {
-    final List<RuleDescription> descriptions = new ArrayList<RuleDescription>();
-    final Context context = new Context(IOUtils.readStreamAsCharArray(reader));
-    RuleDescription descr = GrammarRuleFactory.create(context.getRuleContext());
-    while (descr != null) {
-      descriptions.add(descr);
-      descr = GrammarRuleFactory.create(context.getRuleContext());
-    }
-    return descriptions;
   }
 
   static class Context {
