@@ -99,8 +99,6 @@ public class GrammarParser {
     } else if ("RuleReferenceExpression".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE,
           createString(node, "RuleReferenceChar")));
-    } else if ("InTerminalChar".equals(node.getValue())) {
-
     } else if ("Terminal".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL,
           createString(node, "InTerminalChar").replace("\\\\", "\\")

@@ -6,28 +6,25 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
 
 /**
  * @author markusw
  */
-public class GenerateParserTest {
-
-  private final boolean forTest = true;
+public class GenerateParser {
 
   /**
+   * @param args
    * @throws Exception
    */
-  @Test
-  public void generate() throws Exception {
-    if (this.forTest) {
-      generate("src/test/java", "de.matrixweb.jpeg.test.JPEGTestParser");
-    } else {
+  public static void main(final String[] args) throws Exception {
+    if (args.length > 0 && "release".equals(args[0])) {
       generate("src/main/java", "de.matrixweb.jpeg.internal.JPEGParser");
+    } else {
+      generate("src/test/java", "de.matrixweb.jpeg.test.JPEGTestParser");
     }
   }
 
-  private void generate(final String target, final String name)
+  private static void generate(final String target, final String name)
       throws Exception {
     final Java java = new Java(name);
     final String source = JPEG.createParser(new InputStreamReader(
@@ -44,6 +41,7 @@ public class GenerateParserTest {
     FileUtils.deleteDirectory(file);
     file.mkdirs();
     java.compile(file, source);
+    FileUtils.deleteDirectory(file);
   }
 
 }

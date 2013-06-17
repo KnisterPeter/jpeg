@@ -4,10 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -34,8 +36,13 @@ public class JPEGTest {
   public void setUp() throws Exception {
     this.testParser = createParserDelegate("de/matrixweb/jpeg/test.jpeg",
         "de.matrixweb.jpeg.TestParser");
-    this.jpegParser = createParserDelegate("de/matrixweb/jpeg/jpeg.jpeg",
-        "de.matrixweb.jpeg.JPEGParser");
+    if (Boolean.parseBoolean(System.getProperty("jpeg.debug", "false"))) {
+      this.jpegParser = new ParserDelegate(
+          new de.matrixweb.jpeg.test.JPEGTestParser());
+    } else {
+      this.jpegParser = createParserDelegate("de/matrixweb/jpeg/jpeg.jpeg",
+          "de.matrixweb.jpeg.JPEGParser");
+    }
   }
 
   @SuppressWarnings("resource")
@@ -49,6 +56,8 @@ public class JPEGTest {
     target.mkdirs();
     java.compile(target, source);
 
+    FileUtils.write(new File(target, name.replace('.', '/') + ".java"), source);
+
     return new URLClassLoader(new URL[] { target.toURI().toURL() }, null)
         .loadClass(name).newInstance();
   }
@@ -57,6 +66,19 @@ public class JPEGTest {
       final String name) throws Exception {
     return new ParserDelegate(createParser(IOUtils.toString(
         JPEGTest.class.getResourceAsStream("/" + grammarPath), "UTF-8"), name));
+  }
+
+  /**
+   * @throws Exception
+   */
+  @Test
+  public void testGrammarMatchers() throws Exception {
+    this.jpegParser.validateGrammar("Terminal", "RuleMatcher#QUOTE",
+        "ZeroOrMoreMatcher#InTerminalChar", "RuleMatcher#QUOTE");
+
+    this.jpegParser.validateGrammar("WS", "TerminalMatcher# ",
+        "ChoiceMatcher#", "TerminalMatcher#\n", "ChoiceMatcher#",
+        "TerminalMatcher#\t", "ChoiceMatcher#", "TerminalMatcher#\r");
   }
 
   /** */
@@ -81,12 +103,10 @@ public class JPEGTest {
    */
   @Test
   public void testWhiteSpaces() throws Exception {
-    final ParserDelegate parser = createParserDelegate("whitespace.jpeg",
-        "white.SpaceParser");
-    parser.parse("WS", "\t", true);
-    parser.parse("WS", "\r", true);
-    final Object res = parser.parse("WS", "\n", true);
-    parser.validate(res, "{1}[0](\n)");
+    this.jpegParser.parse("WS", "\t", true);
+    this.jpegParser.parse("WS", "\r", true);
+    final Object res = this.jpegParser.parse("WS", "\n", true);
+    this.jpegParser.validateResult(res, "{1}[0](\n)");
   }
 
   /**
@@ -107,19 +127,19 @@ public class JPEGTest {
   public void testEscapesParseTree() throws Exception {
     Object result = this.jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\\', 'n', '\'' }), true);
-    this.jpegParser.validate(result, "{4}");
+    this.jpegParser.validateResult(result, "{4}");
 
     result = this.jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\\', '\\', '\'' }), true);
-    this.jpegParser.validate(result, "{3}");
+    this.jpegParser.validateResult(result, "{3}");
 
     result = this.jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\\', '\'', '\'' }), true);
-    this.jpegParser.validate(result, "{3}");
+    this.jpegParser.validateResult(result, "{3}");
 
     result = this.jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\n', '\'' }), true);
-    this.jpegParser.validate(result, "{3}");
+    this.jpegParser.validateResult(result, "{3}");
   }
 
   /** */
@@ -185,6 +205,13 @@ public class JPEGTest {
         "UTF-8"), true);
   }
 
+  /** */
+  @Test
+  public void testExpressionExtensions() {
+    this.jpegParser.parse("ZeroOrMoreExpression", "(a b)*;", true);
+    this.jpegParser.parse("JPEG", "ex: !'a';", true);
+  }
+
   private static class ParserDelegate {
 
     private final Object parser;
@@ -194,6 +221,35 @@ public class JPEGTest {
      */
     public ParserDelegate(final Object parser) {
       this.parser = parser;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void validateGrammar(final String ruleName,
+        final String... nodeValidators) throws Exception {
+      Field field = this.parser.getClass().getDeclaredField("rules");
+      field.setAccessible(true);
+      final Map<String, Object> rules = (Map<String, Object>) field.get(null);
+      final Object rule = rules.get(ruleName);
+      field = rule.getClass().getDeclaredField("grammarNodes");
+      field.setAccessible(true);
+      final Object[] nodes = (Object[]) field.get(rule);
+      assertThat("Expected " + nodeValidators.length + " nodes but got "
+          + nodes.length, nodes.length, is(nodeValidators.length));
+      for (int i = 0; i < nodes.length; i++) {
+        final String[] val = nodeValidators[i].split("#", 2);
+        final Object node = nodes[i];
+        field = node.getClass().getDeclaredField("matcher");
+        field.setAccessible(true);
+        final Object matcher = field.get(node);
+        assertThat("On position " + i + " expected " + val[0] + " but got "
+            + matcher.getClass().getSimpleName(), matcher.getClass()
+            .getSimpleName(), is(val[0]));
+        field = node.getClass().getDeclaredField("value");
+        field.setAccessible(true);
+        final String value = (String) field.get(node);
+        assertThat("On position " + i + " expected value " + val[1]
+            + " but got " + value, value, is(val[1]));
+      }
     }
 
     public Object parse(final String rule, final String input,
@@ -217,7 +273,7 @@ public class JPEGTest {
       }
     }
 
-    public void validate(final Object parseTree,
+    public void validateResult(final Object parseTree,
         final String parseTreeExpression) throws Exception {
       final Object node = parseTree.getClass().getMethod("getParseTree")
           .invoke(parseTree);

@@ -34,12 +34,25 @@ SequenceExpression :
   SequenceExpressionPart1+
 ;
 SequenceExpressionPart1 :
-  SequenceExpressionPart2 WS*
+  PredicateExpression WS*
 ;
-SequenceExpressionPart2 :
-  Terminal
-  | AndPredicateExpression
+
+PredicateExpression :
+    AndPredicateExpression
   | NotPredicateExpression
+  | AtomicExpression
+;
+
+AndPredicateExpression :
+  '&' RuleReferenceExpression
+;
+
+NotPredicateExpression :
+  '!' RuleReferenceExpression
+;
+
+AtomicExpression :
+  Terminal
   | OneOrMoreExpression
   | ZeroOrMoreExpression
   | OptionalExpression
@@ -76,14 +89,6 @@ RuleReferenceChar :
 ;
 RuleReferenceEnd :
  '+' | '*' | '?' | '|' | QUOTE | '&' | '!' | SEMI | WS
-;
-
-AndPredicateExpression :
-  '&' RuleReferenceExpression
-;
-
-NotPredicateExpression :
-  '!' RuleReferenceExpression
 ;
 
 Terminal :
