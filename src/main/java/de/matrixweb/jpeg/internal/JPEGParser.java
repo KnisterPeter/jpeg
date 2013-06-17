@@ -122,7 +122,7 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "."),
               }));
         rules.put("EndOfInputExpression", new GrammarRule("EndOfInputExpression", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.TERMINAL, "#"),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "EOI"),
               }));
         rules.put("internal_RuleReferenceExpression_0", new GrammarRule("internal_RuleReferenceExpression_0", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "RuleReferenceEnd"),

@@ -1,5 +1,5 @@
 JPEG :
-  Rule+ #
+  Rule+ EOI
 ;
 
 Rule :
@@ -72,7 +72,7 @@ AnyCharExpression :
 ;
 
 EndOfInputExpression :
-  '#'
+  'EOI'
 ;
 
 RuleReferenceExpression :

@@ -3,11 +3,11 @@ Start :
 ;
 
 Sequence :
-  StringChoice OneOrMore Optional NotPredicateAndAnyChar #
+  StringChoice OneOrMore Optional NotPredicateAndAnyChar EOI
 ;
 
 EOITest:
- 'a' #
+ 'a' EOI
 ;
 
 StringChoice :
