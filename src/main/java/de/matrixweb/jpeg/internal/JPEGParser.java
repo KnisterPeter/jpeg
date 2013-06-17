@@ -82,22 +82,27 @@ public class JPEGParser {
               }));
         rules.put("AndPredicateExpression", new GrammarRule("AndPredicateExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "&"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
               }));
         rules.put("NotPredicateExpression", new GrammarRule("NotPredicateExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "!"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
               }));
         rules.put("OneOrMoreExpression", new GrammarRule("OneOrMoreExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "+"),
               }));
         rules.put("ZeroOrMoreExpression", new GrammarRule("ZeroOrMoreExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "*"),
               }));
         rules.put("OptionalExpression", new GrammarRule("OptionalExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "?"),
               }));
         rules.put("AtomicExpression", new GrammarRule("AtomicExpression", new GrammarNode[] {

@@ -39,23 +39,23 @@ SequenceExpression :
 ;
 
 AndPredicateExpression :
-  '&' AtomicExpression
+  '&' WS* AtomicExpression
 ;
 
 NotPredicateExpression :
-  '!' AtomicExpression
+  '!' WS* AtomicExpression
 ;
 
 OneOrMoreExpression :
-  AtomicExpression '+'
+  AtomicExpression WS* '+'
 ;
 
 ZeroOrMoreExpression :
-  AtomicExpression '*'
+  AtomicExpression WS* '*'
 ;
 
 OptionalExpression :
-  AtomicExpression '?'
+  AtomicExpression WS* '?'
 ;
 
 AtomicExpression :
