@@ -45,7 +45,7 @@ public class GrammarParser {
     final MutableInteger n = new MutableInteger(0);
     for (final ParsingNode subnode : rule.getChildren()) {
       if ("Name".equals(subnode.getValue())) {
-        name = createString(subnode, "NameChar");
+        name = createString(subnode);
       } else if ("Body".equals(subnode.getValue())) {
         nodes = buildNodeDescriptions(descriptions, subnode, name, n);
       }
@@ -54,6 +54,19 @@ public class GrammarParser {
         nodes.toArray(new RuleDescription.NodeDescription[nodes.size()]));
   }
 
+  static String createString(final ParsingNode node) {
+    final StringBuilder str = new StringBuilder();
+    for (final ParsingNode child : node.getChildren()) {
+      if (child.getChildren().length == 0) {
+        str.append(child.getValue());
+      } else {
+        str.append(createString(child));
+      }
+    }
+    return str.toString();
+  }
+
+  @Deprecated
   static String createString(final ParsingNode node, final String charnodeName) {
     final StringBuilder str = new StringBuilder();
     for (final ParsingNode subnode : node.getChildren()) {
@@ -110,7 +123,7 @@ public class GrammarParser {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.EOI, null));
     } else if ("RuleReferenceExpression".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE,
-          createString(node, "RuleReferenceChar")));
+          createString(node)));
     } else if ("Terminal".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL,
           createString(node, "InTerminalChar").replace("\\\\", "\\")

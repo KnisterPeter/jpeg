@@ -7,13 +7,7 @@ Rule :
 ;
 
 Name :
-  NameChar+
-;
-NameChar :
-  !NameEndChar .
-;
-NameEndChar :
-  WS | COLON
+  (!(WS | COLON) .)+
 ;
 
 Body :
@@ -87,10 +81,7 @@ EndOfInputExpression :
 ;
 
 RuleReferenceExpression :
-  RuleReferenceChar+
-;
-RuleReferenceChar :
-  !RuleReferenceEnd .
+  (!RuleReferenceEnd .)+
 ;
 RuleReferenceEnd :
  '+' | '*' | '?' | '|' | QUOTE | '&' | '!' | SEMI | WS | '(' | ')'
