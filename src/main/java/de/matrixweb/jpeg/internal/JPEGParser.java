@@ -58,12 +58,19 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "SequenceExpressionPart1"),
               }));
         rules.put("SequenceExpressionPart1", new GrammarRule("SequenceExpressionPart1", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.RULE, "SequenceExpressionPart2"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "Terminal"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AnyCharExpression"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "EndOfInputExpression"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "OperatorExpression"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
               }));
-        rules.put("SequenceExpressionPart2", new GrammarRule("SequenceExpressionPart2", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.RULE, "Terminal"),
-                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+        rules.put("OperatorExpression", new GrammarRule("OperatorExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "AndPredicateExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "NotPredicateExpression"),
@@ -74,23 +81,39 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "OptionalExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
-                new GrammarNode(GrammarNodeMatcher.RULE, "AnyCharExpression"),
-                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
-                new GrammarNode(GrammarNodeMatcher.RULE, "EndOfInputExpression"),
-                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
-                new GrammarNode(GrammarNodeMatcher.RULE, "RuleReferenceExpression"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
+              }));
+        rules.put("AndPredicateExpression", new GrammarRule("AndPredicateExpression", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "&"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
+              }));
+        rules.put("NotPredicateExpression", new GrammarRule("NotPredicateExpression", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "!"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
               }));
         rules.put("OneOrMoreExpression", new GrammarRule("OneOrMoreExpression", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.RULE, "RuleReferenceExpression"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "+"),
               }));
         rules.put("ZeroOrMoreExpression", new GrammarRule("ZeroOrMoreExpression", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.RULE, "RuleReferenceExpression"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "*"),
               }));
         rules.put("OptionalExpression", new GrammarRule("OptionalExpression", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.RULE, "RuleReferenceExpression"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AtomicExpression"),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "?"),
+              }));
+        rules.put("AtomicExpression", new GrammarRule("AtomicExpression", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "SubExpression"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "RuleReferenceExpression"),
+              }));
+        rules.put("SubExpression", new GrammarRule("SubExpression", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "("),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "ChoiceExpression"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, ")"),
               }));
         rules.put("AnyCharExpression", new GrammarRule("AnyCharExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "."),
@@ -123,14 +146,10 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.RULE, "SEMI"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "WS"),
-              }));
-        rules.put("AndPredicateExpression", new GrammarRule("AndPredicateExpression", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.TERMINAL, "&"),
-                new GrammarNode(GrammarNodeMatcher.RULE, "RuleReferenceExpression"),
-              }));
-        rules.put("NotPredicateExpression", new GrammarRule("NotPredicateExpression", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.TERMINAL, "!"),
-                new GrammarNode(GrammarNodeMatcher.RULE, "RuleReferenceExpression"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "("),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, ")"),
               }));
         rules.put("Terminal", new GrammarRule("Terminal", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "QUOTE"),
@@ -224,8 +243,16 @@ public class JPEGParser {
     return new ParsingResult(new JPEGParser().parse("SequenceExpressionPart1", new Input(input)));
   }
   
-    public static ParsingResult SequenceExpressionPart2(final String input) {
-    return new ParsingResult(new JPEGParser().parse("SequenceExpressionPart2", new Input(input)));
+    public static ParsingResult OperatorExpression(final String input) {
+    return new ParsingResult(new JPEGParser().parse("OperatorExpression", new Input(input)));
+  }
+  
+    public static ParsingResult AndPredicateExpression(final String input) {
+    return new ParsingResult(new JPEGParser().parse("AndPredicateExpression", new Input(input)));
+  }
+  
+    public static ParsingResult NotPredicateExpression(final String input) {
+    return new ParsingResult(new JPEGParser().parse("NotPredicateExpression", new Input(input)));
   }
   
     public static ParsingResult OneOrMoreExpression(final String input) {
@@ -238,6 +265,14 @@ public class JPEGParser {
   
     public static ParsingResult OptionalExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("OptionalExpression", new Input(input)));
+  }
+  
+    public static ParsingResult AtomicExpression(final String input) {
+    return new ParsingResult(new JPEGParser().parse("AtomicExpression", new Input(input)));
+  }
+  
+    public static ParsingResult SubExpression(final String input) {
+    return new ParsingResult(new JPEGParser().parse("SubExpression", new Input(input)));
   }
   
     public static ParsingResult AnyCharExpression(final String input) {
@@ -258,14 +293,6 @@ public class JPEGParser {
   
     public static ParsingResult RuleReferenceEnd(final String input) {
     return new ParsingResult(new JPEGParser().parse("RuleReferenceEnd", new Input(input)));
-  }
-  
-    public static ParsingResult AndPredicateExpression(final String input) {
-    return new ParsingResult(new JPEGParser().parse("AndPredicateExpression", new Input(input)));
-  }
-  
-    public static ParsingResult NotPredicateExpression(final String input) {
-    return new ParsingResult(new JPEGParser().parse("NotPredicateExpression", new Input(input)));
   }
   
     public static ParsingResult Terminal(final String input) {

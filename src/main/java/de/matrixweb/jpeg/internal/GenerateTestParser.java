@@ -1,16 +1,18 @@
-package de.matrixweb.jpeg;
+package de.matrixweb.jpeg.internal;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
 
-import org.apache.commons.io.FileUtils;
+import de.matrixweb.jpeg.JPEG;
+import de.matrixweb.jpeg.Java;
 
 /**
  * @author markusw
  */
-public class GenerateParser {
+public class GenerateTestParser {
 
   /**
    * @param args
@@ -20,16 +22,17 @@ public class GenerateParser {
     if (args.length > 0 && "release".equals(args[0])) {
       generate("src/main/java", "de.matrixweb.jpeg.internal.JPEGParser");
     } else {
-      generate("src/test/java", "de.matrixweb.jpeg.test.JPEGTestParser");
+      generate("target/test-parser", "de.matrixweb.jpeg.test.JPEGTestParser");
     }
   }
 
   private static void generate(final String target, final String name)
       throws Exception {
     final Java java = new Java(name);
-    final String source = JPEG.createParser(new InputStreamReader(
-        JPEGTest.class.getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"),
-        "UTF-8"), java);
+    final String source = JPEG.createParser(
+        new InputStreamReader(GenerateTestParser.class
+            .getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"), "UTF-8"),
+        java);
 
     File file = new File(target + "/" + name.replace('.', '/') + ".java");
     file.getParentFile().mkdirs();
@@ -38,10 +41,23 @@ public class GenerateParser {
     writer.close();
 
     file = new File("target/gen-parser-classes");
-    FileUtils.deleteDirectory(file);
+    deleteDirectory(file);
     file.mkdirs();
     java.compile(file, source);
-    FileUtils.deleteDirectory(file);
+    deleteDirectory(file);
+  }
+
+  static void deleteDirectory(final File directory) throws IOException {
+    if (directory.exists()) {
+      for (final File file : directory.listFiles()) {
+        if (file.isDirectory()) {
+          deleteDirectory(file);
+        } else {
+          file.delete();
+        }
+      }
+      directory.delete();
+    }
   }
 
 }

@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg;
+package de.matrixweb.jpeg.internal;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +15,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+
+import de.matrixweb.jpeg.JPEG;
+import de.matrixweb.jpeg.JPEGParserException;
+import de.matrixweb.jpeg.Java;
 
 import static org.junit.Assert.*;
 
@@ -106,7 +110,7 @@ public class JPEGTest {
     this.jpegParser.parse("WS", "\t", true);
     this.jpegParser.parse("WS", "\r", true);
     final Object res = this.jpegParser.parse("WS", "\n", true);
-    this.jpegParser.validateResult(res, "{1}[0](\n)");
+    this.jpegParser.validateResult(res, "{1}[0]('\n')");
   }
 
   /**
@@ -205,11 +209,22 @@ public class JPEGTest {
         "UTF-8"), true);
   }
 
-  /** */
+  /**
+   * @throws Exception
+   */
   @Test
-  public void testExpressionExtensions() {
-    this.jpegParser.parse("ZeroOrMoreExpression", "(a b)*;", true);
-    this.jpegParser.parse("JPEG", "ex: !'a';", true);
+  public void testSubExpressions() throws Exception {
+    final Object res = this.jpegParser.parse("ZeroOrMoreExpression", "(a b)*",
+        true);
+    this.jpegParser.validateResult(res,
+        "{2}[0]{1}('AtomicExpression')[0]{3}('SubExpression')[0]('(')");
+    this.jpegParser.validateResult(res,
+        "{2}[0]{1}[0]{3}[1]('ChoiceExpression')");
+    this.jpegParser.validateResult(res, "{2}[0]{1}[0]{3}[2](')')");
+
+    // res = this.jpegParser.parse("NotPredicateExpression", "!'a'", true);
+    // this.jpegParser.validateResult(res,
+    // "{2}[1]{1}('AtomicExpression')[0]{3}('Terminal')");
   }
 
   private static class ParserDelegate {
@@ -277,37 +292,48 @@ public class JPEGTest {
         final String parseTreeExpression) throws Exception {
       final Object node = parseTree.getClass().getMethod("getParseTree")
           .invoke(parseTree);
-      final String expr = validate0(node, parseTreeExpression);
+      final String expr = validate0(node, parseTreeExpression,
+          parseTreeExpression);
       if (expr.length() > 0) {
-        fail(expr.replace("\n", "\\n"));
+        fail("Expression " + expr.replace("\n", "\\n")
+            + " not completly verified");
       }
     }
 
-    String validate0(final Object node, final String parseTreeExpression)
-        throws Exception {
-      String expr = parseTreeExpression;
+    String validate0(final Object node, final String expressionTail,
+        final String parseTreeExpression) throws Exception {
+      String expr = expressionTail;
       if (expr.startsWith("{")) {
         final int n = Integer.parseInt(expr.substring(1, expr.indexOf('}')));
         final Method m = node.getClass().getMethod("getChildren");
         m.setAccessible(true);
         final Object[] children = (Object[]) m.invoke(node);
-        assertThat(children.length, is(n));
         expr = expr.substring(expr.indexOf('}') + 1);
+        assertThat(
+            "Expected "
+                + n
+                + " children but got "
+                + children.length
+                + " at "
+                + parseTreeExpression.substring(0, parseTreeExpression.length()
+                    - expr.length()), children.length, is(n));
+      }
+      if (expr.startsWith("('")) {
+        String test = expr.substring(2);
+        test = test.substring(0, test.indexOf("')"));
+        final Method m = node.getClass().getMethod("getValue");
+        m.setAccessible(true);
+        final String value = (String) m.invoke(node);
+        assertThat(value, is(test));
+        expr = expr.substring(test.length() + 4);
       }
       if (expr.startsWith("[")) {
         final int n = Integer.parseInt(expr.substring(1, expr.indexOf(']')));
         final Method m = node.getClass().getMethod("getChildren");
         m.setAccessible(true);
         final Object[] children = (Object[]) m.invoke(node);
-        expr = validate0(children[n], expr.substring(expr.indexOf(']') + 1));
-      }
-      if (expr.startsWith("(")) {
-        final String test = expr.substring(1, expr.indexOf(')'));
-        final Method m = node.getClass().getMethod("getValue");
-        m.setAccessible(true);
-        final String value = (String) m.invoke(node);
-        assertThat(value, is(test));
-        expr = expr.substring(expr.indexOf(')') + 1);
+        expr = validate0(children[n], expr.substring(expr.indexOf(']') + 1),
+            parseTreeExpression);
       }
       return expr;
     }

@@ -34,43 +34,48 @@ SequenceExpression :
   SequenceExpressionPart1+
 ;
 SequenceExpressionPart1 :
-  PredicateExpression WS*
+  Terminal WS*
+  | AnyCharExpression WS*
+  | EndOfInputExpression WS*
+  | OperatorExpression WS*
 ;
 
-PredicateExpression :
+OperatorExpression :
     AndPredicateExpression
   | NotPredicateExpression
+  | OneOrMoreExpression
+  | ZeroOrMoreExpression
+  | OptionalExpression
   | AtomicExpression
 ;
 
 AndPredicateExpression :
-  '&' RuleReferenceExpression
+  '&' AtomicExpression
 ;
 
 NotPredicateExpression :
-  '!' RuleReferenceExpression
-;
-
-AtomicExpression :
-  Terminal
-  | OneOrMoreExpression
-  | ZeroOrMoreExpression
-  | OptionalExpression
-  | AnyCharExpression
-  | EndOfInputExpression
-  | RuleReferenceExpression
+  '!' AtomicExpression
 ;
 
 OneOrMoreExpression :
-  RuleReferenceExpression '+'
+  AtomicExpression '+'
 ;
 
 ZeroOrMoreExpression :
-  RuleReferenceExpression '*'
+  AtomicExpression '*'
 ;
 
 OptionalExpression :
-  RuleReferenceExpression '?'
+  AtomicExpression '?'
+;
+
+AtomicExpression :
+    SubExpression
+  | RuleReferenceExpression
+;
+
+SubExpression :
+  '(' WS* ChoiceExpression WS* ')'
 ;
 
 AnyCharExpression :
@@ -88,7 +93,7 @@ RuleReferenceChar :
   !RuleReferenceEnd .
 ;
 RuleReferenceEnd :
- '+' | '*' | '?' | '|' | QUOTE | '&' | '!' | SEMI | WS
+ '+' | '*' | '?' | '|' | QUOTE | '&' | '!' | SEMI | WS | '(' | ')'
 ;
 
 Terminal :

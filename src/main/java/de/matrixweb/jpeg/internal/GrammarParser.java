@@ -32,20 +32,22 @@ public class GrammarParser {
     final List<RuleDescription> descriptions = new ArrayList<RuleDescription>();
     for (final ParsingNode node : result.getParseTree().getChildren()) {
       if ("Rule".equals(node.getValue())) {
-        descriptions.add(buildRuleDescription(node));
+        descriptions.add(buildRuleDescription(descriptions, node));
       }
     }
     return descriptions;
   }
 
-  static RuleDescription buildRuleDescription(final ParsingNode rule) {
+  static RuleDescription buildRuleDescription(
+      final List<RuleDescription> descriptions, final ParsingNode rule) {
     String name = null;
     List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
+    final MutableInteger n = new MutableInteger(0);
     for (final ParsingNode subnode : rule.getChildren()) {
       if ("Name".equals(subnode.getValue())) {
         name = createString(subnode, "NameChar");
       } else if ("Body".equals(subnode.getValue())) {
-        nodes = buildNodeDescriptions(subnode);
+        nodes = buildNodeDescriptions(descriptions, subnode, name, n);
       }
     }
     return new RuleDescription(name,
@@ -59,38 +61,48 @@ public class GrammarParser {
         for (final ParsingNode charnode : subnode.getChildren()) {
           str.append(charnode.getValue());
         }
+      } else {
+        str.append(createString(subnode, charnodeName));
       }
     }
     return str.toString();
   }
 
   static List<RuleDescription.NodeDescription> buildNodeDescriptions(
-      final ParsingNode node) {
+      final List<RuleDescription> descriptions, final ParsingNode node,
+      final String nodeName, final MutableInteger n) {
     final List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
     // System.out.println(JPEGParser.Utils.formatParsingNode(node, 0));
 
     if ("WS".equals(node.getValue())) {
       // Ignore whitespaces
-    } else if ("OptionalExpression".equals(node.getValue())) {
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.OPTIONAL,
-          createString(node.getChildren()[0], "RuleReferenceChar")));
     } else if ("ChoiceExpressionPart".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.CHOICE, null));
-      for (int i = 1; i < node.getChildren().length; i++) {
-        nodes.addAll(buildNodeDescriptions(node.getChildren()[i]));
+      final ParsingNode[] children = node.getChildren();
+      for (int i = 1; i < children.length; i++) {
+        nodes.addAll(buildNodeDescriptions(descriptions, children[i], nodeName,
+            n));
       }
+    } else if ("OptionalExpression".equals(node.getValue())) {
+      nodes.add(new RuleDescription.NodeDescription(MatcherName.OPTIONAL,
+          buildNodeDescriptions(descriptions, node.getChildren()[0], nodeName,
+              n).get(0).getValue()));
     } else if ("OneOrMoreExpression".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.ONE_OR_MORE,
-          createString(node.getChildren()[0], "RuleReferenceChar")));
+          buildNodeDescriptions(descriptions, node.getChildren()[0], nodeName,
+              n).get(0).getValue()));
     } else if ("ZeroOrMoreExpression".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.ZERO_OR_MORE,
-          createString(node.getChildren()[0], "RuleReferenceChar")));
+          buildNodeDescriptions(descriptions, node.getChildren()[0], nodeName,
+              n).get(0).getValue()));
     } else if ("AndPredicateExpression".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.AND_PREDICATE,
-          createString(node.getChildren()[1], "RuleReferenceChar")));
+          buildNodeDescriptions(descriptions, node.getChildren()[1], nodeName,
+              n).get(0).getValue()));
     } else if ("NotPredicateExpression".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.NOT_PREDICATE,
-          createString(node.getChildren()[1], "RuleReferenceChar")));
+          buildNodeDescriptions(descriptions, node.getChildren()[1], nodeName,
+              n).get(0).getValue()));
     } else if ("AnyCharExpression".equals(node.getValue())) {
       nodes
           .add(new RuleDescription.NodeDescription(MatcherName.ANY_CHAR, null));
@@ -104,18 +116,34 @@ public class GrammarParser {
           createString(node, "InTerminalChar").replace("\\\\", "\\")
               .replace("\\'", "'").replace("\\n", "\n").replace("\\r", "\r")
               .replace("\\t", "\t")));
+    } else if ("SubExpression".equals(node.getValue())) {
+      final String name = nodeName + '_' + n.n++;
+      final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
+      final ParsingNode[] children = node.getChildren();
+      for (int i = 1; i < children.length - 1; i++) {
+        sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
+      }
+      final RuleDescription internal = new RuleDescription(name,
+          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
+      descriptions.add(internal);
+      nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
     } else {
-      if (node.getChildren().length == 0) {
-        nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL,
-            node.getValue()));
-      } else {
-        for (final ParsingNode child : node.getChildren()) {
-          nodes.addAll(buildNodeDescriptions(child));
-        }
+      for (final ParsingNode child : node.getChildren()) {
+        nodes.addAll(buildNodeDescriptions(descriptions, child, nodeName, n));
       }
     }
 
     return nodes;
+  }
+
+  private static class MutableInteger {
+
+    private int n;
+
+    MutableInteger(final int n) {
+      this.n = n;
+    }
+
   }
 
 }
