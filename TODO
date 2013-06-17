@@ -3,3 +3,4 @@
 - Add AST generation
 - Add actions to parsing tree
 - Build JPEG based template engine
+- Add rule annotations
