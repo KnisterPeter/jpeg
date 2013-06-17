@@ -89,6 +89,39 @@ public class GrammarParser {
 
     if ("WS".equals(node.getValue())) {
       // Ignore whitespaces
+    } else if ("RangeExpression".equals(node.getValue())) {
+      final String name = "internal_" + nodeName + '_' + n.n++;
+
+      final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
+      final ParsingNode[] children = node.getChildren();
+      for (int i = 1; i < children.length - 1; i++) {
+        sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
+      }
+      sub.remove(0);
+      final RuleDescription internal = new RuleDescription(name,
+          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
+      descriptions.add(internal);
+      nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
+    } else if ("RangeExpressionDash".equals(node.getValue())) {
+      throw new UnsupportedOperationException();
+    } else if ("RangeExpressionRange".equals(node.getValue())) {
+      char from = node.getChildren()[0].getValue().charAt(0);
+      char to = node.getChildren()[2].getValue().charAt(0);
+      if (from > to) {
+        final char temp = from;
+        from = to;
+        to = temp;
+      }
+      for (char i = from; i <= to; i++) {
+        nodes
+            .add(new RuleDescription.NodeDescription(MatcherName.CHOICE, null));
+        nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL,
+            String.valueOf(i)));
+      }
+    } else if ("RangeExpressionChar".equals(node.getValue())) {
+      nodes.add(new RuleDescription.NodeDescription(MatcherName.CHOICE, null));
+      nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL, node
+          .getChildren()[0].getValue()));
     } else if ("ChoiceExpressionPart".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.CHOICE, null));
       final ParsingNode[] children = node.getChildren();

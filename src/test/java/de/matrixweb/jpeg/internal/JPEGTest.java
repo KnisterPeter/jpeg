@@ -227,6 +227,21 @@ public class JPEGTest {
     // "{2}[1]{1}('AtomicExpression')[0]{3}('Terminal')");
   }
 
+  /**
+   * 
+   */
+  @Test
+  public void testRangeExpression() {
+    this.jpegParser.parse("RangeExpression", "[-]", true);
+    this.jpegParser.parse("RangeExpression", "[a-z]", true);
+    this.jpegParser.parse("RangeExpression", "[a-z0-9]", true);
+    this.jpegParser.parse("RangeExpression", "[-a-z0-9]", true);
+    this.jpegParser.parse("RangeExpression", "[ab]", true);
+    this.jpegParser.parse("RangeExpression", "[-9]", true);
+    this.jpegParser.parse("RangeExpression", "[a-]", false);
+    this.jpegParser.parse("RangeExpression", "[ab-]", false);
+  }
+
   private static class ParserDelegate {
 
     private final Object parser;

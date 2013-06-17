@@ -27,17 +27,246 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.RULE, "SEMI"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
               }));
-        rules.put("internal_Name_1", new GrammarRule("internal_Name_1", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.RULE, "WS"),
-                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
-                new GrammarNode(GrammarNodeMatcher.RULE, "COLON"),
-              }));
         rules.put("internal_Name_0", new GrammarRule("internal_Name_0", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "internal_Name_1"),
-                new GrammarNode(GrammarNodeMatcher.ANY_CHAR, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "a"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "b"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "c"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "d"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "e"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "f"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "g"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "h"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "i"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "j"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "k"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "l"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "m"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "n"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "o"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "p"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "q"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "r"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "s"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "t"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "u"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "v"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "w"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "x"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "y"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "z"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "A"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "B"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "C"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "D"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "E"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "F"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "G"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "H"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "I"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "J"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "K"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "L"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "M"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "N"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "O"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "P"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "Q"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "R"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "S"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "T"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "U"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "V"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "W"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "X"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "Y"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "Z"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "_"),
+              }));
+        rules.put("internal_Name_2", new GrammarRule("internal_Name_2", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "a"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "b"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "c"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "d"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "e"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "f"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "g"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "h"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "i"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "j"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "k"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "l"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "m"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "n"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "o"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "p"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "q"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "r"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "s"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "t"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "u"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "v"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "w"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "x"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "y"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "z"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "A"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "B"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "C"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "D"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "E"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "F"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "G"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "H"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "I"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "J"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "K"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "L"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "M"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "N"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "O"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "P"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "Q"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "R"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "S"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "T"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "U"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "V"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "W"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "X"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "Y"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "Z"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "0"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "1"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "2"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "3"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "4"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "5"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "6"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "7"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "8"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "9"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "_"),
+              }));
+        rules.put("internal_Name_1", new GrammarRule("internal_Name_1", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "internal_Name_2"),
               }));
         rules.put("Name", new GrammarRule("Name", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "internal_Name_0"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "internal_Name_0"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "internal_Name_1"),
               }));
         rules.put("internal_Body_0", new GrammarRule("internal_Body_0", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "ChoiceExpression"),
@@ -57,6 +286,8 @@ public class JPEGParser {
               }));
         rules.put("internal_SequenceExpression_1", new GrammarRule("internal_SequenceExpression_1", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "Terminal"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "RangeExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "AnyCharExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
@@ -80,6 +311,47 @@ public class JPEGParser {
               }));
         rules.put("SequenceExpression", new GrammarRule("SequenceExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "internal_SequenceExpression_0"),
+              }));
+        rules.put("internal_RangeExpression_1", new GrammarRule("internal_RangeExpression_1", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "]"),
+              }));
+        rules.put("internal_RangeExpression_2", new GrammarRule("internal_RangeExpression_2", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "RangeExpressionRange"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "RangeExpressionChar"),
+              }));
+        rules.put("internal_RangeExpression_0", new GrammarRule("internal_RangeExpression_0", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "internal_RangeExpression_1"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "internal_RangeExpression_2"),
+              }));
+        rules.put("RangeExpression", new GrammarRule("RangeExpression", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "["),
+                new GrammarNode(GrammarNodeMatcher.OPTIONAL, "RangeExpressionDash"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "internal_RangeExpression_0"),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "]"),
+              }));
+        rules.put("RangeExpressionDash", new GrammarRule("RangeExpressionDash", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "-"),
+              }));
+        rules.put("internal_RangeExpressionRange_0", new GrammarRule("internal_RangeExpressionRange_0", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "-"),
+              }));
+        rules.put("internal_RangeExpressionRange_1", new GrammarRule("internal_RangeExpressionRange_1", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "-"),
+              }));
+        rules.put("RangeExpressionRange", new GrammarRule("RangeExpressionRange", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "internal_RangeExpressionRange_0"),
+                new GrammarNode(GrammarNodeMatcher.ANY_CHAR, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "-"),
+                new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "internal_RangeExpressionRange_1"),
+                new GrammarNode(GrammarNodeMatcher.ANY_CHAR, ""),
+              }));
+        rules.put("internal_RangeExpressionChar_0", new GrammarRule("internal_RangeExpressionChar_0", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "-"),
+              }));
+        rules.put("RangeExpressionChar", new GrammarRule("RangeExpressionChar", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "internal_RangeExpressionChar_0"),
+                new GrammarNode(GrammarNodeMatcher.ANY_CHAR, ""),
               }));
         rules.put("AndPredicateExpression", new GrammarRule("AndPredicateExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "&"),
@@ -153,6 +425,10 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "("),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, ")"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "["),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "]"),
               }));
         rules.put("Terminal", new GrammarRule("Terminal", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "QUOTE"),
@@ -213,12 +489,16 @@ public class JPEGParser {
     return new ParsingResult(new JPEGParser().parse("Rule", new Input(input)));
   }
   
-    public static ParsingResult internal_Name_1(final String input) {
-    return new ParsingResult(new JPEGParser().parse("internal_Name_1", new Input(input)));
-  }
-  
     public static ParsingResult internal_Name_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_Name_0", new Input(input)));
+  }
+  
+    public static ParsingResult internal_Name_2(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_Name_2", new Input(input)));
+  }
+  
+    public static ParsingResult internal_Name_1(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_Name_1", new Input(input)));
   }
   
     public static ParsingResult Name(final String input) {
@@ -251,6 +531,46 @@ public class JPEGParser {
   
     public static ParsingResult SequenceExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("SequenceExpression", new Input(input)));
+  }
+  
+    public static ParsingResult internal_RangeExpression_1(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_RangeExpression_1", new Input(input)));
+  }
+  
+    public static ParsingResult internal_RangeExpression_2(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_RangeExpression_2", new Input(input)));
+  }
+  
+    public static ParsingResult internal_RangeExpression_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_RangeExpression_0", new Input(input)));
+  }
+  
+    public static ParsingResult RangeExpression(final String input) {
+    return new ParsingResult(new JPEGParser().parse("RangeExpression", new Input(input)));
+  }
+  
+    public static ParsingResult RangeExpressionDash(final String input) {
+    return new ParsingResult(new JPEGParser().parse("RangeExpressionDash", new Input(input)));
+  }
+  
+    public static ParsingResult internal_RangeExpressionRange_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_RangeExpressionRange_0", new Input(input)));
+  }
+  
+    public static ParsingResult internal_RangeExpressionRange_1(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_RangeExpressionRange_1", new Input(input)));
+  }
+  
+    public static ParsingResult RangeExpressionRange(final String input) {
+    return new ParsingResult(new JPEGParser().parse("RangeExpressionRange", new Input(input)));
+  }
+  
+    public static ParsingResult internal_RangeExpressionChar_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_RangeExpressionChar_0", new Input(input)));
+  }
+  
+    public static ParsingResult RangeExpressionChar(final String input) {
+    return new ParsingResult(new JPEGParser().parse("RangeExpressionChar", new Input(input)));
   }
   
     public static ParsingResult AndPredicateExpression(final String input) {
@@ -811,8 +1131,6 @@ class OptionalMatcher implements GrammarNodeMatcher {
     final ParsingNode result = context.getParser().parse(rule, newInput);
     if (result != null) {
       context.addParsingNode(result);
-      // context
-      // .addParsingNode(new ParsingNode(rule, new ParsingNode[] { result }));
       input.setChars(newInput.getChars());
     }
     return true;

@@ -7,7 +7,7 @@ Rule :
 ;
 
 Name :
-  (!(WS | COLON) .)+
+  [a-zA-Z_]([a-zA-Z0-9_])*
 ;
 
 Body :
@@ -25,6 +25,7 @@ SequenceExpression :
   (
     (
       Terminal
+      | RangeExpression
       | AnyCharExpression
       | EndOfInputExpression
       | AndPredicateExpression
@@ -36,6 +37,19 @@ SequenceExpression :
     )
     WS*
   )+
+;
+
+RangeExpression : 
+  '[' RangeExpressionDash? (!(']')(RangeExpressionRange | RangeExpressionChar))* ']'
+;
+RangeExpressionDash :
+  '-'
+; 
+RangeExpressionRange : 
+  !('-') . '-' !('-') .
+;
+RangeExpressionChar : 
+  !('-') .
 ;
 
 AndPredicateExpression :
@@ -79,7 +93,7 @@ RuleReferenceExpression :
   (!RuleReferenceEnd .)+
 ;
 RuleReferenceEnd :
- '+' | '*' | '?' | '|' | QUOTE | '&' | '!' | SEMI | WS | '(' | ')'
+ '+' | '*' | '?' | '|' | QUOTE | '&' | '!' | SEMI | WS | '(' | ')' | '[' | ']'
 ;
 
 Terminal :
