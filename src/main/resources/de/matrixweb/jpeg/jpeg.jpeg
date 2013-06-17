@@ -3,7 +3,7 @@ JPEG :
 ;
 
 Rule :
-  Name WS* COLON Body SEMI WS*
+  Name WS* COLON WS* Body WS* SEMI WS*
 ;
 
 Name :
@@ -11,7 +11,7 @@ Name :
 ;
 
 Body :
-  (WS* ChoiceExpression)+ WS*
+  (ChoiceExpression WS*)+
 ;
 
 ChoiceExpression :

@@ -21,7 +21,9 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.RULE, "Name"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "COLON"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "Body"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "SEMI"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
               }));
@@ -38,12 +40,11 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "internal_Name_0"),
               }));
         rules.put("internal_Body_0", new GrammarRule("internal_Body_0", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "ChoiceExpression"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
               }));
         rules.put("Body", new GrammarRule("Body", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "internal_Body_0"),
-                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
               }));
         rules.put("ChoiceExpression", new GrammarRule("ChoiceExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "SequenceExpression"),
