@@ -44,7 +44,7 @@ public class GrammarParser {
     List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
     final MutableInteger n = new MutableInteger(0);
     for (final ParsingNode subnode : rule.getChildren()) {
-      if ("Name".equals(subnode.getValue())) {
+      if ("RuleName".equals(subnode.getValue())) {
         name = createString(subnode);
       } else if ("Body".equals(subnode.getValue())) {
         nodes = buildNodeDescriptions(descriptions, subnode, name, n);
@@ -154,7 +154,7 @@ public class GrammarParser {
           .add(new RuleDescription.NodeDescription(MatcherName.ANY_CHAR, null));
     } else if ("EndOfInputExpression".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.EOI, null));
-    } else if ("RuleReferenceExpression".equals(node.getValue())) {
+    } else if ("RuleName".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE,
           createString(node)));
     } else if ("Terminal".equals(node.getValue())) {
