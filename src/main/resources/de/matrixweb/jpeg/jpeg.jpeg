@@ -11,10 +11,7 @@ Name :
 ;
 
 Body :
-  BodyPart+ WS*
-;
-BodyPart :
-  WS* ChoiceExpression
+  (WS* ChoiceExpression)+ WS*
 ;
 
 ChoiceExpression :
@@ -25,22 +22,20 @@ ChoiceExpressionPart :
 ;
 
 SequenceExpression :
-  SequenceExpressionPart1+
-;
-SequenceExpressionPart1 :
-  Terminal WS*
-  | AnyCharExpression WS*
-  | EndOfInputExpression WS*
-  | OperatorExpression WS*
-;
-
-OperatorExpression :
-    AndPredicateExpression
-  | NotPredicateExpression
-  | OneOrMoreExpression
-  | ZeroOrMoreExpression
-  | OptionalExpression
-  | AtomicExpression
+  (
+    (
+      Terminal
+      | AnyCharExpression
+      | EndOfInputExpression
+      | AndPredicateExpression
+      | NotPredicateExpression
+      | OneOrMoreExpression
+      | ZeroOrMoreExpression
+      | OptionalExpression
+      | AtomicExpression
+    )
+    WS*
+  )+
 ;
 
 AndPredicateExpression :

@@ -134,7 +134,7 @@ public class GrammarParser {
           .toString().replace("\\\\", "\\").replace("\\'", "'")
           .replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")));
     } else if ("SubExpression".equals(node.getValue())) {
-      final String name = nodeName + '_' + n.n++;
+      final String name = "internal_" + nodeName + '_' + n.n++;
       final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
       final ParsingNode[] children = node.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
