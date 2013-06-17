@@ -88,12 +88,10 @@ RuleReferenceEnd :
 ;
 
 Terminal :
- QUOTE InTerminalChar* QUOTE
+ QUOTE InTerminalChar? QUOTE
 ;
 InTerminalChar :
-    '\\' '\''
-  | '\\' '\\'
-  | !QUOTE .
+  ('\\' '\'' | '\\' '\\' | !QUOTE .)+
 ;
 
 WS : ' ' | '\n' | '\t' | '\r';

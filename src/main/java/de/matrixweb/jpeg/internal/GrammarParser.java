@@ -125,10 +125,14 @@ public class GrammarParser {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE,
           createString(node)));
     } else if ("Terminal".equals(node.getValue())) {
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL,
-          createString(node, "InTerminalChar").replace("\\\\", "\\")
-              .replace("\\'", "'").replace("\\n", "\n").replace("\\r", "\r")
-              .replace("\\t", "\t")));
+      final StringBuilder str = new StringBuilder();
+      final ParsingNode[] children = node.getChildren();
+      for (int i = 1; i < children.length - 1; i++) {
+        str.append(createString(children[i]));
+      }
+      nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL, str
+          .toString().replace("\\\\", "\\").replace("\\'", "'")
+          .replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")));
     } else if ("SubExpression".equals(node.getValue())) {
       final String name = nodeName + '_' + n.n++;
       final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();

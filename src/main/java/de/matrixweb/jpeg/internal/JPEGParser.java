@@ -153,10 +153,10 @@ public class JPEGParser {
               }));
         rules.put("Terminal", new GrammarRule("Terminal", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "QUOTE"),
-                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "InTerminalChar"),
+                new GrammarNode(GrammarNodeMatcher.OPTIONAL, "InTerminalChar"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "QUOTE"),
               }));
-        rules.put("InTerminalChar", new GrammarRule("InTerminalChar", new GrammarNode[] {
+        rules.put("InTerminalChar_0", new GrammarRule("InTerminalChar_0", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "\\"),
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "'"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
@@ -165,6 +165,9 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "QUOTE"),
                 new GrammarNode(GrammarNodeMatcher.ANY_CHAR, ""),
+              }));
+        rules.put("InTerminalChar", new GrammarRule("InTerminalChar", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "InTerminalChar_0"),
               }));
         rules.put("WS", new GrammarRule("WS", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, " "),
@@ -297,6 +300,10 @@ public class JPEGParser {
   
     public static ParsingResult Terminal(final String input) {
     return new ParsingResult(new JPEGParser().parse("Terminal", new Input(input)));
+  }
+  
+    public static ParsingResult InTerminalChar_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("InTerminalChar_0", new Input(input)));
   }
   
     public static ParsingResult InTerminalChar(final String input) {
