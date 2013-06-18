@@ -71,7 +71,8 @@ class RuleMatchingContext {
    */
   public ParsingNode[] getParsingNodes() {
     return this.parsingNodes != null ? this.parsingNodes
-        .toArray(new ParsingNode[this.parsingNodes.size()]) : null;
+        .toArray(new ParsingNode[this.parsingNodes.size()])
+        : new ParsingNode[0];
   }
 
   /**

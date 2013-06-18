@@ -19,20 +19,17 @@ GrammarBlock :
 // -----------------------------------------------------------------------------
 
 Rule :
-  RuleName WS* 
-  COLON WS* 
-  Body WS* 
-  SEMI WS*
+  RuleName WS* RuleReturns? WS* COLON WS* Body WS* SEMI WS*
+;
+
+RuleReturns :
+  'returns' WS* '=' WS* ID
 ;
 
 // -----------------------------------------------------------------------------
 
-// 
-// A rule name must start with an letter or underscore and be followed
-// by letters, digits or underscores.
-// 
 RuleName :
-  [a-zA-Z_]([a-zA-Z0-9_])*
+  ID
 ;
 
 // -----------------------------------------------------------------------------
@@ -46,6 +43,7 @@ Body :
 ChoiceExpression :
   SequenceExpression ChoiceExpressionPart*
 ;
+
 ChoiceExpressionPart :
   '|' WS* SequenceExpression
 ;
@@ -75,12 +73,15 @@ SequenceExpression :
 RangeExpression : 
   '[' RangeExpressionDash? (!(']')(RangeExpressionRange | RangeExpressionChar))* ']'
 ;
+
 RangeExpressionDash :
   '-'
-; 
+;
+ 
 RangeExpressionRange : 
   !('-') . '-' !('-') .
 ;
+
 RangeExpressionChar : 
   !('-') .
 ;
@@ -145,6 +146,7 @@ EndOfInputExpression :
 Terminal :
   QUOTE InTerminalChar? QUOTE
 ;
+
 InTerminalChar :
   ('\\' '\'' | '\\' '\\' | !QUOTE .)+
 ;
@@ -156,6 +158,14 @@ Comment :
 ;
 
 // -----------------------------------------------------------------------------
+
+// 
+// An ID name must start with an letter or underscore and be followed
+// by letters, digits or underscores.
+// 
+ID :
+  [a-zA-Z_]([a-zA-Z0-9_])*
+;
 
 WS : ' ' | '\n' | '\t' | '\r';
 COLON : ':';

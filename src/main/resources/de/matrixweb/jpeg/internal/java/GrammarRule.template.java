@@ -41,7 +41,7 @@ class GrammarRule {
     }
     ParsingNode result = null;
     if (context.isMatch()) {
-      result = new ParsingNode(this.name, context.getParsingNodes());
+      result = new ParsingNode(true, this.name, context.getParsingNodes());
       input.setChars(tail);
     }
     return result;
