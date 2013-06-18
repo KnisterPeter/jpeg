@@ -1,3 +1,4 @@
+/** */
 public static class Utils {
 
   /**
@@ -11,9 +12,9 @@ public static class Utils {
   }
 
   /**
-   * @param node The {@link ParsingNode} to print out
+   * @param node The node to print out
    * @param n The indention level
-   * @return Returns the {@link ParsingNode} as {@link String}
+   * @return Returns the node as {@link String}
    */
   public static String formatParsingNode(final ParsingNode node, final int n) {
     final StringBuilder indent = new StringBuilder();

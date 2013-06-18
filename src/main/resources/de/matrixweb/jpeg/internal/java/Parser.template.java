@@ -36,6 +36,10 @@ public class {{$name}} {
   }
 
   {{for rule in rules}}
+  /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
   public static ParsingResult {{$rule.name}}(final String input) {
     return new ParsingResult(new {{$name}}().parse("{{$rule.name}}", new Input(input)));
   }

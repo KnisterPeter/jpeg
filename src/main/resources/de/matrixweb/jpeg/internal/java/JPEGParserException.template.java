@@ -1,3 +1,5 @@
+/** */
+// TODO: Updated classname
 public static class JPEGParserException extends RuntimeException {
 
   private static final long serialVersionUID = 0;

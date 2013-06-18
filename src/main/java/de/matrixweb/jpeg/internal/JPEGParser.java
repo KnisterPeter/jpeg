@@ -483,196 +483,385 @@ public class JPEGParser {
     return rule.match(this, input);
   }
 
-    public static ParsingResult JPEG(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult JPEG(final String input) {
     return new ParsingResult(new JPEGParser().parse("JPEG", new Input(input)));
   }
   
-    public static ParsingResult internal_GrammarBlock_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_GrammarBlock_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_GrammarBlock_0", new Input(input)));
   }
   
-    public static ParsingResult GrammarBlock(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult GrammarBlock(final String input) {
     return new ParsingResult(new JPEGParser().parse("GrammarBlock", new Input(input)));
   }
   
-    public static ParsingResult Rule(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult Rule(final String input) {
     return new ParsingResult(new JPEGParser().parse("Rule", new Input(input)));
   }
   
-    public static ParsingResult RuleReturns(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult RuleReturns(final String input) {
     return new ParsingResult(new JPEGParser().parse("RuleReturns", new Input(input)));
   }
   
-    public static ParsingResult RuleName(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult RuleName(final String input) {
     return new ParsingResult(new JPEGParser().parse("RuleName", new Input(input)));
   }
   
-    public static ParsingResult internal_Body_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_Body_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_Body_0", new Input(input)));
   }
   
-    public static ParsingResult Body(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult Body(final String input) {
     return new ParsingResult(new JPEGParser().parse("Body", new Input(input)));
   }
   
-    public static ParsingResult ChoiceExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult ChoiceExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("ChoiceExpression", new Input(input)));
   }
   
-    public static ParsingResult ChoiceExpressionPart(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult ChoiceExpressionPart(final String input) {
     return new ParsingResult(new JPEGParser().parse("ChoiceExpressionPart", new Input(input)));
   }
   
-    public static ParsingResult internal_SequenceExpression_1(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_SequenceExpression_1(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_SequenceExpression_1", new Input(input)));
   }
   
-    public static ParsingResult internal_SequenceExpression_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_SequenceExpression_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_SequenceExpression_0", new Input(input)));
   }
   
-    public static ParsingResult SequenceExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult SequenceExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("SequenceExpression", new Input(input)));
   }
   
-    public static ParsingResult internal_RangeExpression_1(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_RangeExpression_1(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_RangeExpression_1", new Input(input)));
   }
   
-    public static ParsingResult internal_RangeExpression_2(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_RangeExpression_2(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_RangeExpression_2", new Input(input)));
   }
   
-    public static ParsingResult internal_RangeExpression_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_RangeExpression_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_RangeExpression_0", new Input(input)));
   }
   
-    public static ParsingResult RangeExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult RangeExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("RangeExpression", new Input(input)));
   }
   
-    public static ParsingResult RangeExpressionDash(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult RangeExpressionDash(final String input) {
     return new ParsingResult(new JPEGParser().parse("RangeExpressionDash", new Input(input)));
   }
   
-    public static ParsingResult internal_RangeExpressionRange_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_RangeExpressionRange_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_RangeExpressionRange_0", new Input(input)));
   }
   
-    public static ParsingResult internal_RangeExpressionRange_1(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_RangeExpressionRange_1(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_RangeExpressionRange_1", new Input(input)));
   }
   
-    public static ParsingResult RangeExpressionRange(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult RangeExpressionRange(final String input) {
     return new ParsingResult(new JPEGParser().parse("RangeExpressionRange", new Input(input)));
   }
   
-    public static ParsingResult internal_RangeExpressionChar_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_RangeExpressionChar_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_RangeExpressionChar_0", new Input(input)));
   }
   
-    public static ParsingResult RangeExpressionChar(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult RangeExpressionChar(final String input) {
     return new ParsingResult(new JPEGParser().parse("RangeExpressionChar", new Input(input)));
   }
   
-    public static ParsingResult AndPredicateExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult AndPredicateExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("AndPredicateExpression", new Input(input)));
   }
   
-    public static ParsingResult NotPredicateExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult NotPredicateExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("NotPredicateExpression", new Input(input)));
   }
   
-    public static ParsingResult OneOrMoreExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult OneOrMoreExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("OneOrMoreExpression", new Input(input)));
   }
   
-    public static ParsingResult ZeroOrMoreExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult ZeroOrMoreExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("ZeroOrMoreExpression", new Input(input)));
   }
   
-    public static ParsingResult OptionalExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult OptionalExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("OptionalExpression", new Input(input)));
   }
   
-    public static ParsingResult AtomicExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult AtomicExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("AtomicExpression", new Input(input)));
   }
   
-    public static ParsingResult SubExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult SubExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("SubExpression", new Input(input)));
   }
   
-    public static ParsingResult AnyCharExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult AnyCharExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("AnyCharExpression", new Input(input)));
   }
   
-    public static ParsingResult EndOfInputExpression(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult EndOfInputExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("EndOfInputExpression", new Input(input)));
   }
   
-    public static ParsingResult Terminal(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult Terminal(final String input) {
     return new ParsingResult(new JPEGParser().parse("Terminal", new Input(input)));
   }
   
-    public static ParsingResult internal_InTerminalChar_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_InTerminalChar_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_InTerminalChar_0", new Input(input)));
   }
   
-    public static ParsingResult InTerminalChar(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult InTerminalChar(final String input) {
     return new ParsingResult(new JPEGParser().parse("InTerminalChar", new Input(input)));
   }
   
-    public static ParsingResult internal_Comment_2(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_Comment_2(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_Comment_2", new Input(input)));
   }
   
-    public static ParsingResult internal_Comment_1(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_Comment_1(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_Comment_1", new Input(input)));
   }
   
-    public static ParsingResult internal_Comment_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_Comment_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_Comment_0", new Input(input)));
   }
   
-    public static ParsingResult Comment(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult Comment(final String input) {
     return new ParsingResult(new JPEGParser().parse("Comment", new Input(input)));
   }
   
-    public static ParsingResult internal_ID_0(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_ID_0(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_ID_0", new Input(input)));
   }
   
-    public static ParsingResult internal_ID_2(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_ID_2(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_ID_2", new Input(input)));
   }
   
-    public static ParsingResult internal_ID_1(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_ID_1(final String input) {
     return new ParsingResult(new JPEGParser().parse("internal_ID_1", new Input(input)));
   }
   
-    public static ParsingResult ID(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult ID(final String input) {
     return new ParsingResult(new JPEGParser().parse("ID", new Input(input)));
   }
   
-    public static ParsingResult WS(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult WS(final String input) {
     return new ParsingResult(new JPEGParser().parse("WS", new Input(input)));
   }
   
-    public static ParsingResult COLON(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult COLON(final String input) {
     return new ParsingResult(new JPEGParser().parse("COLON", new Input(input)));
   }
   
-    public static ParsingResult SEMI(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult SEMI(final String input) {
     return new ParsingResult(new JPEGParser().parse("SEMI", new Input(input)));
   }
   
-    public static ParsingResult QUOTE(final String input) {
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult QUOTE(final String input) {
     return new ParsingResult(new JPEGParser().parse("QUOTE", new Input(input)));
   }
   
   
   // reference ParsingResult.template.java
+/** */
 public static class ParsingResult {
 
   private final ParsingNode parseTree;
@@ -700,6 +889,7 @@ public static class ParsingResult {
 
 }
   // reference Utils.template.java
+/** */
 public static class Utils {
 
   /**
@@ -713,9 +903,9 @@ public static class Utils {
   }
 
   /**
-   * @param node The {@link ParsingNode} to print out
+   * @param node The node to print out
    * @param n The indention level
-   * @return Returns the {@link ParsingNode} as {@link String}
+   * @return Returns the node as {@link String}
    */
   public static String formatParsingNode(final ParsingNode node, final int n) {
     final StringBuilder indent = new StringBuilder();
@@ -733,6 +923,8 @@ public static class Utils {
 
 }
   // reference JPEGParserException.template.java
+/** */
+// TODO: Updated classname
 public static class JPEGParserException extends RuntimeException {
 
   private static final long serialVersionUID = 0;
