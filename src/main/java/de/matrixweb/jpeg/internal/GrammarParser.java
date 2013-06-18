@@ -66,26 +66,10 @@ public class GrammarParser {
     return str.toString();
   }
 
-  @Deprecated
-  static String createString(final ParsingNode node, final String charnodeName) {
-    final StringBuilder str = new StringBuilder();
-    for (final ParsingNode subnode : node.getChildren()) {
-      if (charnodeName.equals(subnode.getValue())) {
-        for (final ParsingNode charnode : subnode.getChildren()) {
-          str.append(charnode.getValue());
-        }
-      } else {
-        str.append(createString(subnode, charnodeName));
-      }
-    }
-    return str.toString();
-  }
-
   static List<RuleDescription.NodeDescription> buildNodeDescriptions(
       final List<RuleDescription> descriptions, final ParsingNode node,
       final String nodeName, final MutableInteger n) {
     final List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
-    // System.out.println(JPEGParser.Utils.formatParsingNode(node, 0));
 
     if ("WS".equals(node.getValue())) {
       // Ignore whitespaces
