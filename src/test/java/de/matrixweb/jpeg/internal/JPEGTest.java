@@ -243,13 +243,15 @@ public class JPEGTest {
   }
 
   /**
-   * 
+   * @throws Exception
    */
   @Test
-  public void testRuleComment() {
-    this.jpegParser.parse("Rule", "// Some dumb comment\nRule: Body;", true);
-    this.jpegParser.parse("Rule", "// Some dumb comment Rule: Body;", false);
-    this.jpegParser.parse("Rule", "// Some dumb\ncomment\nRule: Body;", false);
+  public void testGrammarComment() throws Exception {
+    this.jpegParser.parse("JPEG", "// Some dumb comment\nRule: Body;", true);
+    final Object res = this.jpegParser.parse("JPEG",
+        "// Some dumb comment Rule: Body;", true);
+    this.jpegParser.validateResult(res, "{1}[0]{1}[0]{1}");
+    this.jpegParser.parse("JPEG", "// Some dumb\ncomment\nRule: Body;", false);
   }
 
   private static class ParserDelegate {

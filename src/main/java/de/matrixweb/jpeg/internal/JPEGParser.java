@@ -14,15 +14,19 @@ public class JPEGParser {
   private static final Map<String, GrammarRule> rules = new HashMap<String, GrammarRule>();
   static {
         rules.put("JPEG", new GrammarRule("JPEG", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "Rule"),
+                new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "GrammarBlock"),
                 new GrammarNode(GrammarNodeMatcher.EOI, ""),
               }));
-        rules.put("internal_Rule_0", new GrammarRule("internal_Rule_0", new GrammarNode[] {
+        rules.put("internal_GrammarBlock_0", new GrammarRule("internal_GrammarBlock_0", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "Rule"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "Comment"),
+              }));
+        rules.put("GrammarBlock", new GrammarRule("GrammarBlock", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "internal_GrammarBlock_0"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
               }));
         rules.put("Rule", new GrammarRule("Rule", new GrammarNode[] {
-                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "internal_Rule_0"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "RuleName"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "COLON"),
@@ -471,8 +475,12 @@ public class JPEGParser {
     return new ParsingResult(new JPEGParser().parse("JPEG", new Input(input)));
   }
   
-    public static ParsingResult internal_Rule_0(final String input) {
-    return new ParsingResult(new JPEGParser().parse("internal_Rule_0", new Input(input)));
+    public static ParsingResult internal_GrammarBlock_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_GrammarBlock_0", new Input(input)));
+  }
+  
+    public static ParsingResult GrammarBlock(final String input) {
+    return new ParsingResult(new JPEGParser().parse("GrammarBlock", new Input(input)));
   }
   
     public static ParsingResult Rule(final String input) {

@@ -7,13 +7,18 @@
 // This is the main entry point into the JPEG grammar.
 // 
 JPEG :
-  Rule+ EOI
+  GrammarBlock+ EOI
+;
+
+// -----------------------------------------------------------------------------
+
+GrammarBlock :
+  (Rule | Comment) WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 Rule :
-  (Comment WS*)*
   RuleName WS* 
   COLON WS* 
   Body WS* 

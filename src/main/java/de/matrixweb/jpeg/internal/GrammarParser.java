@@ -25,14 +25,16 @@ public class GrammarParser {
     if (!result.matches()) {
       throw new JPEGParser.JPEGParserException("Failed to parser input");
     }
-    return buildRuleDescriptions(result);
+    return buildRuleDescriptions(result.getParseTree());
   }
 
-  static List<RuleDescription> buildRuleDescriptions(final ParsingResult result) {
+  static List<RuleDescription> buildRuleDescriptions(final ParsingNode node) {
     final List<RuleDescription> descriptions = new ArrayList<RuleDescription>();
-    for (final ParsingNode node : result.getParseTree().getChildren()) {
-      if ("Rule".equals(node.getValue())) {
-        descriptions.add(buildRuleDescription(descriptions, node));
+    for (final ParsingNode child : node.getChildren()) {
+      if ("Rule".equals(child.getValue())) {
+        descriptions.add(buildRuleDescription(descriptions, child));
+      } else {
+        descriptions.addAll(buildRuleDescriptions(child));
       }
     }
     return descriptions;
