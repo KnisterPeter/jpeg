@@ -46,9 +46,7 @@ public class GrammarParser {
     List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
     final MutableInteger n = new MutableInteger(0);
     for (final ParsingNode subnode : rule.getChildren()) {
-      if ("RuleAnnotations".equals(subnode.getValue())) {
-        // TODO: Add annotations here
-      } else if ("RuleName".equals(subnode.getValue())) {
+      if ("RuleName".equals(subnode.getValue())) {
         name = createString(subnode);
       } else if ("Body".equals(subnode.getValue())) {
         nodes = buildNodeDescriptions(descriptions, subnode, name, n);

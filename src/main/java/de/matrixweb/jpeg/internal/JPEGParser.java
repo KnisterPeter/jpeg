@@ -41,8 +41,6 @@ public class JPEGParser {
         rules.put("RuleReturns", new GrammarRule("RuleReturns", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, "returns"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
-                new GrammarNode(GrammarNodeMatcher.TERMINAL, "="),
-                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "ID"),
               }));
         rules.put("RuleName", new GrammarRule("RuleName", new GrammarNode[] {
