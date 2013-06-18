@@ -17,7 +17,12 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "Rule"),
                 new GrammarNode(GrammarNodeMatcher.EOI, ""),
               }));
+        rules.put("internal_Rule_0", new GrammarRule("internal_Rule_0", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "Comment"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
+              }));
         rules.put("Rule", new GrammarRule("Rule", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "internal_Rule_0"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "RuleName"),
                 new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "WS"),
                 new GrammarNode(GrammarNodeMatcher.RULE, "COLON"),
@@ -414,6 +419,21 @@ public class JPEGParser {
         rules.put("InTerminalChar", new GrammarRule("InTerminalChar", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.ONE_OR_MORE, "internal_InTerminalChar_0"),
               }));
+        rules.put("internal_Comment_2", new GrammarRule("internal_Comment_2", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "\r"),
+              }));
+        rules.put("internal_Comment_1", new GrammarRule("internal_Comment_1", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.OPTIONAL, "internal_Comment_2"),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "\n"),
+              }));
+        rules.put("internal_Comment_0", new GrammarRule("internal_Comment_0", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.NOT_PREDICATE, "internal_Comment_1"),
+                new GrammarNode(GrammarNodeMatcher.ANY_CHAR, ""),
+              }));
+        rules.put("Comment", new GrammarRule("Comment", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "//"),
+                new GrammarNode(GrammarNodeMatcher.ZERO_OR_MORE, "internal_Comment_0"),
+              }));
         rules.put("WS", new GrammarRule("WS", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.TERMINAL, " "),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
@@ -449,6 +469,10 @@ public class JPEGParser {
 
     public static ParsingResult JPEG(final String input) {
     return new ParsingResult(new JPEGParser().parse("JPEG", new Input(input)));
+  }
+  
+    public static ParsingResult internal_Rule_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_Rule_0", new Input(input)));
   }
   
     public static ParsingResult Rule(final String input) {
@@ -585,6 +609,22 @@ public class JPEGParser {
   
     public static ParsingResult InTerminalChar(final String input) {
     return new ParsingResult(new JPEGParser().parse("InTerminalChar", new Input(input)));
+  }
+  
+    public static ParsingResult internal_Comment_2(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_Comment_2", new Input(input)));
+  }
+  
+    public static ParsingResult internal_Comment_1(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_Comment_1", new Input(input)));
+  }
+  
+    public static ParsingResult internal_Comment_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_Comment_0", new Input(input)));
+  }
+  
+    public static ParsingResult Comment(final String input) {
+    return new ParsingResult(new JPEGParser().parse("Comment", new Input(input)));
   }
   
     public static ParsingResult WS(final String input) {

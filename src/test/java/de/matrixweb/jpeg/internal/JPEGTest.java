@@ -242,6 +242,16 @@ public class JPEGTest {
     this.jpegParser.parse("RangeExpression", "[ab-]", false);
   }
 
+  /**
+   * 
+   */
+  @Test
+  public void testRuleComment() {
+    this.jpegParser.parse("Rule", "// Some dumb comment\nRule: Body;", true);
+    this.jpegParser.parse("Rule", "// Some dumb comment Rule: Body;", false);
+    this.jpegParser.parse("Rule", "// Some dumb\ncomment\nRule: Body;", false);
+  }
+
   private static class ParserDelegate {
 
     private final Object parser;

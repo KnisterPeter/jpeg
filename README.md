@@ -6,7 +6,6 @@ A ParsingGrammarExpression parser generator written in java with multiple target
 TODO
 ====
 
-* Add syntax comments
 * Add rule annotations
 * Add AST generation
 * Add actions to parsing tree
