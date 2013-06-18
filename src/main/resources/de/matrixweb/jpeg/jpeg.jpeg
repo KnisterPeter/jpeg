@@ -3,11 +3,33 @@ JPEG :
 ;
 
 Rule :
-  RuleName WS* COLON WS* Body WS* SEMI WS*
+  RuleAnnotations? WS* RuleName WS* COLON WS* Body WS* SEMI WS*
+;
+
+RuleAnnotations :
+  RuleAnnotation+
+;
+RuleAnnotation :
+  '[' WS* (RuleAnnotationInternal | RuleAnnotationHidden | RuleAnnotationReturns) WS* ']'
+;
+RuleAnnotationInternal :
+  'internal'
+;
+RuleAnnotationHidden :
+  'hidden' WS* '=' WS* RuleAnnotationHiddenRules
+;
+RuleAnnotationHiddenRules :
+  RuleAnnotationHiddenRule ( WS* ',' WS* RuleAnnotationHiddenRule)*
+;
+RuleAnnotationHiddenRule :
+  RuleName
+;
+RuleAnnotationReturns :
+  'returns' WS* '=' WS* ID
 ;
 
 RuleName :
-  [a-zA-Z_]([a-zA-Z0-9_])*
+  ID
 ;
 
 Body :
@@ -94,6 +116,10 @@ Terminal :
 ;
 InTerminalChar :
   ('\\' '\'' | '\\' '\\' | !QUOTE .)+
+;
+
+ID :
+  [a-zA-Z_]([a-zA-Z0-9_])*
 ;
 
 WS : ' ' | '\n' | '\t' | '\r';

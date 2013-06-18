@@ -14,11 +14,15 @@ public class {{$name}} {
   private static final Map<String, GrammarRule> rules = new HashMap<String, GrammarRule>();
   static {
     {{for rule in rules}}
-    rules.put("{{$rule.name}}", new GrammarRule("{{$rule.name}}", new GrammarNode[] {
-        {{for node in rule.Nodes}}
-        new GrammarNode(GrammarNodeMatcher.{{$node.matcher}}, "{{$node.value}}"),
-        {{/for}}
-      }));
+    rules.put("{{$rule.name}}", new GrammarRule(
+        "{{$rule.name}}", 
+        new AbstractRuleAnnotation[] {},
+        new GrammarNode[] {
+          {{for node in rule.Nodes}}
+          new GrammarNode(GrammarNodeMatcher.{{$node.matcher}}, "{{$node.value}}"),
+          {{/for}}
+        }
+      ));
     {{/for}}
   }
 
@@ -51,6 +55,7 @@ public class {{$name}} {
 // {{reference GrammarNode.template.java}}
 // {{reference GrammarRule.template.java}}
 // {{reference Input.template.java}}
+// {{reference RuleAnnotation.template.java}}
 // {{reference RuleMatchingContext.template.java}}
 // {{reference matcher/AbstractPredicateMatcher.template.java}}
 // {{reference matcher/AndPredicateMatcher.template.java}}

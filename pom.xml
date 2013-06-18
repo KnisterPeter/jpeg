@@ -185,4 +185,33 @@
     </pluginManagement>
   </build>
 
+  <profiles>
+    <profile>
+      <id>next-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.2.1</version>
+            <executions>
+              <execution>
+                <phase>generate-test-sources</phase>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <mainClass>de.matrixweb.jpeg.internal.GenerateTestParser</mainClass>
+              <arguments>
+                <argument>release</argument>
+              </arguments>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>

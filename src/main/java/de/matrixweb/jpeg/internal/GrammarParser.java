@@ -85,10 +85,12 @@ public class GrammarParser {
       final List<RuleDescription> descriptions, final ParsingNode node,
       final String nodeName, final MutableInteger n) {
     final List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
-    // System.out.println(JPEGParser.Utils.formatParsingNode(node, 0));
+    //System.out.println(JPEGParser.Utils.formatParsingNode(node, 0));
 
     if ("WS".equals(node.getValue())) {
       // Ignore whitespaces
+    } else if ("RuleAnnotationHidden".equals(node.getValue())) {
+      throw new UnsupportedOperationException();
     } else if ("RangeExpression".equals(node.getValue())) {
       final String name = "internal_" + nodeName + '_' + n.n++;
 

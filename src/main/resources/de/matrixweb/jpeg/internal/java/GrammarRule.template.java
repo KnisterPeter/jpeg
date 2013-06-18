@@ -2,10 +2,13 @@ class GrammarRule {
 
   private final String name;
 
+  private final AbstractRuleAnnotation[] annotations;
+
   private final GrammarNode[] grammarNodes;
 
-  public GrammarRule(final String name, final GrammarNode[] grammarNodes) {
+  public GrammarRule(final String name, final AbstractRuleAnnotation[] annotations, final GrammarNode[] grammarNodes) {
     this.name = name;
+    this.annotations = annotations;
     this.grammarNodes = grammarNodes;
   }
 
@@ -41,8 +44,27 @@ class GrammarRule {
     }
     ParsingNode result = null;
     if (context.isMatch()) {
-      result = new ParsingNode(this.name, context.getParsingNodes());
+      result = new ParsingNode(true, this.name, filterParsingNodes(context.getParsingNodes()));
       input.setChars(tail);
+    }
+    return result;
+  }
+
+  private ParsingNode[] filterParsingNodes(ParsingNode[] nodes) {
+    if (nodes == null) { return null; }
+    List<ParsingNode> list = new ArrayList<ParsingNode>();
+    for (ParsingNode node : nodes) {
+      if (!isFiltered(node)) {
+        list.add(node);
+      }
+    }
+    return list.toArray(new ParsingNode[list.size()]);
+  }
+
+  private boolean isFiltered(ParsingNode node) {
+    boolean result = false;
+    for (AbstractRuleAnnotation annotation : annotations) {
+      result |= annotation.filter(node);
     }
     return result;
   }

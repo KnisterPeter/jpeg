@@ -1,5 +1,7 @@
 class ParsingNode {
 
+  private final boolean ruleNode;
+
   private final String value;
 
   private final ParsingNode[] children;
@@ -9,8 +11,21 @@ class ParsingNode {
    * @param children
    */
   public ParsingNode(final String value, final ParsingNode[] children) {
+    this(false, value, children);
+  }
+
+  /**
+   * @param value
+   * @param children
+   */
+  public ParsingNode(final boolean ruleNode, final String value, final ParsingNode[] children) {
+    this.ruleNode = ruleNode;
     this.value = value;
     this.children = children;
+  }
+
+  public boolean isRuleNode() {
+    return this.ruleNode;
   }
 
   /**
