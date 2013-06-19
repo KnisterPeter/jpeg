@@ -23,7 +23,11 @@ Rule :
 ;
 
 RuleReturns :
-  'returns' WS* ID
+  'returns' WS* ReturnTypeName
+;
+
+ReturnTypeName :
+  ID
 ;
 
 // -----------------------------------------------------------------------------

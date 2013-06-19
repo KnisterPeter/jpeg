@@ -48,6 +48,8 @@ public class GrammarParser {
     for (final ParsingNode subnode : rule.getChildren()) {
       if ("RuleName".equals(subnode.getValue())) {
         name = createString(subnode);
+      } else if ("RuleReturns".equals(subnode.getValue())) {
+        // TODO: RuleReturns
       } else if ("Body".equals(subnode.getValue())) {
         nodes = buildNodeDescriptions(descriptions, subnode, name, n);
       }
