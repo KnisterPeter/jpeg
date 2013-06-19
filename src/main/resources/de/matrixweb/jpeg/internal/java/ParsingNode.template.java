@@ -9,6 +9,14 @@ class ParsingNode {
   /**
    * @param isRuleNode
    * @param value
+   */
+  public ParsingNode(final boolean isRuleNode, final String value) {
+    this(isRuleNode, value, null);
+  }
+
+  /**
+   * @param isRuleNode
+   * @param value
    * @param children
    */
   public ParsingNode(final boolean isRuleNode, final String value,

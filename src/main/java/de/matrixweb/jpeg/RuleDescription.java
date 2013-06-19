@@ -33,14 +33,19 @@ public class RuleDescription {
 
   private final String name;
 
+  private final String returnType;
+
   private final NodeDescription[] nodes;
 
   /**
    * @param name
+   * @param returnType
    * @param nodes
    */
-  public RuleDescription(final String name, final NodeDescription[] nodes) {
+  public RuleDescription(final String name, final String returnType,
+      final NodeDescription[] nodes) {
     this.name = name;
+    this.returnType = returnType;
     this.nodes = nodes;
   }
 
@@ -49,6 +54,13 @@ public class RuleDescription {
    */
   public String getName() {
     return this.name;
+  }
+
+  /**
+   * @return the returnType
+   */
+  public String getReturnType() {
+    return this.returnType;
   }
 
   /**

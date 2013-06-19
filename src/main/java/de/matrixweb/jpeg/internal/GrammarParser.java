@@ -43,18 +43,23 @@ public class GrammarParser {
   static RuleDescription buildRuleDescription(
       final List<RuleDescription> descriptions, final ParsingNode rule) {
     String name = null;
+    String returnType = null;
     List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
     final MutableInteger n = new MutableInteger(0);
     for (final ParsingNode subnode : rule.getChildren()) {
       if ("RuleName".equals(subnode.getValue())) {
         name = createString(subnode);
       } else if ("RuleReturns".equals(subnode.getValue())) {
-        // TODO: RuleReturns
+        for (final ParsingNode node : subnode.getChildren()) {
+          if ("ReturnTypeName".equals(node.getValue())) {
+            returnType = createString(node);
+          }
+        }
       } else if ("Body".equals(subnode.getValue())) {
         nodes = buildNodeDescriptions(descriptions, subnode, name, n);
       }
     }
-    return new RuleDescription(name,
+    return new RuleDescription(name, returnType != null ? returnType : name,
         nodes.toArray(new RuleDescription.NodeDescription[nodes.size()]));
   }
 
@@ -86,7 +91,7 @@ public class GrammarParser {
         sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
       }
       sub.remove(0);
-      final RuleDescription internal = new RuleDescription(name,
+      final RuleDescription internal = new RuleDescription(name, "MString",
           sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
       descriptions.add(internal);
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
@@ -162,7 +167,8 @@ public class GrammarParser {
         sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
       }
       final RuleDescription internal = new RuleDescription(name,
-          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
+          "MSubExpression", sub.toArray(new RuleDescription.NodeDescription[sub
+              .size()]));
       descriptions.add(internal);
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
     } else {
