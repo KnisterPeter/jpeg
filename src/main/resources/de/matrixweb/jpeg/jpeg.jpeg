@@ -19,7 +19,7 @@ GrammarBlock :
 // -----------------------------------------------------------------------------
 
 Rule :
-  RuleName WS* RuleReturns? WS* COLON WS* Body WS* SEMI WS*
+  RuleName WS* RuleReturns? WS* ':' WS* Body WS* ';' WS*
 ;
 
 RuleReturns :
@@ -57,11 +57,7 @@ ChoiceExpressionPart :
 SequenceExpression :
   (
     (
-      Terminal
-      | RangeExpression
-      | AnyCharExpression
-      | EndOfInputExpression
-      | AndPredicateExpression
+      AndPredicateExpression
       | NotPredicateExpression
       | OneOrMoreExpression
       | ZeroOrMoreExpression
@@ -70,24 +66,6 @@ SequenceExpression :
     )
     WS*
   )+
-;
-
-// -----------------------------------------------------------------------------
-
-RangeExpression : 
-  '[' RangeExpressionDash? (!(']')(RangeExpressionRange | RangeExpressionChar))* ']'
-;
-
-RangeExpressionDash :
-  '-'
-;
- 
-RangeExpressionRange : 
-  !('-') . '-' !('-') .
-;
-
-RangeExpressionChar : 
-  !('-') .
 ;
 
 // -----------------------------------------------------------------------------
@@ -124,6 +102,10 @@ OptionalExpression :
 
 AtomicExpression :
     SubExpression
+  | RangeExpression
+  | Terminal
+  | AnyCharExpression
+  | EndOfInputExpression
   | RuleName
 ;
 
@@ -131,6 +113,24 @@ AtomicExpression :
 
 SubExpression :
   '(' WS* ChoiceExpression WS* ')'
+;
+
+// -----------------------------------------------------------------------------
+
+RangeExpression : 
+  '[' RangeExpressionDash? (!']'(RangeExpressionRange | RangeExpressionChar))* ']'
+;
+
+RangeExpressionDash :
+  '-'
+;
+ 
+RangeExpressionRange : 
+  !'-' . '-' !'-' .
+;
+
+RangeExpressionChar : 
+  !'-' .
 ;
 
 // -----------------------------------------------------------------------------
@@ -148,17 +148,17 @@ EndOfInputExpression :
 // -----------------------------------------------------------------------------
 
 Terminal :
-  QUOTE InTerminalChar? QUOTE
+  '\'' InTerminalChar? '\''
 ;
 
 InTerminalChar :
-  ('\\' '\'' | '\\' '\\' | !QUOTE .)+
+  ('\\' '\'' | '\\' '\\' | !'\'' .)+
 ;
 
 // -----------------------------------------------------------------------------
 
 Comment :
-  '//' (!(('\r')? '\n') .)*
+  '//' (!('\r'? '\n') .)*
 ;
 
 // -----------------------------------------------------------------------------
@@ -172,6 +172,3 @@ ID :
 ;
 
 WS : ' ' | '\n' | '\t' | '\r';
-COLON : ':';
-SEMI  : ';';
-QUOTE : '\'';

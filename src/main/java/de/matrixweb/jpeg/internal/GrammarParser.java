@@ -123,25 +123,20 @@ public class GrammarParser {
             n));
       }
     } else if ("OptionalExpression".equals(node.getValue())) {
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.OPTIONAL,
-          buildNodeDescriptions(descriptions, node.getChildren()[0], nodeName,
-              n).get(0).getValue()));
+      nodes.add(createOperatorExpressionNode(descriptions, node, nodeName, n,
+          MatcherName.OPTIONAL, 0));
     } else if ("OneOrMoreExpression".equals(node.getValue())) {
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.ONE_OR_MORE,
-          buildNodeDescriptions(descriptions, node.getChildren()[0], nodeName,
-              n).get(0).getValue()));
+      nodes.add(createOperatorExpressionNode(descriptions, node, nodeName, n,
+          MatcherName.ONE_OR_MORE, 0));
     } else if ("ZeroOrMoreExpression".equals(node.getValue())) {
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.ZERO_OR_MORE,
-          buildNodeDescriptions(descriptions, node.getChildren()[0], nodeName,
-              n).get(0).getValue()));
+      nodes.add(createOperatorExpressionNode(descriptions, node, nodeName, n,
+          MatcherName.ZERO_OR_MORE, 0));
     } else if ("AndPredicateExpression".equals(node.getValue())) {
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.AND_PREDICATE,
-          buildNodeDescriptions(descriptions, node.getChildren()[1], nodeName,
-              n).get(0).getValue()));
+      nodes.add(createOperatorExpressionNode(descriptions, node, nodeName, n,
+          MatcherName.AND_PREDICATE, 1));
     } else if ("NotPredicateExpression".equals(node.getValue())) {
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.NOT_PREDICATE,
-          buildNodeDescriptions(descriptions, node.getChildren()[1], nodeName,
-              n).get(0).getValue()));
+      nodes.add(createOperatorExpressionNode(descriptions, node, nodeName, n,
+          MatcherName.NOT_PREDICATE, 1));
     } else if ("AnyCharExpression".equals(node.getValue())) {
       nodes
           .add(new RuleDescription.NodeDescription(MatcherName.ANY_CHAR, null));
@@ -178,6 +173,19 @@ public class GrammarParser {
     }
 
     return nodes;
+  }
+
+  private static RuleDescription.NodeDescription createOperatorExpressionNode(
+      final List<RuleDescription> descriptions, final ParsingNode node,
+      final String nodeName, final MutableInteger n,
+      final MatcherName matcherName, final int nthChild) {
+    final String name = "internal_" + nodeName + '_' + n.n++;
+    // TODO: Return type here
+    final RuleDescription internal = new RuleDescription(name, "returnType",
+        buildNodeDescriptions(descriptions, node.getChildren()[nthChild],
+            nodeName, n).toArray(new RuleDescription.NodeDescription[0]));
+    descriptions.add(internal);
+    return new RuleDescription.NodeDescription(matcherName, name);
   }
 
   private static class MutableInteger {
