@@ -177,7 +177,14 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "AssignableExpression"),
               }));
-        rules.put("AssignableExpression", new GrammarRule("AssignableExpression", new GrammarNode[] {
+        rules.put("internal_AssignableExpression_1", new GrammarRule("internal_AssignableExpression_1", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "ID"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AssignOperation"),
+              }));
+        rules.put("internal_AssignableExpression_0", new GrammarRule("internal_AssignableExpression_0", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.RULE, "internal_AssignableExpression_1"),
+              }));
+        rules.put("internal_AssignableExpression_2", new GrammarRule("internal_AssignableExpression_2", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "RangeExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "Terminal"),
@@ -185,6 +192,15 @@ public class JPEGParser {
                 new GrammarNode(GrammarNodeMatcher.RULE, "AnyCharExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "RuleName"),
+              }));
+        rules.put("AssignableExpression", new GrammarRule("AssignableExpression", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.OPTIONAL, "internal_AssignableExpression_0"),
+                new GrammarNode(GrammarNodeMatcher.RULE, "internal_AssignableExpression_2"),
+              }));
+        rules.put("AssignOperation", new GrammarRule("AssignOperation", new GrammarNode[] {
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "="),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.TERMINAL, "+="),
               }));
         rules.put("internal_SubExpression_0", new GrammarRule("internal_SubExpression_0", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "WS"),
@@ -892,8 +908,40 @@ public class JPEGParser {
    * @param input
    * @return Returns the parsing result of this operation
    */
+  public static ParsingResult internal_AssignableExpression_1(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_AssignableExpression_1", new Input(input)));
+  }
+  
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_AssignableExpression_0(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_AssignableExpression_0", new Input(input)));
+  }
+  
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult internal_AssignableExpression_2(final String input) {
+    return new ParsingResult(new JPEGParser().parse("internal_AssignableExpression_2", new Input(input)));
+  }
+  
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
   public static ParsingResult AssignableExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("AssignableExpression", new Input(input)));
+  }
+  
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult AssignOperation(final String input) {
+    return new ParsingResult(new JPEGParser().parse("AssignOperation", new Input(input)));
   }
   
     /**

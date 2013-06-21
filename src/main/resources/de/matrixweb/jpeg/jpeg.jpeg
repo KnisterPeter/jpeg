@@ -109,10 +109,16 @@ AtomicExpression :
 // -----------------------------------------------------------------------------
 
 AssignableExpression :
-    RangeExpression
-  | Terminal
-  | AnyCharExpression
-  | RuleName
+  (ID AssignOperation)?
+  (   RangeExpression
+    | Terminal
+    | AnyCharExpression
+    | RuleName
+  )
+;
+AssignOperation :
+    '='
+  | '+='
 ;
 
 // -----------------------------------------------------------------------------

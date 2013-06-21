@@ -127,9 +127,6 @@ public class JPEGGrammarTest extends AbstractBaseTest {
     jpegParser.validateResult(res, "{2}[0]{1}[0]{3}[2](')')");
 
     res = jpegParser.parse("NotPredicateExpression", "!'a'", true);
-    jpegParser
-        .validateResult(res,
-            "{2}[1]{1}('AtomicExpression')[0]{1}('AssignableExpression')[0]{3}('Terminal')");
   }
 
   /**
