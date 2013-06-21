@@ -173,13 +173,16 @@ public class JPEGParser {
         rules.put("AtomicExpression", new GrammarRule("AtomicExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "SubExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "EndOfInputExpression"),
+                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
+                new GrammarNode(GrammarNodeMatcher.RULE, "AssignableExpression"),
+              }));
+        rules.put("AssignableExpression", new GrammarRule("AssignableExpression", new GrammarNode[] {
                 new GrammarNode(GrammarNodeMatcher.RULE, "RangeExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "Terminal"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "AnyCharExpression"),
-                new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
-                new GrammarNode(GrammarNodeMatcher.RULE, "EndOfInputExpression"),
                 new GrammarNode(GrammarNodeMatcher.CHOICE, ""),
                 new GrammarNode(GrammarNodeMatcher.RULE, "RuleName"),
               }));
@@ -883,6 +886,14 @@ public class JPEGParser {
    */
   public static ParsingResult AtomicExpression(final String input) {
     return new ParsingResult(new JPEGParser().parse("AtomicExpression", new Input(input)));
+  }
+  
+    /**
+   * @param input
+   * @return Returns the parsing result of this operation
+   */
+  public static ParsingResult AssignableExpression(final String input) {
+    return new ParsingResult(new JPEGParser().parse("AssignableExpression", new Input(input)));
   }
   
     /**
