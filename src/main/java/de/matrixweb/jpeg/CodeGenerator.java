@@ -8,6 +8,8 @@ import java.util.List;
 public interface CodeGenerator {
 
   /**
+   * Creates the source code from the given parser rules.
+   * 
    * @param rules
    *          The parsed rules to build into the parser
    * @return Returns the parser source code

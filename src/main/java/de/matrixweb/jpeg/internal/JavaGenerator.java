@@ -59,6 +59,9 @@ public class JavaGenerator implements CodeGenerator {
   }
 
   /**
+   * Compiles the given parser source, saving the created class files in the
+   * specified target folder.
+   * 
    * @param target
    * @param source
    */
