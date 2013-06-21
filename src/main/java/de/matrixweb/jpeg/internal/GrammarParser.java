@@ -184,6 +184,11 @@ public class GrammarParser {
     final RuleDescription internal = new RuleDescription(name, "returnType",
         buildNodeDescriptions(descriptions, node.getChildren()[nthChild],
             nodeName, n).toArray(new RuleDescription.NodeDescription[0]));
+    if (internal.getNodes().length == 1
+        && internal.getNodes()[0].getMatcher() == MatcherName.RULE) {
+      return new RuleDescription.NodeDescription(matcherName,
+          internal.getNodes()[0].getValue());
+    }
     descriptions.add(internal);
     return new RuleDescription.NodeDescription(matcherName, name);
   }
