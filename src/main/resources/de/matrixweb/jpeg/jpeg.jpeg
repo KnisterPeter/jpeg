@@ -101,19 +101,19 @@ OptionalExpression :
 // -----------------------------------------------------------------------------
 
 AtomicExpression :
-    SubExpression
-  | EndOfInputExpression
+  EndOfInputExpression
   | AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
 AssignableExpression :
-  (ID AssignOperation)?
-  (   RangeExpression
-    | Terminal
-    | AnyCharExpression
-    | RuleName
+  (ID WS* AssignOperation WS*)?
+  ( SubExpression
+  | RangeExpression
+  | Terminal
+  | AnyCharExpression
+  | RuleName
   )
 ;
 AssignOperation :
