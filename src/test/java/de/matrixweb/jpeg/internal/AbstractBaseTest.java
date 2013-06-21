@@ -1,0 +1,165 @@
+package de.matrixweb.jpeg.internal;
+
+import java.io.File;
+import java.io.StringReader;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.Map;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
+import de.matrixweb.jpeg.JPEG;
+import de.matrixweb.jpeg.Java;
+
+import static org.junit.Assert.*;
+
+import static org.hamcrest.CoreMatchers.*;
+
+/**
+ * @author markusw
+ */
+public abstract class AbstractBaseTest {
+
+  @SuppressWarnings("resource")
+  protected static Object createParser(final String grammar, final String name)
+      throws Exception {
+    final Java java = new Java(name);
+    final String source = JPEG.createParser(new StringReader(grammar), java);
+
+    final File target = new File("target/" + name.replace('.', '-'));
+    FileUtils.deleteDirectory(target);
+    target.mkdirs();
+    java.compile(target, source);
+
+    FileUtils.write(new File(target, name.replace('.', '/') + ".java"), source);
+
+    return new URLClassLoader(new URL[] { target.toURI().toURL() }, null)
+        .loadClass(name).newInstance();
+  }
+
+  protected static ParserDelegate createParserDelegate(
+      final String grammarPath, final String name) throws Exception {
+    return new ParserDelegate(createParser(
+        IOUtils.toString(
+            AbstractBaseTest.class.getResourceAsStream("/" + grammarPath),
+            "UTF-8"), name));
+  }
+
+  protected static class ParserDelegate {
+
+    private final Object parser;
+
+    /**
+     * @param parser
+     */
+    public ParserDelegate(final Object parser) {
+      this.parser = parser;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void validateGrammar(final String ruleName,
+        final String... nodeValidators) throws Exception {
+      Field field = this.parser.getClass().getDeclaredField("rules");
+      field.setAccessible(true);
+      final Map<String, Object> rules = (Map<String, Object>) field.get(null);
+      final Object rule = rules.get(ruleName);
+      field = rule.getClass().getDeclaredField("grammarNodes");
+      field.setAccessible(true);
+      final Object[] nodes = (Object[]) field.get(rule);
+      assertThat("Expected " + nodeValidators.length + " nodes but got "
+          + nodes.length, nodes.length, is(nodeValidators.length));
+      for (int i = 0; i < nodes.length; i++) {
+        final String[] val = nodeValidators[i].split("#", 2);
+        final Object node = nodes[i];
+        field = node.getClass().getDeclaredField("matcher");
+        field.setAccessible(true);
+        final Object matcher = field.get(node);
+        assertThat("On position " + i + " expected " + val[0] + " but got "
+            + matcher.getClass().getSimpleName(), matcher.getClass()
+            .getSimpleName(), is(val[0]));
+        field = node.getClass().getDeclaredField("value");
+        field.setAccessible(true);
+        final String value = (String) field.get(node);
+        assertThat("On position " + i + " expected value " + val[1]
+            + " but got " + value, value, is(val[1]));
+      }
+    }
+
+    public Object parse(final String rule, final String input,
+        final boolean result) {
+      try {
+        final Method m = this.parser.getClass().getMethod(rule, String.class);
+        final Object res = m.invoke(this.parser, input);
+        assertThat((Boolean) res.getClass().getMethod("matches").invoke(res),
+            is(result));
+        return res;
+      } catch (final NoSuchMethodException e) {
+        throw new RuntimeException(e);
+      } catch (final IllegalAccessException e) {
+        throw new RuntimeException(e);
+      } catch (final InvocationTargetException e) {
+        final Throwable t = e.getTargetException();
+        if (t instanceof RuntimeException) {
+          throw (RuntimeException) t;
+        }
+        throw new RuntimeException(e);
+      }
+    }
+
+    public void validateResult(final Object parseTree,
+        final String parseTreeExpression) throws Exception {
+      final Object node = parseTree.getClass().getMethod("getParseTree")
+          .invoke(parseTree);
+      final String expr = validate0(node, parseTreeExpression,
+          parseTreeExpression);
+      if (expr.length() > 0) {
+        fail("Expression " + expr.replace("\n", "\\n")
+            + " not completly verified");
+      }
+    }
+
+    String validate0(final Object node, final String expressionTail,
+        final String parseTreeExpression) throws Exception {
+      String expr = expressionTail;
+      if (expr.startsWith("{")) {
+        final int n = Integer.parseInt(expr.substring(1, expr.indexOf('}')));
+        final Method m = node.getClass().getMethod("getChildren");
+        m.setAccessible(true);
+        final Object[] children = (Object[]) m.invoke(node);
+        expr = expr.substring(expr.indexOf('}') + 1);
+        assertThat(
+            "Expected "
+                + n
+                + " children but got "
+                + children.length
+                + " at "
+                + parseTreeExpression.substring(0, parseTreeExpression.length()
+                    - expr.length()), children.length, is(n));
+      }
+      if (expr.startsWith("('")) {
+        String test = expr.substring(2);
+        test = test.substring(0, test.indexOf("')"));
+        final Method m = node.getClass().getMethod("getValue");
+        m.setAccessible(true);
+        final String value = (String) m.invoke(node);
+        assertThat(value, is(test));
+        expr = expr.substring(test.length() + 4);
+      }
+      if (expr.startsWith("[")) {
+        final int n = Integer.parseInt(expr.substring(1, expr.indexOf(']')));
+        final Method m = node.getClass().getMethod("getChildren");
+        m.setAccessible(true);
+        final Object[] children = (Object[]) m.invoke(node);
+        expr = validate0(children[n], expr.substring(expr.indexOf(']') + 1),
+            parseTreeExpression);
+      }
+      return expr;
+    }
+
+  }
+
+}
