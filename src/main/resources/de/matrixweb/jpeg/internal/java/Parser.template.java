@@ -11,10 +11,15 @@ import java.util.Map;
  */
 public class {{$name}} {
 
+  private static final Map<String, Type> types = new HashMap<String, Type>();
+  static {
+    types.put("MetaString", new MetaString());
+  }
+  
   private static final Map<String, GrammarRule> rules = new HashMap<String, GrammarRule>();
   static {
     {{for rule in rules}}
-    rules.put("{{$rule.name}}", new GrammarRule("{{$rule.name}}", new GrammarNode[] {
+    rules.put("{{$rule.name}}", new GrammarRule("{{$rule.name}}", "{{$rule.type}}", new GrammarNode[] {
         {{for node in rule.Nodes}}
         new GrammarNode(GrammarNodeMatcher.{{$node.matcher}}, "{{$node.value}}"),
         {{/for}}
@@ -35,7 +40,7 @@ public class {{$name}} {
     return rule.match(this, input);
   }
 
-  {{for rule in rules}}
+  {{for rule in publicRules}}
   /**
    * @param input
    * @return Returns the parsing result of this operation
@@ -45,10 +50,17 @@ public class {{$name}} {
   }
   
   {{/for}}
+  
+  Type getType(String name) {
+    return types.get(name);
+  }
 
   // {{reference ParsingResult.template.java}}
   // {{reference Utils.template.java}}
   // {{reference JPEGParserException.template.java}}
+  // {{reference types/MetaClass.template.java}}
+  // {{reference types/MetaString.template.java}}
+  // {{reference types/Type.template.java}}
 
 }
 // {{reference ParsingNode.template.java}}

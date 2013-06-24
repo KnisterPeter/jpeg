@@ -54,8 +54,21 @@ public class JavaGenerator implements CodeGenerator {
     parameters.put("package", packageName);
     parameters.put("name", className);
     parameters.put("rules", rules);
+    parameters.put("publicRules", getPublicRules(rules));
+
     return tmpl.render("de/matrixweb/jpeg/internal/java",
         "Parser.template.java", parameters).replace("JavaParser", className);
+  }
+
+  // TODO: Use rule annotations instead
+  private List<RuleDescription> getPublicRules(final List<RuleDescription> rules) {
+    final List<RuleDescription> publicRules = new ArrayList<RuleDescription>();
+    for (final RuleDescription rule : rules) {
+      if (!rule.getName().startsWith("internal_")) {
+        publicRules.add(rule);
+      }
+    }
+    return publicRules;
   }
 
   /**

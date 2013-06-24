@@ -136,7 +136,7 @@ RangeExpression :
 RangeExpressionDash :
   '-'
 ;
- 
+
 RangeExpressionRange : 
   !'-' . '-' !'-' .
 ;
@@ -179,7 +179,7 @@ Comment :
 // An ID name must start with an letter or underscore and be followed
 // by letters, digits or underscores.
 // 
-ID :
+ID returns MetaString :
   [a-zA-Z_]([a-zA-Z0-9_])*
 ;
 

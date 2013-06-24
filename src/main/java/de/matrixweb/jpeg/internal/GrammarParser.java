@@ -80,9 +80,7 @@ public class GrammarParser {
       final String nodeName, final MutableInteger n) {
     final List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
 
-    if ("WS".equals(node.getValue())) {
-      // Ignore whitespaces
-    } else if ("RangeExpression".equals(node.getValue())) {
+    if ("RangeExpression".equals(node.getValue())) {
       final String name = "internal_" + nodeName + '_' + n.n++;
 
       final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
@@ -91,8 +89,10 @@ public class GrammarParser {
         sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
       }
       sub.remove(0);
-      final RuleDescription internal = new RuleDescription(name, "MString",
-          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
+      // TODO: Define return type
+      final RuleDescription internal = new RuleDescription(name,
+          "unknown-type", sub.toArray(new RuleDescription.NodeDescription[sub
+              .size()]));
       descriptions.add(internal);
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
     } else if ("RangeExpressionDash".equals(node.getValue())) {
@@ -161,9 +161,10 @@ public class GrammarParser {
       for (int i = 1; i < children.length - 1; i++) {
         sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
       }
+      // TODO: Define return type
       final RuleDescription internal = new RuleDescription(name,
-          "MSubExpression", sub.toArray(new RuleDescription.NodeDescription[sub
-              .size()]));
+          "MetaSubExpression",
+          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
       descriptions.add(internal);
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
     } else {
@@ -180,7 +181,7 @@ public class GrammarParser {
       final String nodeName, final MutableInteger n,
       final MatcherName matcherName, final int nthChild) {
     final String name = "internal_" + nodeName + '_' + n.n++;
-    // TODO: Return type here
+    // TODO: Define return type
     final RuleDescription internal = new RuleDescription(name, "returnType",
         buildNodeDescriptions(descriptions, node.getChildren()[nthChild],
             nodeName, n).toArray(new RuleDescription.NodeDescription[0]));

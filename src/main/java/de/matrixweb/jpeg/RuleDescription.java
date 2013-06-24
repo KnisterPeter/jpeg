@@ -33,7 +33,7 @@ public class RuleDescription {
 
   private final String name;
 
-  private final String returnType;
+  private final String type;
 
   private final NodeDescription[] nodes;
 
@@ -45,7 +45,7 @@ public class RuleDescription {
   public RuleDescription(final String name, final String returnType,
       final NodeDescription[] nodes) {
     this.name = name;
-    this.returnType = returnType;
+    this.type = returnType;
     this.nodes = nodes;
   }
 
@@ -59,8 +59,8 @@ public class RuleDescription {
   /**
    * @return the returnType
    */
-  public String getReturnType() {
-    return this.returnType;
+  public String getType() {
+    return this.type;
   }
 
   /**

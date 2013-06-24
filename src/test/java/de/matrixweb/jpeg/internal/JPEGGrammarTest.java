@@ -112,7 +112,7 @@ public class JPEGGrammarTest extends AbstractBaseTest {
   @Test
   public void testParsingJPEGGrammarWithJPEGParser() throws Exception {
     jpegParser.parse("JPEG", IOUtils.toString(JPEGGrammarTest.class
-        .getResourceAsStream("/de/matrixweb/jpeg/test.jpeg"), "UTF-8"), true);
+        .getResourceAsStream("/de/matrixweb/jpeg/jpeg.jpeg"), "UTF-8"), true);
   }
 
   /**

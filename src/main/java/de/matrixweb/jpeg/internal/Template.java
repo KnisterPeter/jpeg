@@ -23,6 +23,8 @@ public class Template {
     String source = IOUtils.readResourceAsString('/' + base + '/' + name,
         "UTF-8");
 
+    // TODO: Define if-else statement
+
     // Rewrite outputs
     final Pattern pattern = Pattern.compile("\\{\\{\\$([^}]+)\\}\\}");
     final Matcher matcher = pattern.matcher(source);

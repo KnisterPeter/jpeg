@@ -2,10 +2,13 @@ class GrammarRule {
 
   private final String name;
 
+  private final String resultType;
+  
   private final GrammarNode[] grammarNodes;
 
-  public GrammarRule(final String name, final GrammarNode[] grammarNodes) {
+  public GrammarRule(final String name, final String resultType, final GrammarNode[] grammarNodes) {
     this.name = name;
+    this.resultType = resultType;
     this.grammarNodes = grammarNodes;
   }
 
@@ -42,6 +45,11 @@ class GrammarRule {
     ParsingNode result = null;
     if (context.isMatch()) {
       result = new ParsingNode(true, this.name, context.getParsingNodes());
+      JavaParser.Type type = parser.getType(this.resultType);
+      if (type != null) {
+        // TODO: Cleanup AST generation and do not use ParsingNode here
+        result = new ParsingNode(true, this.name, context.getParsingNodes(), type.create(result));
+      }
       input.setChars(tail);
     }
     return result;
