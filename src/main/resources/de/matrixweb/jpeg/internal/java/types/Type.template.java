@@ -4,4 +4,6 @@ static interface Type {
 
   MetaClass getMClass();
 
+  Object getValue();
+
 }

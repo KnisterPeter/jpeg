@@ -167,6 +167,17 @@ public class GrammarParser {
           sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
       descriptions.add(internal);
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
+    } else if ("AssignableExpression".equals(node.getValue())
+        && node.getChildren().length > 1) {
+      final String name = "internal_" + nodeName + '_' + n.n++;
+      final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
+      sub.addAll(buildNodeDescriptions(descriptions, node.getChildren()[1],
+          nodeName, n));
+      final RuleDescription internal = new RuleDescription(name,
+          "some-type-assignment",
+          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
+      descriptions.add(internal);
+      nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
     } else {
       for (final ParsingNode child : node.getChildren()) {
         nodes.addAll(buildNodeDescriptions(descriptions, child, nodeName, n));

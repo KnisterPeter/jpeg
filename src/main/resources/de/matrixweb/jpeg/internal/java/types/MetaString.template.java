@@ -10,6 +10,8 @@ static class MetaString implements Type {
     for (final ParsingNode child : node.getChildren()) {
       if (child.getChildren().length == 0) {
         str.append(child.getValue());
+      } else if (child.getObject() != null) {
+        str.append(child.getValue());
       } else {
         str.append(create(child).getValue());
       }

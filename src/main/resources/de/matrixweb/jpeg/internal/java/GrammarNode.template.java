@@ -20,7 +20,7 @@ class GrammarNode {
     return this.matcher;
   }
 
-  boolean matches(final RuleMatchingContext context, final Input input) {
+  public boolean matches(final RuleMatchingContext context, final Input input) {
     return this.matcher.matches(context, this.value, input);
   }
 
