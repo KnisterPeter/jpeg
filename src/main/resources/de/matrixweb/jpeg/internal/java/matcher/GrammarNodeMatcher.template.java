@@ -20,6 +20,8 @@ interface GrammarNodeMatcher {
   public static final GrammarNodeMatcher AND_PREDICATE = new AndPredicateMatcher();
   /** */
   public static final GrammarNodeMatcher NOT_PREDICATE = new NotPredicateMatcher();
+  /** */
+  public static final GrammarNodeMatcher ASSIGN = new AssignMatcher();
 
   /**
    * @param context

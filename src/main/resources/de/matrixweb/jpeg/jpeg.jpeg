@@ -32,7 +32,7 @@ ReturnTypeName :
 
 // -----------------------------------------------------------------------------
 
-RuleName returns MetaString :
+RuleName :
   value=ID
 ;
 

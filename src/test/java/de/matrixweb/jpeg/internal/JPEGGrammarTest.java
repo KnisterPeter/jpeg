@@ -91,19 +91,19 @@ public class JPEGGrammarTest extends AbstractBaseTest {
   public void testEscapesParseTree() throws Exception {
     Object result = jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\\', 'n', '\'' }), true);
-    // this.jpegParser.validateResult(result, "{3}[1]{2}");
+    jpegParser.validateResult(result, "{3}[1]{2}");
 
     result = jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\\', '\\', '\'' }), true);
-    // this.jpegParser.validateResult(result, "{3}[1]{1}");
+    jpegParser.validateResult(result, "{3}[1]{2}");
 
     result = jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\\', '\'', '\'' }), true);
-    // this.jpegParser.validateResult(result, "{3}[1]{1}");
+    jpegParser.validateResult(result, "{3}[1]{2}");
 
     result = jpegParser.parse("Terminal",
         String.valueOf(new char[] { '\'', '\n', '\'' }), true);
-    // this.jpegParser.validateResult(result, "{3}[1]{1}");
+    jpegParser.validateResult(result, "{3}[1]{1}");
   }
 
   /**
@@ -147,8 +147,16 @@ public class JPEGGrammarTest extends AbstractBaseTest {
     jpegParser.parse("JPEG", "// Some dumb comment\nRule: Body;", true);
     final Object res = jpegParser.parse("JPEG",
         "// Some dumb comment Rule: Body;", true);
-    jpegParser.validateResult(res, "{1}[0]{1}[0]{1}");
+    jpegParser.validateResult(res, "{1}[0]{1}[0]{31}");
     jpegParser.parse("JPEG", "// Some dumb\ncomment\nRule: Body;", false);
+  }
+
+  /**
+   * 
+   */
+  @Test
+  public void testRuleNameAssignment() {
+    jpegParser.parse("RuleName", "SomeRuleName", true);
   }
 
 }

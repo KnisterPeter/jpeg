@@ -71,6 +71,7 @@ public class {{$name}} {
 // {{reference matcher/AbstractPredicateMatcher.template.java}}
 // {{reference matcher/AndPredicateMatcher.template.java}}
 // {{reference matcher/AnyCharMatcher.template.java}}
+// {{reference matcher/AssignMatcher.template.java}}
 // {{reference matcher/ChoiceMatcher.template.java}}
 // {{reference matcher/EndOfInputMatcher.template.java}}
 // {{reference matcher/GrammarNodeMatcher.template.java}}

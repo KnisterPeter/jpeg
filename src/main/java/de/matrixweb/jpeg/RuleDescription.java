@@ -28,7 +28,9 @@ public class RuleDescription {
     /** */
     NOT_PREDICATE,
     /** */
-    RULE
+    RULE,
+    /** */
+    ASSIGN
   }
 
   private final String name;

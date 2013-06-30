@@ -80,7 +80,9 @@ public class GrammarParser {
       final String nodeName, final MutableInteger n) {
     final List<RuleDescription.NodeDescription> nodes = new ArrayList<RuleDescription.NodeDescription>();
 
-    if ("RangeExpression".equals(node.getValue())) {
+    if ("WS".equals(node.getValue())) {
+      // Ignore WS nodes
+    } else if ("RangeExpression".equals(node.getValue())) {
       final String name = "internal_" + nodeName + '_' + n.n++;
 
       final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
@@ -144,40 +146,15 @@ public class GrammarParser {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.EOI, null));
     } else if ("RuleName".equals(node.getValue())) {
       nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE,
-          createString(node)));
+          (String) node.getChildren()[0].getObject().getValue()));
     } else if ("Terminal".equals(node.getValue())) {
-      final StringBuilder str = new StringBuilder();
-      final ParsingNode[] children = node.getChildren();
-      for (int i = 1; i < children.length - 1; i++) {
-        str.append(createString(children[i]));
-      }
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.TERMINAL, str
-          .toString().replace("\\\\", "\\").replace("\\'", "'")
-          .replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t")));
+      nodes.add(createTerminalNode(descriptions, node, nodeName, n));
     } else if ("SubExpression".equals(node.getValue())) {
-      final String name = "internal_" + nodeName + '_' + n.n++;
-      final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
-      final ParsingNode[] children = node.getChildren();
-      for (int i = 1; i < children.length - 1; i++) {
-        sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
-      }
-      // TODO: Define return type
-      final RuleDescription internal = new RuleDescription(name,
-          "MetaSubExpression",
-          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
-      descriptions.add(internal);
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
+      nodes.add(createSubExpressionNode(descriptions, node, nodeName, n));
     } else if ("AssignableExpression".equals(node.getValue())
         && node.getChildren().length > 1) {
-      final String name = "internal_" + nodeName + '_' + n.n++;
-      final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
-      sub.addAll(buildNodeDescriptions(descriptions, node.getChildren()[1],
-          nodeName, n));
-      final RuleDescription internal = new RuleDescription(name,
-          "some-type-assignment",
-          sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
-      descriptions.add(internal);
-      nodes.add(new RuleDescription.NodeDescription(MatcherName.RULE, name));
+      nodes
+          .add(createAssignableExpressionNode(descriptions, node, nodeName, n));
     } else {
       for (final ParsingNode child : node.getChildren()) {
         nodes.addAll(buildNodeDescriptions(descriptions, child, nodeName, n));
@@ -203,6 +180,53 @@ public class GrammarParser {
     }
     descriptions.add(internal);
     return new RuleDescription.NodeDescription(matcherName, name);
+  }
+
+  private static RuleDescription.NodeDescription createTerminalNode(
+      final List<RuleDescription> descriptions, final ParsingNode node,
+      final String nodeName, final MutableInteger n) {
+    final StringBuilder str = new StringBuilder();
+    final ParsingNode[] children = node.getChildren();
+    for (int i = 1; i < children.length - 1; i++) {
+      str.append(createString(children[i]));
+    }
+    return new RuleDescription.NodeDescription(MatcherName.TERMINAL, str
+        .toString().replace("\\\\", "\\").replace("\\'", "'")
+        .replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t"));
+  }
+
+  private static RuleDescription.NodeDescription createSubExpressionNode(
+      final List<RuleDescription> descriptions, final ParsingNode node,
+      final String nodeName, final MutableInteger n) {
+    final String name = "internal_" + nodeName + '_' + n.n++;
+    final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
+    final ParsingNode[] children = node.getChildren();
+    for (int i = 1; i < children.length - 1; i++) {
+      sub.addAll(buildNodeDescriptions(descriptions, children[i], nodeName, n));
+    }
+    // TODO: Define return type
+    final RuleDescription internal = new RuleDescription(name,
+        "MetaSubExpression",
+        sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
+    descriptions.add(internal);
+    return new RuleDescription.NodeDescription(MatcherName.RULE, name);
+  }
+
+  private static RuleDescription.NodeDescription createAssignableExpressionNode(
+      final List<RuleDescription> descriptions, final ParsingNode node,
+      final String nodeName, final MutableInteger n) {
+    final String name = "internal_" + nodeName + '_' + n.n++;
+    final List<RuleDescription.NodeDescription> sub = new ArrayList<RuleDescription.NodeDescription>();
+
+    for (final ParsingNode child : node.getChildren()) {
+      sub.addAll(buildNodeDescriptions(descriptions, child, nodeName, n));
+    }
+
+    final RuleDescription internal = new RuleDescription(name,
+        "some-type-assignment",
+        sub.toArray(new RuleDescription.NodeDescription[sub.size()]));
+    descriptions.add(internal);
+    return new RuleDescription.NodeDescription(MatcherName.ASSIGN, name);
   }
 
   private static class MutableInteger {
