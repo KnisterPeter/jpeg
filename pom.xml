@@ -35,9 +35,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git@github.com:KnisterPeter/Smaller.git</connection>
-    <developerConnection>scm:git:git@github.com:KnisterPeter/Smaller.git</developerConnection>
-    <url>https://github.com/KnisterPeter/Smaller</url>
+    <connection>scm:git:git@github.com:KnisterPeter/jpeg.git</connection>
+    <developerConnection>scm:git:git@github.com:KnisterPeter/jpeg.git</developerConnection>
+    <url>https://github.com/KnisterPeter/jpeg</url>
   </scm>
 
   <properties>
@@ -106,41 +106,6 @@
           </dependency>
         </dependencies>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2.1</version>
-        <executions>
-          <execution>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>java</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <mainClass>de.matrixweb.jpeg.internal.GenerateTestParser</mainClass>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.8</version>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-test-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>target/test-parser</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
@@ -162,19 +127,6 @@
                   </pluginExecutionFilter>
                   <action>
                     <ignore />
-                  </action>
-                </pluginExecution>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <versionRange>[1.2.1,)</versionRange>
-                    <goals>
-                      <goal>java</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore></ignore>
                   </action>
                 </pluginExecution>
               </pluginExecutions>

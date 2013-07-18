@@ -7,13 +7,7 @@
 // This is the main entry point into the JPEG grammar.
 // 
 JPEG :
-  GrammarBlock+ EOI
-;
-
-// -----------------------------------------------------------------------------
-
-GrammarBlock :
-  (Rule | Comment) WS*
+  ((Rule | Comment) WS*)+ EOI
 ;
 
 // -----------------------------------------------------------------------------
@@ -27,7 +21,7 @@ RuleReturns :
 ;
 
 ReturnTypeName :
-  ID
+  FQTN
 ;
 
 // -----------------------------------------------------------------------------
@@ -45,11 +39,7 @@ Body :
 // -----------------------------------------------------------------------------
 
 ChoiceExpression :
-  SequenceExpression ChoiceExpressionPart*
-;
-
-ChoiceExpressionPart :
-  '|' WS* SequenceExpression
+  SequenceExpression ('|' WS* SequenceExpression)*
 ;
 
 // -----------------------------------------------------------------------------
@@ -130,19 +120,7 @@ SubExpression :
 // -----------------------------------------------------------------------------
 
 RangeExpression : 
-  '[' RangeExpressionDash? (!']'(RangeExpressionRange | RangeExpressionChar))* ']'
-;
-
-RangeExpressionDash :
-  '-'
-;
-
-RangeExpressionRange : 
-  !'-' . '-' !'-' .
-;
-
-RangeExpressionChar : 
-  !'-' .
+  '[' '-'? (!']'(!'-' . '-' !'-' . | !'-' .))* ']'
 ;
 
 // -----------------------------------------------------------------------------
@@ -176,11 +154,18 @@ Comment :
 // -----------------------------------------------------------------------------
 
 // 
+// Namespaced type identifier
+// 
+FQTN returns String:
+  name+=ID ('.' name+=ID)*
+;
+
+// 
 // An ID name must start with an letter or underscore and be followed
 // by letters, digits or underscores.
 // 
-ID returns MetaString :
-  [a-zA-Z_]([a-zA-Z0-9_])*
+ID returns String :
+  chars+=[a-zA-Z_](chars+=[a-zA-Z0-9_])*
 ;
 
 WS : ' ' | '\n' | '\t' | '\r';
