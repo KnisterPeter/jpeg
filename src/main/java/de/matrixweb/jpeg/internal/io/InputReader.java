@@ -53,14 +53,14 @@ public class InputReader {
   }
 
   /**
-   * @return
+   * @return Returns true if there is more input available, false otherwise
    */
   public boolean hasNext() {
     return this.next < this.data.length;
   }
 
   /**
-   * @return
+   * @return Returns the next available char
    * @throws UnexpectedEndOfInputException
    */
   public char read() {
@@ -79,7 +79,7 @@ public class InputReader {
   }
 
   /**
-   * @return
+   * @return Returns the mark position
    */
   public int mark() {
     final int mark = this.marks.size();
@@ -89,7 +89,7 @@ public class InputReader {
 
   /**
    * @param mark
-   * @return
+   * @return Returns the matched input {@link String} from mark position
    */
   public String get(final int mark) {
     final Position position = this.marks.get(mark);
@@ -111,7 +111,7 @@ public class InputReader {
   }
 
   /**
-   * @return
+   * @return Returns the current input position in line and char
    */
   public String getPosition() {
     return "[" + this.line + "," + this.position + "]";

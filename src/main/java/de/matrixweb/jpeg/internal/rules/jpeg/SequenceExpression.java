@@ -7,21 +7,32 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 
 /**
  * @author markusw
  */
-public class SequenceExpression extends Expression {
+public class SequenceExpression extends Expression<SequenceExpression> {
 
-  private List<Expression> expressions = new ArrayList<Expression>();
+  private List<Expression<?>> expressions = new ArrayList<Expression<?>>();
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public SequenceExpression copy() {
+    final SequenceExpression copy = new SequenceExpression();
+    for (final Expression<?> expression : this.expressions) {
+      copy.expressions.add(expression.copy());
+    }
+    return copy;
+  }
 
   /**
    * @return the expressions
    */
-  public List<Expression> getExpressions() {
+  public List<Expression<?>> getExpressions() {
     return this.expressions;
   }
 
@@ -29,85 +40,85 @@ public class SequenceExpression extends Expression {
    * @param expressions
    *          the expressions to set
    */
-  public void setExpressions(final List<Expression> expressions) {
+  public void setExpressions(final List<Expression<?>> expressions) {
     this.expressions = expressions;
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<List<Expression>> expressions = new Mutable<List<Expression>>(
-          new ArrayList<Expression>());
+      SequenceExpression expression = new SequenceExpression();
 
       // @formatter:off
       // (expressions+=(ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression) WS*)+
-      OneOrMore(reader, new RuleCallback() {
+      expression = OneOrMore(expression, reader, new RuleCallback<SequenceExpression>() {
         @Override
-        public void run(final InputReader reader) throws RuleMismatchException {
+        public SequenceExpression run(final SequenceExpression expression, final InputReader reader) throws RuleMismatchException {
           // expressions+=(ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression)
-          Choice(reader, new RuleCallback() {
+          expression.getExpressions().add(Choice(null, reader, new RuleCallback<Expression>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public Expression run(final Expression expression, final InputReader reader) throws RuleMismatchException {
               // ActionExpression
-              expressions.getValue().add(ActionExpression().match(reader));
+              return ActionExpression().match(reader);
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<Expression>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public Expression run(final Expression expression, final InputReader reader) throws RuleMismatchException {
               // AndPredicateExpression
-              expressions.getValue().add(AndPredicateExpression().match(reader));
+              return AndPredicateExpression().match(reader);
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<Expression>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public Expression run(final Expression expression, final InputReader reader) throws RuleMismatchException {
               // NotPredicateExpression
-              expressions.getValue().add(NotPredicateExpression().match(reader));
+              return NotPredicateExpression().match(reader);
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<Expression>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public Expression run(final Expression expression, final InputReader reader) throws RuleMismatchException {
               // OneOrMoreExpression
-              expressions.getValue().add(OneOrMoreExpression().match(reader));
+              return OneOrMoreExpression().match(reader);
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<Expression>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public Expression run(final Expression expression, final InputReader reader) throws RuleMismatchException {
               // ZeroOrMoreExpression
-              expressions.getValue().add(ZeroOrMoreExpression().match(reader));
+              return ZeroOrMoreExpression().match(reader);
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<Expression>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public Expression run(final Expression expression, final InputReader reader) throws RuleMismatchException {
               // OptionalExpression
-              expressions.getValue().add(OptionalExpression().match(reader));
+              return OptionalExpression().match(reader);
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<Expression>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public Expression run(final Expression expression, final InputReader reader) throws RuleMismatchException {
               // AtomicExpression
-              expressions.getValue().add(AtomicExpression().match(reader));
+              return AtomicExpression().match(reader);
             }
-          });
+          }));
           // WS*
-          ZeroOrMore(reader, new RuleCallback() {
+          ZeroOrMore(null, reader, new RuleCallback<WS>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
               // WS
-              WS().match(reader);
+              return WS().match(reader);
             }
           });
+          
+          return expression;
         }
       });
       // @formatter:on
 
-      final SequenceExpression expression = new SequenceExpression();
-      expression.setExpressions(expressions.getValue());
       return expression;
     }
   }

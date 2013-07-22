@@ -9,189 +9,189 @@ public final class StaticRules {
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final ActionExpression.GrammarRule ActionExpression() {
     return new ActionExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final AndPredicateExpression.GrammarRule AndPredicateExpression() {
     return new AndPredicateExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final AnyCharExpression.GrammarRule AnyCharExpression() {
     return new AnyCharExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final AtomicExpression.GrammarRule AtomicExpression() {
     return new AtomicExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final AssignableExpression.GrammarRule AssignableExpression() {
     return new AssignableExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final AssignmentOperator.GrammarRule AssignmentOperator() {
     return new AssignmentOperator.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final Body.GrammarRule Body() {
     return new Body.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final CharRange.GrammarRule CharRange() {
     return new CharRange.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final ChoiceExpression.GrammarRule ChoiceExpression() {
     return new ChoiceExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final Comment.GrammarRule Comment() {
     return new Comment.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final EndOfInputExpression.GrammarRule EndOfInputExpression() {
     return new EndOfInputExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final FQTN.GrammarRule FQTN() {
     return new FQTN.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final ID.GrammarRule ID() {
     return new ID.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final InTerminalChar.GrammarRule InTerminalChar() {
     return new InTerminalChar.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final MinMaxRange.GrammarRule MinMaxRange() {
     return new MinMaxRange.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final NotPredicateExpression.GrammarRule NotPredicateExpression() {
     return new NotPredicateExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final OneOrMoreExpression.GrammarRule OneOrMoreExpression() {
     return new OneOrMoreExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final OptionalExpression.GrammarRule OptionalExpression() {
     return new OptionalExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final RangeExpression.GrammarRule RangeExpression() {
     return new RangeExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final Rule.GrammarRule Rule() {
     return new Rule.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final RuleReferenceExpression.GrammarRule RuleReferenceExpression() {
     return new RuleReferenceExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final RuleReturns.GrammarRule RuleReturns() {
     return new RuleReturns.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final SequenceExpression.GrammarRule SequenceExpression() {
     return new SequenceExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final SubExpression.GrammarRule SubExpression() {
     return new SubExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final TerminalExpression.GrammarRule TerminalExpression() {
     return new TerminalExpression.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final WS.GrammarRule WS() {
     return new WS.GrammarRule();
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static final ZeroOrMoreExpression.GrammarRule ZeroOrMoreExpression() {
     return new ZeroOrMoreExpression.GrammarRule();

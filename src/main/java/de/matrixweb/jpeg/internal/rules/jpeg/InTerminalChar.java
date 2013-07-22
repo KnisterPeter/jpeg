@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import de.matrixweb.jpeg.internal.type.Type;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
@@ -13,7 +12,15 @@ import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 /**
  * @author markusw
  */
-public class InTerminalChar implements Type {
+public class InTerminalChar implements Type<InTerminalChar> {
+
+  /**
+   * @see de.matrixweb.jpeg.internal.type.Type#copy()
+   */
+  @Override
+  public InTerminalChar copy() {
+    return new InTerminalChar();
+  }
 
   /** */
   public static class GrammarRule extends ParserRule<String> {
@@ -24,63 +31,59 @@ public class InTerminalChar implements Type {
     @Override
     protected String consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> value = new Mutable<String>(new String());
+      String string = new String();
 
       // @formatter:off
       // ('\\' '\'' | '\\' '\\' | !'\'' .)+
-      OneOrMore(reader, new RuleCallback() {
+      string = OneOrMore(string, reader, new RuleCallback<String>() {
+        @SuppressWarnings("unchecked")
         @Override
-        public void run(final InputReader reader) throws RuleMismatchException {
+        public String run(String string, final InputReader reader) throws RuleMismatchException {
           // '\\' '\'' | '\\' '\\' | !'\'' .
-          Choice(reader, new RuleCallback() {
+          string = Choice(string, reader, new RuleCallback<String>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
-              final Mutable<String> value0 = new Mutable<String>(new String());
-              
+            public String run(final String string, final InputReader reader) throws RuleMismatchException {
               // '\\' 
-              value0.getValue().add(T("\\").match(reader));
+              string.add(T("\\").match(reader));
               // '\''
-              value0.getValue().add(T("'").match(reader));
+              string.add(T("'").match(reader));
               
-              value.getValue().add(value0.getValue());
+              return string;
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<String>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
-              final Mutable<String> value0 = new Mutable<String>(new String());
-              
+            public String run(final String string, final InputReader reader) throws RuleMismatchException {
               // '\\'
-              value0.getValue().add(T("\\").match(reader));
+              string.add(T("\\").match(reader));
               // '\\'
-              value0.getValue().add(T("\\").match(reader));
+              string.add(T("\\").match(reader));
               
-              value.getValue().add(value0.getValue());
+              return string;
             }
-          }, new RuleCallback() {
+          }, new RuleCallback<String>() {
+            @SuppressWarnings("rawtypes")
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
-              final Mutable<String> value0 = new Mutable<String>(new String());
-              
+            public String run(final String string, final InputReader reader) throws RuleMismatchException {
               // !'\''
               Not(reader, new RuleCallback() {
                 @Override
-                public void run(final InputReader reader) throws RuleMismatchException {
+                public Type run(final Type type, final InputReader reader) throws RuleMismatchException {
                   // '\''
-                  T("'").match(reader);
+                  return T("'").match(reader);
                 }
               });
               // .
-              value0.getValue().add(Any().match(reader));
+              string.add(Any().match(reader));
               
-              value.getValue().add(value0.getValue());
+              return string;
             }
           });
+          
+          return string;
         }
       });
       // @formatter:on
 
-      final String string = new String();
-      string.setValue(value.getValue());
       return string;
     }
   }

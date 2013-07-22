@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import de.matrixweb.jpeg.internal.type.Type;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
@@ -13,11 +12,22 @@ import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 /**
  * @author markusw
  */
-public class AssignmentOperator implements Type {
+public class AssignmentOperator implements Type<AssignmentOperator> {
 
   private String single;
 
   private String multi;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.type.Type#copy()
+   */
+  @Override
+  public AssignmentOperator copy() {
+    final AssignmentOperator copy = new AssignmentOperator();
+    copy.single = this.single != null ? this.single.copy() : null;
+    copy.multi = this.multi != null ? this.multi.copy() : null;
+    return copy;
+  }
 
   /**
    * @return the single
@@ -55,33 +65,32 @@ public class AssignmentOperator implements Type {
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#consume(de.matrixweb.jpeg.internal.io.InputReader)
      */
+    @SuppressWarnings("unchecked")
     @Override
     protected AssignmentOperator consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> single = new Mutable<String>(new String());
-      final Mutable<String> multi = new Mutable<String>(new String());
+      AssignmentOperator operator = new AssignmentOperator();
 
       // @formatter:off
       // single='=' | multi='+='
-      Choice(reader, new RuleCallback() {
+      operator = Choice(operator, reader, new RuleCallback<AssignmentOperator>() {
         @Override
-        public void run(final InputReader reader) throws RuleMismatchException {
+        public AssignmentOperator run(final AssignmentOperator assignmentOperator, final InputReader reader) throws RuleMismatchException {
           // single='='
-          single.getValue().add(T("=").match(reader));
+          assignmentOperator.setSingle(T("=").match(reader));
+          return assignmentOperator;
         }
-      }, new RuleCallback() {
+      }, new RuleCallback<AssignmentOperator>() {
         @Override
-        public void run(final InputReader reader) throws RuleMismatchException {
+        public AssignmentOperator run(final AssignmentOperator assignmentOperator, final InputReader reader) throws RuleMismatchException {
           // multi='+='
-          multi.getValue().add(T("+=").match(reader));
+          assignmentOperator.setMulti(T("+=").match(reader));
+          return assignmentOperator;
         }
       });
       
       // @formatter:on
 
-      final AssignmentOperator operator = new AssignmentOperator();
-      operator.setSingle(single.getValue());
-      operator.setMulti(multi.getValue());
       return operator;
     }
 

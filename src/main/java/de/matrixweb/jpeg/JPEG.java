@@ -5,6 +5,7 @@ import java.io.Reader;
 import de.matrixweb.jpeg.internal.ParserImpl;
 import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
+import de.matrixweb.jpeg.internal.rules.jpeg.Rule;
 
 /**
  * @author markusw
@@ -38,7 +39,11 @@ public class JPEG {
       final de.matrixweb.jpeg.internal.rules.jpeg.JPEG jpeg = new de.matrixweb.jpeg.internal.rules.jpeg.JPEG.GrammarRule()
           .match(this.reader);
       // TODO: Start code generation and add to ParserImpl
-      return new ParserImpl();
+      for (final Rule rule : jpeg.getRules()) {
+        System.out.println("Rule:\n" + rule);
+      }
+      final ParserImpl parser = new ParserImpl();
+      return parser;
     } catch (final UnexpectedEndOfInputException e) {
       throw new JPEGParserException("Failed to create parser from grammar", e);
     } catch (final RuleMismatchException e) {

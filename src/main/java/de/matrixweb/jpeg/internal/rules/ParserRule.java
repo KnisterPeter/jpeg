@@ -9,7 +9,7 @@ import de.matrixweb.jpeg.internal.type.Type;
  * 
  * @author markusw
  */
-public abstract class ParserRule<T extends Type> {
+public abstract class ParserRule<T extends Type<?>> {
 
   /**
    * @param reader

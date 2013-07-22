@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
@@ -12,14 +11,24 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class OneOrMoreExpression extends Expression {
+public class OneOrMoreExpression extends Expression<OneOrMoreExpression> {
 
-  private Expression expr;
+  private Expression<?> expr;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public OneOrMoreExpression copy() {
+    final OneOrMoreExpression copy = new OneOrMoreExpression();
+    copy.expr = this.expr.copy();
+    return copy;
+  }
 
   /**
    * @return the expr
    */
-  public Expression getExpr() {
+  public Expression<?> getExpr() {
     return this.expr;
   }
 
@@ -27,32 +36,32 @@ public class OneOrMoreExpression extends Expression {
    * @param expr
    *          the expr to set
    */
-  public void setExpr(final Expression expr) {
+  public void setExpr(final Expression<?> expr) {
     this.expr = expr;
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<Expression> expr = new Mutable<Expression>();
+      final OneOrMoreExpression expression = new OneOrMoreExpression();
 
       // @formatter:off
       // expr=AtomicExpression WS* '+'
       {
         // expr=AtomicExpression
-        expr.setValue(AtomicExpression().match(reader));
+        expression.setExpr(AtomicExpression().match(reader));
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // '+'
@@ -60,8 +69,6 @@ public class OneOrMoreExpression extends Expression {
       }
       // @formatter:on
 
-      final OneOrMoreExpression expression = new OneOrMoreExpression();
-      expression.setExpr(expr.getValue());
       return expression;
     }
 

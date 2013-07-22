@@ -3,16 +3,26 @@ package de.matrixweb.jpeg.internal.rules.jpeg;
 import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 
 /**
  * @author markusw
  */
-public class RuleReferenceExpression extends Expression {
+public class RuleReferenceExpression extends
+    Expression<RuleReferenceExpression> {
 
   private String name;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public RuleReferenceExpression copy() {
+    final RuleReferenceExpression copy = new RuleReferenceExpression();
+    copy.name = this.name.copy();
+    return copy;
+  }
 
   /**
    * @return the name
@@ -30,22 +40,21 @@ public class RuleReferenceExpression extends Expression {
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> name = new Mutable<String>(new String());
+      final RuleReferenceExpression expression = new RuleReferenceExpression();
 
       // @formatter:off
-      name.getValue().add(ID().match(reader));
+      // name=ID
+      expression.setName(ID().match(reader));
       // @formatter:on
 
-      final RuleReferenceExpression expression = new RuleReferenceExpression();
-      expression.setName(name.getValue());
       return expression;
     }
 

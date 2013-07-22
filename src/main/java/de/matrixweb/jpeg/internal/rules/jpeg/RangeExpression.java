@@ -7,8 +7,8 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
+import de.matrixweb.jpeg.internal.type.Type;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
@@ -16,11 +16,24 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class RangeExpression extends Expression {
+public class RangeExpression extends Expression<RangeExpression> {
 
   private String dash;
 
-  private List<Range> ranges;
+  private List<Range> ranges = new ArrayList<Range>();
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public RangeExpression copy() {
+    final RangeExpression copy = new RangeExpression();
+    copy.dash = this.dash != null ? this.dash.copy() : null;
+    for (final Range range : this.ranges) {
+      copy.ranges.add(range.copy());
+    }
+    return copy;
+  }
 
   /**
    * @return the dash
@@ -53,57 +66,58 @@ public class RangeExpression extends Expression {
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> dash = new Mutable<String>(new String());
-      final Mutable<List<Range>> ranges = new Mutable<List<Range>>(
-          new ArrayList<Range>());
+      RangeExpression expression = new RangeExpression();
 
       // @formatter:off
-      // '[' '-'? (!']'(!'-' . '-' !'-' . | !'-' .))* ']'
+      // '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']'
       {
         // '['
         T("[").match(reader);
-        // '-'?
-        Optional(reader, new RuleCallback() {
+        // dash='-'?
+        expression.setDash(Optional(null, reader, new RuleCallback<String>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
-            // '-'
-            dash.getValue().add(T("-").match(reader));
+          public String run(final String string, final InputReader reader) throws RuleMismatchException {
+            // dash='-'
+            return T("-").match(reader);
           }
-        });
-        // (!']'(!'-' . '-' !'-' . | !'-' .))*
-        ZeroOrMore(reader, new RuleCallback() {
+        }));
+        // (!']' ranges+=(MinMaxRange | CharRange))*
+        expression = ZeroOrMore(expression, reader, new RuleCallback<RangeExpression>() {
+          @SuppressWarnings({ "unchecked", "rawtypes" })
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public RangeExpression run(final RangeExpression expression, final InputReader reader) throws RuleMismatchException {
             // !']'
             Not(reader, new RuleCallback() {
               @Override
-              public void run(final InputReader reader) throws RuleMismatchException {
+              public Type run(final Type type, final InputReader reader) throws RuleMismatchException {
                 // ']'
-                T("]").match(reader);
+                return T("]").match(reader);
               }
             });
-            // (!'-' . '-' !'-' . | !'-' .)
-            Choice(reader, new RuleCallback() {
+            // ranges+=(MinMaxRange | CharRange)
+            expression.getRanges().add(Choice(null, reader, new RuleCallback<Range>() {
               @Override
-              public void run(final InputReader reader) throws RuleMismatchException {
-                // !'-' . '-' !'-' .
-                ranges.getValue().add(MinMaxRange().match(reader));
+              public Range run(final Range range, final InputReader reader) throws RuleMismatchException {
+                // MinMaxRange
+                return MinMaxRange().match(reader);
               }
-            }, new RuleCallback() {
+            }, new RuleCallback<Range>() {
               @Override
-              public void run(final InputReader reader) throws RuleMismatchException {
-                // !'-' .
-                ranges.getValue().add(CharRange().match(reader));
+              public Range run(final Range range, final InputReader reader) throws RuleMismatchException {
+                // CharRange
+                return CharRange().match(reader);
               }
-            });
+            }));
+            
+            return expression;
           }
         });
         // ']'
@@ -111,9 +125,6 @@ public class RangeExpression extends Expression {
       }
       // @formatter:on
 
-      final RangeExpression expression = new RangeExpression();
-      expression.setDash(dash.getValue());
-      expression.setRanges(ranges.getValue());
       return expression;
     }
   }

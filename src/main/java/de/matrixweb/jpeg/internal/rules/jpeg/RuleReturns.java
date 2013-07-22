@@ -13,9 +13,19 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class RuleReturns implements Type {
+public class RuleReturns implements Type<RuleReturns> {
 
   private String name;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.type.Type#copy()
+   */
+  @Override
+  public RuleReturns copy() {
+    final RuleReturns copy = new RuleReturns();
+    copy.name = this.name.copy();
+    return copy;
+  }
 
   /**
    * @return the name
@@ -49,11 +59,11 @@ public class RuleReturns implements Type {
         // 'returns'
         T("returns").match(reader);
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // name=FQTN

@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
@@ -12,14 +11,24 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class SubExpression extends Expression {
+public class SubExpression extends Expression<SubExpression> {
 
-  private Expression expr;
+  private Expression<?> expr;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public SubExpression copy() {
+    final SubExpression copy = new SubExpression();
+    copy.expr = this.expr.copy();
+    return copy;
+  }
 
   /**
    * @return the expr
    */
-  public Expression getExpr() {
+  public Expression<?> getExpr() {
     return this.expr;
   }
 
@@ -27,42 +36,42 @@ public class SubExpression extends Expression {
    * @param expr
    *          the expr to set
    */
-  public void setExpr(final Expression expr) {
+  public void setExpr(final Expression<?> expr) {
     this.expr = expr;
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<Expression> expr = new Mutable<Expression>();
+      final SubExpression expression = new SubExpression();
 
       // @formatter:off
       // '(' WS* expr=ChoiceExpression WS* ')'
       {
         // '('
         T("(").match(reader);
-        // WS* 
-        ZeroOrMore(reader, new RuleCallback() {
+        // WS*
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // expr=ChoiceExpression
-        expr.setValue(ChoiceExpression().match(reader));
-        // WS* 
-        ZeroOrMore(reader, new RuleCallback() {
+        expression.setExpr(ChoiceExpression().match(reader));
+        // WS*
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // ')'
@@ -70,8 +79,6 @@ public class SubExpression extends Expression {
       }
       // @formatter:on
 
-      final SubExpression expression = new SubExpression();
-      expression.setExpr(expr.getValue());
       return expression;
     }
 

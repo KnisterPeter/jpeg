@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
+import de.matrixweb.jpeg.internal.type.String;
 
 /**
  * @author markusw
@@ -16,8 +17,8 @@ public class CharRange implements Matcher {
   /**
    * @param range
    */
-  public CharRange(final String range) {
-    String def = range.substring(1, range.length() - 1);
+  public CharRange(final java.lang.String range) {
+    java.lang.String def = range.substring(1, range.length() - 1);
     while (def.length() > 0) {
       if (def.length() > 1 && def.charAt(1) == '-') {
         this.ranges.add(new RangeDef(def.substring(0, 3)));
@@ -46,14 +47,14 @@ public class CharRange implements Matcher {
       throw new RuleMismatchException(this.ranges.toString(),
           reader.getPosition(), reader.toString());
     }
-    return character.toString();
+    return new String(character);
   }
 
   /**
    * @see java.lang.Object#toString()
    */
   @Override
-  public String toString() {
+  public java.lang.String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append("[");
     for (final RangeDef range : this.ranges) {
@@ -72,7 +73,7 @@ public class CharRange implements Matcher {
     /**
      * @param range
      */
-    public RangeDef(final String range) {
+    public RangeDef(final java.lang.String range) {
       if (range.length() == 1) {
         this.min = this.max = range.charAt(0);
       } else {
@@ -89,9 +90,9 @@ public class CharRange implements Matcher {
      * @see java.lang.Object#toString()
      */
     @Override
-    public String toString() {
-      return this.min != this.max ? this.min + "-" + this.max : String
-          .valueOf(this.min);
+    public java.lang.String toString() {
+      return this.min != this.max ? this.min + "-" + this.max
+          : java.lang.String.valueOf(this.min);
     }
 
   }

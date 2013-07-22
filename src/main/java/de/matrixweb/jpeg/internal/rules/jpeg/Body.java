@@ -14,14 +14,26 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class Body implements Type {
+public class Body implements Type<Body> {
 
-  private List<Expression> expressions;
+  private List<Expression<?>> expressions = new ArrayList<Expression<?>>();
+
+  /**
+   * @see de.matrixweb.jpeg.internal.type.Type#copy()
+   */
+  @Override
+  public Body copy() {
+    final Body copy = new Body();
+    for (final Expression<?> expression : this.expressions) {
+      copy.expressions.add(expression.copy());
+    }
+    return copy;
+  }
 
   /**
    * @return the expressions
    */
-  public List<Expression> getExpressions() {
+  public List<Expression<?>> getExpressions() {
     return this.expressions;
   }
 
@@ -29,14 +41,12 @@ public class Body implements Type {
    * @param expressions
    *          the expressions to set
    */
-  public void setExpressions(final List<Expression> expressions) {
+  public void setExpressions(final List<Expression<?>> expressions) {
     this.expressions = expressions;
   }
 
   /** */
   public static class GrammarRule extends ParserRule<Body> {
-
-    private final List<Expression> expressions = new ArrayList<Expression>();
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
@@ -44,27 +54,28 @@ public class Body implements Type {
     @Override
     protected Body consume(final InputReader reader)
         throws RuleMismatchException {
+      Body body = new Body();
+
       // @formatter:off
       // (expressions+=ChoiceExpression WS*)+
-      OneOrMore(reader, new RuleCallback() {
+      body = OneOrMore(body, reader, new RuleCallback<Body>() {
         @Override
-        public void run(final InputReader reader) throws RuleMismatchException {
+        public Body run(final Body body, final InputReader reader) throws RuleMismatchException {
           // expressions+=ChoiceExpression
-          GrammarRule.this.expressions.add(ChoiceExpression().match(reader));
+          body.getExpressions().add(ChoiceExpression().match(reader));
           // WS*
-          ZeroOrMore(reader, new RuleCallback() {
+          ZeroOrMore(null, reader, new RuleCallback<WS>() {
             @Override
-            public void run(final InputReader reader) throws RuleMismatchException {
+            public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
               // WS
-              WS().match(reader);
+              return WS().match(reader);
             }
           });
+          return body;
         }
       });
       // @formatter:on
 
-      final Body body = new Body();
-      body.setExpressions(this.expressions);
       return body;
     }
 

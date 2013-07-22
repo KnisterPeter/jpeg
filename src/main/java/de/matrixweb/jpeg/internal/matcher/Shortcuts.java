@@ -1,6 +1,5 @@
 package de.matrixweb.jpeg.internal.matcher;
 
-
 /**
  * @author markusw
  */
@@ -10,7 +9,7 @@ public final class Shortcuts {
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static AnyChar Any() {
     return new AnyChar();
@@ -18,15 +17,15 @@ public final class Shortcuts {
 
   /**
    * @param sequence
-   * @return
+   * @return ...
    */
   public static Terminal T(final String sequence) {
     return new Terminal(sequence);
   }
 
   /**
-   * @param sequence
-   * @return
+   * @param c
+   * @return ...
    */
   public static Terminal T(final char c) {
     return new Terminal(c);
@@ -34,14 +33,14 @@ public final class Shortcuts {
 
   /**
    * @param range
-   * @return
+   * @return ...
    */
   public static CharRange Char(final String range) {
     return new CharRange(range);
   }
 
   /**
-   * @return
+   * @return ...
    */
   public static EndOfInput EOI() {
     return new EndOfInput();

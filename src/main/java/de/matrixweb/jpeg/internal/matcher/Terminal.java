@@ -2,18 +2,19 @@ package de.matrixweb.jpeg.internal.matcher;
 
 import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
+import de.matrixweb.jpeg.internal.type.String;
 
 /**
  * @author markusw
  */
 public class Terminal implements Matcher {
 
-  private final String sequence;
+  private final java.lang.String sequence;
 
   /**
    * @param sequence
    */
-  public Terminal(final String sequence) {
+  public Terminal(final java.lang.String sequence) {
     this.sequence = sequence;
   }
 
@@ -21,7 +22,7 @@ public class Terminal implements Matcher {
    * @param c
    */
   public Terminal(final char c) {
-    this.sequence = String.valueOf(c);
+    this.sequence = java.lang.String.valueOf(c);
   }
 
   @Override
@@ -46,14 +47,14 @@ public class Terminal implements Matcher {
         throw rme;
       }
     }
-    return sb.toString();
+    return new String(sb.toString());
   }
 
   /**
    * @see java.lang.Object#toString()
    */
   @Override
-  public String toString() {
+  public java.lang.String toString() {
     return "'"
         + this.sequence.replace("\n", "\\n").replace("\r", "\\r")
             .replace("\t", "\\t") + "'";

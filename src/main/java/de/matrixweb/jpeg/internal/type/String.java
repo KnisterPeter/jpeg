@@ -3,7 +3,7 @@ package de.matrixweb.jpeg.internal.type;
 /**
  * @author markusw
  */
-public class String implements Type {
+public class String implements Type<String> {
 
   private StringBuilder value;
 
@@ -19,6 +19,21 @@ public class String implements Type {
    */
   public String(final java.lang.String value) {
     this.value = new StringBuilder(value);
+  }
+
+  /**
+   * @param c
+   */
+  public String(final char c) {
+    this.value = new StringBuilder().append(c);
+  }
+
+  /**
+   * @see de.matrixweb.jpeg.internal.type.Type#copy()
+   */
+  @Override
+  public String copy() {
+    return new String(getValue());
   }
 
   /**

@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
@@ -13,13 +12,25 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class ActionExpression extends Expression {
+public class ActionExpression extends Expression<ActionExpression> {
 
   private String property;
 
   private AssignmentOperator op;
 
   private String name;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public ActionExpression copy() {
+    final ActionExpression copy = new ActionExpression();
+    copy.property = this.property.copy();
+    copy.op = this.op.copy();
+    copy.name = this.name.copy();
+    return copy;
+  }
 
   /**
    * @return the name
@@ -67,17 +78,16 @@ public class ActionExpression extends Expression {
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
+    @SuppressWarnings("unchecked")
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> property = new Mutable<String>(new String());
-      final Mutable<AssignmentOperator> op = new Mutable<AssignmentOperator>();
-      final Mutable<String> name = new Mutable<String>(new String());
+      ActionExpression expression = new ActionExpression();
 
       // @formatter:off
       // '{' WS* (property=ID WS* op=('='|'+=') WS* 'current' WS* | name=FQTN) WS* '}'
@@ -85,70 +95,68 @@ public class ActionExpression extends Expression {
         // '{'
         T("{").match(reader);
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // (property=ID WS* op=('='|'+=') WS* 'current' WS* | name=FQTN)
-        Choice(reader, new RuleCallback() {
+        expression = Choice(expression, reader, new RuleCallback<ActionExpression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
-            final Mutable<String> property0 = new Mutable<String>(new String());
-            final Mutable<AssignmentOperator> op0 = new Mutable<AssignmentOperator>();
+          public ActionExpression run(final ActionExpression expression, final InputReader reader) throws RuleMismatchException {
             
             // property=ID WS* op=('='|'+=') WS* 'current' WS*
             {
               // property=ID 
-              property0.getValue().add(ID().match(reader));
-              // WS* 
-              ZeroOrMore(reader, new RuleCallback() {
+              expression.setProperty(ID().match(reader));
+              // WS*
+              ZeroOrMore(null, reader, new RuleCallback<WS>() {
                 @Override
-                public void run(final InputReader reader) throws RuleMismatchException {
+                public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
                   // WS
-                  WS().match(reader);
+                  return WS().match(reader);
                 }
               });
               // op=AssignmentOperator
-              op0.setValue(AssignmentOperator().match(reader));
-              // WS* 
-              ZeroOrMore(reader, new RuleCallback() {
+              expression.setOp(AssignmentOperator().match(reader));
+              // WS*
+              ZeroOrMore(null, reader, new RuleCallback<WS>() {
                 @Override
-                public void run(final InputReader reader) throws RuleMismatchException {
+                public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
                   // WS
-                  WS().match(reader);
+                  return WS().match(reader);
                 }
               });
               // 'current' 
               T("current").match(reader);
               // WS*
-              ZeroOrMore(reader, new RuleCallback() {
+              ZeroOrMore(null, reader, new RuleCallback<WS>() {
                 @Override
-                public void run(final InputReader reader) throws RuleMismatchException {
+                public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
                   // WS
-                  WS().match(reader);
+                  return WS().match(reader);
                 }
               });
               
-              property.setValue(property0.getValue());
-              op.setValue(op0.getValue());
             }
+            return expression;
           }
-        }, new RuleCallback() {
+        }, new RuleCallback<ActionExpression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public ActionExpression run(final ActionExpression expression, final InputReader reader) throws RuleMismatchException {
             // name=FQTN
-            name.getValue().add(FQTN().match(reader));
+            expression.setName(FQTN().match(reader));
+            return expression;
           }
         });
-        // WS* 
-        ZeroOrMore(reader, new RuleCallback() {
+        // WS*
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // '}'
@@ -156,10 +164,6 @@ public class ActionExpression extends Expression {
       }
       // @formatter:on
 
-      final ActionExpression expression = new ActionExpression();
-      expression.setProperty(property.getValue());
-      expression.setOp(op.getValue());
-      expression.setName(name.getValue());
       return expression;
     }
   }

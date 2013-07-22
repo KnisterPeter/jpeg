@@ -35,9 +35,10 @@ public class ParserImpl implements Parser {
   }
 
   @SuppressWarnings("unchecked")
-  private ParserRule<? extends Type> createStartRule(final String startRule) {
+  private ParserRule<? extends Type<?>> createStartRule(final String startRule) {
     try {
-      return (ParserRule<? extends Type>) Class
+      // TODO: Use stored rules for the created grammar
+      return (ParserRule<? extends Type<?>>) Class
           .forName(
               "de.matrixweb.jpeg.internal.rules.jpeg." + startRule
                   + "$GrammarRule").newInstance();
@@ -55,7 +56,7 @@ public class ParserImpl implements Parser {
 
   private class ParsingResultImpl implements ParsingResult {
 
-    private Type tree;
+    private Type<?> tree;
 
     private Exception error;
 
@@ -63,7 +64,7 @@ public class ParserImpl implements Parser {
      * @see de.matrixweb.jpeg.ParsingResult#getTree()
      */
     @Override
-    public Type getTree() {
+    public Type<?> getTree() {
       return this.tree;
     }
 

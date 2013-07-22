@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
@@ -13,9 +12,19 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class TerminalExpression extends Expression {
+public class TerminalExpression extends Expression<TerminalExpression> {
 
   private String value;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public TerminalExpression copy() {
+    final TerminalExpression copy = new TerminalExpression();
+    copy.value = this.value != null ? this.value.copy() : null;
+    return copy;
+  }
 
   /**
    * @return the value
@@ -33,27 +42,29 @@ public class TerminalExpression extends Expression {
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> value = new Mutable<String>(new String());
+      TerminalExpression expression = new TerminalExpression();
 
       // @formatter:off
       // '\'' value=InTerminalChar? '\''
       {
         // '\''
         T("'").match(reader);
-        // InTerminalChar?
-        Optional(reader, new RuleCallback() {
+        // value=InTerminalChar?
+        expression = Optional(expression, reader, new RuleCallback<TerminalExpression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
-            // InTerminalChar
-            value.getValue().add(InTerminalChar().match(reader));
+          public TerminalExpression run(final TerminalExpression expression, final InputReader reader) throws RuleMismatchException {
+            // value=InTerminalChar
+            expression.setValue(InTerminalChar().match(reader));
+            
+            return expression;
           }
         });
         // '\''
@@ -61,8 +72,6 @@ public class TerminalExpression extends Expression {
       }
       // @formatter:on
 
-      final TerminalExpression expression = new TerminalExpression();
-      expression.setValue(value.getValue());
       return expression;
     }
 

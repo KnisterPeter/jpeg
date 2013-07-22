@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
@@ -12,13 +11,25 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class AssignableExpression extends Expression {
+public class AssignableExpression extends Expression<AssignableExpression> {
 
   private String property;
 
   private AssignmentOperator op;
 
-  private Expression expr;
+  private Expression<?> expr;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public AssignableExpression copy() {
+    final AssignableExpression copy = new AssignableExpression();
+    copy.property = this.property != null ? this.property.copy() : null;
+    copy.op = this.op != null ? this.op.copy() : null;
+    copy.expr = this.expr != null ? this.expr.copy() : null;
+    return copy;
+  }
 
   /**
    * @return the property
@@ -53,7 +64,7 @@ public class AssignableExpression extends Expression {
   /**
    * @return the expr
    */
-  public Expression getExpr() {
+  public Expression<?> getExpr() {
     return this.expr;
   }
 
@@ -61,98 +72,88 @@ public class AssignableExpression extends Expression {
    * @param expr
    *          the expr to set
    */
-  public void setExpr(final Expression expr) {
+  public void setExpr(final Expression<?> expr) {
     this.expr = expr;
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      // FIXME: This should include 'new String()' in the normal pattern
-      final Mutable<String> property = new Mutable<String>();
-      final Mutable<AssignmentOperator> op = new Mutable<AssignmentOperator>();
-      final Mutable<Expression> expr = new Mutable<Expression>();
+      AssignableExpression assignableExpression = new AssignableExpression();
 
       // @formatter:off
       // (property=ID WS* op=('='|'+=') WS*)? expr=( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression)
       {
         // (property=ID WS* op=('='|'+=') WS*)?
-        Optional(reader, new RuleCallback() {
+        assignableExpression = Optional(assignableExpression, reader, new RuleCallback<AssignableExpression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
-            final Mutable<String> property0 = new Mutable<String>(new String());
-            final Mutable<AssignmentOperator> op0 = new Mutable<AssignmentOperator>();
-
+          public AssignableExpression run(final AssignableExpression assignableExpression, final InputReader reader) throws RuleMismatchException {
             // property=ID 
-            property0.getValue().add(ID().match(reader));
+            assignableExpression.setProperty(ID().match(reader));
             // WS*
-            ZeroOrMore(reader, new RuleCallback() {
+            ZeroOrMore(null, reader, new RuleCallback<WS>() {
               @Override
-              public void run(final InputReader reader) throws RuleMismatchException {
+              public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
                 // WS
-                WS().match(reader);
+                return WS().match(reader);
               }
             });
             // op=AssignmentOperator
-            op0.setValue(AssignmentOperator().match(reader));
+            assignableExpression.setOp(AssignmentOperator().match(reader));
             // WS*
-            ZeroOrMore(reader, new RuleCallback() {
+            ZeroOrMore(null, reader, new RuleCallback<WS>() {
               @Override
-              public void run(final InputReader reader) throws RuleMismatchException {
+              public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
                 // WS
-                WS().match(reader);
+                return WS().match(reader);
               }
             });
             
-            property.setValue(property0.getValue());
-            op.setValue(op0.getValue());
+            return assignableExpression;
           }
         });
         // expr=(SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression)
-        Choice(reader, new RuleCallback() {
+        assignableExpression.setExpr(Choice(null, reader, new RuleCallback<Expression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public Expression run(final Expression expr, final InputReader reader) throws RuleMismatchException {
             // SubExpression
-            expr.setValue(SubExpression().match(reader));
+            return SubExpression().match(reader);
           }
-        }, new RuleCallback() {
+        }, new RuleCallback<Expression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public Expression run(final Expression expr, final InputReader reader) throws RuleMismatchException {
             // RangeExpression
-            expr.setValue(RangeExpression().match(reader));
+            return RangeExpression().match(reader);
           }
-        }, new RuleCallback() {
+        }, new RuleCallback<Expression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public Expression run(final Expression expr, final InputReader reader) throws RuleMismatchException {
             // TerminalExpression
-            expr.setValue(TerminalExpression().match(reader));
+            return TerminalExpression().match(reader);
           }
-        }, new RuleCallback() {
+        }, new RuleCallback<Expression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public Expression run(final Expression expr, final InputReader reader) throws RuleMismatchException {
             // AnyCharExpression
-            expr.setValue(AnyCharExpression().match(reader));
+            return AnyCharExpression().match(reader);
           }
-        }, new RuleCallback() {
+        }, new RuleCallback<Expression>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public Expression run(final Expression expr, final InputReader reader) throws RuleMismatchException {
             // RuleReferenceExpression
-            expr.setValue(RuleReferenceExpression().match(reader));
+            return RuleReferenceExpression().match(reader);
           }
-        });
+        }));
       }
       // @formatter:on
 
-      final AssignableExpression assignableExpression = new AssignableExpression();
-      assignableExpression.setProperty(property.getValue());
-      assignableExpression.setOp(op.getValue());
-      assignableExpression.setExpr(expr.getValue());
       return assignableExpression;
     }
 

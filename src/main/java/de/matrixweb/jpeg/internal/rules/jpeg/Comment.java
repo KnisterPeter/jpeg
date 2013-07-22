@@ -11,7 +11,15 @@ import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
 /**
  * @author markusw
  */
-public class Comment implements Type {
+public class Comment implements Type<Comment> {
+
+  /**
+   * @see de.matrixweb.jpeg.internal.type.Type#copy()
+   */
+  @Override
+  public Comment copy() {
+    return new Comment();
+  }
 
   /** */
   public static class GrammarRule extends ParserRule<Comment> {
@@ -28,33 +36,38 @@ public class Comment implements Type {
         // '//'
         T("//").match(reader);
         // (!('\r'? '\n') .)*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<Comment>() {
+          @SuppressWarnings("rawtypes")
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public Comment run(final Comment comment, final InputReader reader) throws RuleMismatchException {
             // !('\r'? '\n') .
             {
               // !('\r'? '\n')
               Not(reader, new RuleCallback() {
                 @Override
-                public void run(final InputReader reader) throws RuleMismatchException {
+                public Type run(final Type type, final InputReader reader) throws RuleMismatchException {
                   // '\r'? '\n'
                   {
                     // '\r'?
-                    Optional(reader, new RuleCallback() {
+                    Optional(null, reader, new RuleCallback<Comment>() {
                       @Override
-                      public void run(final InputReader reader) throws RuleMismatchException {
+                      public Comment run(final Comment comment, final InputReader reader) throws RuleMismatchException {
                         // '\r'
                         T('\r').match(reader);
+                        return comment;
                       }
                     });
                     // '\n'
                     T('\n').match(reader);
                   }
+                  
+                  return null;
                 }
               });
               // .
               Any().match(reader);
             }
+            return comment;
           }
         });
       }

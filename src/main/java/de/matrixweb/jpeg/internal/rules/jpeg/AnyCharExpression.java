@@ -3,16 +3,25 @@ package de.matrixweb.jpeg.internal.rules.jpeg;
 import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
 
 /**
  * @author markusw
  */
-public class AnyCharExpression extends Expression {
+public class AnyCharExpression extends Expression<AnyCharExpression> {
 
   private String _char;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.rules.jpeg.Expression#copy()
+   */
+  @Override
+  public AnyCharExpression copy() {
+    final AnyCharExpression copy = new AnyCharExpression();
+    copy._char = this._char.copy();
+    return copy;
+  }
 
   /**
    * @return the _char
@@ -30,22 +39,21 @@ public class AnyCharExpression extends Expression {
   }
 
   /** */
-  public static class GrammarRule extends ParserRule<Expression> {
+  public static class GrammarRule extends ParserRule<Expression<?>> {
 
     /**
      * @see de.matrixweb.jpeg.internal.rules.ParserRule#match(de.matrixweb.jpeg.internal.io.InputReader)
      */
     @Override
-    protected Expression consume(final InputReader reader)
+    protected Expression<?> consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> _char = new Mutable<String>(new String());
+      final AnyCharExpression expression = new AnyCharExpression();
 
       // @formatter:off
-      _char.getValue().add(T('.').match(reader));
+      // char='.'
+      expression.setChar(T('.').match(reader));
       // @formatter:on
 
-      final AnyCharExpression expression = new AnyCharExpression();
-      expression.setChar(_char.getValue());
       return expression;
     }
 

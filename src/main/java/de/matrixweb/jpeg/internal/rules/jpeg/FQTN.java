@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
 import static de.matrixweb.jpeg.internal.rules.RuleHelper.*;
@@ -24,32 +23,29 @@ public class FQTN extends String {
     @Override
     protected String consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> value = new Mutable<String>(new String());
+      String string = new String();
 
       // @formatter:off
       // ID ('.' ID)*
       {
         // ID
-        value.getValue().add(ID().match(reader));
+        string.add(ID().match(reader));
         // ('.' ID)*
-        ZeroOrMore(reader, new RuleCallback() {
+        string = ZeroOrMore(string, reader, new RuleCallback<String>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
-            final Mutable<String> value0 = new Mutable<String>(new String());
+          public String run(final String string, final InputReader reader) throws RuleMismatchException {
             
             // '.' ID
-            value0.getValue().add(T('.').match(reader));
+            string.add(T('.').match(reader));
             // ID
-            value0.getValue().add(ID().match(reader));
+            string.add(ID().match(reader));
             
-            value.getValue().add(value0.getValue());
+            return string;
           }
         });
       }
       // @formatter:on
 
-      final String string = new String();
-      string.setValue(value.getValue());
       return string;
     }
 

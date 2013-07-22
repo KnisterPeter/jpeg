@@ -4,7 +4,6 @@ import de.matrixweb.jpeg.internal.io.InputReader;
 import de.matrixweb.jpeg.internal.rules.ParserRule;
 import de.matrixweb.jpeg.internal.rules.RuleCallback;
 import de.matrixweb.jpeg.internal.rules.RuleMismatchException;
-import de.matrixweb.jpeg.internal.type.Mutable;
 import de.matrixweb.jpeg.internal.type.String;
 import de.matrixweb.jpeg.internal.type.Type;
 import static de.matrixweb.jpeg.internal.matcher.Shortcuts.*;
@@ -14,13 +13,25 @@ import static de.matrixweb.jpeg.internal.rules.jpeg.StaticRules.*;
 /**
  * @author markusw
  */
-public class Rule implements Type {
+public class Rule implements Type<Rule> {
 
   private String name;
 
   private RuleReturns returns;
 
   private Body body;
+
+  /**
+   * @see de.matrixweb.jpeg.internal.type.Type#copy()
+   */
+  @Override
+  public Rule copy() {
+    final Rule copy = new Rule();
+    copy.name = this.name != null ? this.name.copy() : null;
+    copy.returns = this.returns != null ? this.returns.copy() : null;
+    copy.body = this.body != null ? this.body.copy() : null;
+    return copy;
+  }
 
   /**
    * @return the name
@@ -84,76 +95,71 @@ public class Rule implements Type {
     @Override
     protected Rule consume(final InputReader reader)
         throws RuleMismatchException {
-      final Mutable<String> name = new Mutable<String>(new String());
-      final Mutable<RuleReturns> returns = new Mutable<RuleReturns>();
-      final Mutable<Body> body = new Mutable<Body>();
+      Rule rule = new Rule();
 
       // @formatter:off
       // name=ID WS* returns=RuleReturns? WS* ':' WS* body=Body WS* ';' WS*
       {
         // name=ID
-        name.getValue().add(ID().match(reader));
+        rule.setName(ID().match(reader));
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // returns=RuleReturns?
-        Optional(reader, new RuleCallback() {
+        rule = Optional(rule, reader, new RuleCallback<Rule>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public Rule run(final Rule rule, final InputReader reader) throws RuleMismatchException {
             // returns=RuleReturns
-            returns.setValue(RuleReturns().match(reader));
+            rule.setReturns(RuleReturns().match(reader));
+            return rule;
           }
         });
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // ':'
         T(":").match(reader);
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // body=Body
-        body.setValue(Body().match(reader));
+        rule.setBody(Body().match(reader));
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
         // ':'
         T(";").match(reader);
         // WS*
-        ZeroOrMore(reader, new RuleCallback() {
+        ZeroOrMore(null, reader, new RuleCallback<WS>() {
           @Override
-          public void run(final InputReader reader) throws RuleMismatchException {
+          public WS run(final WS ws, final InputReader reader) throws RuleMismatchException {
             // WS
-            WS().match(reader);
+            return WS().match(reader);
           }
         });
       }
       // @formatter:on
 
-      final Rule rule = new Rule();
-      rule.setName(name.getValue());
-      rule.setReturns(returns.getValue());
-      rule.setBody(body.getValue());
       return rule;
     }
 

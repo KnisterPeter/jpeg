@@ -1,6 +1,7 @@
 package de.matrixweb.jpeg.internal.matcher;
 
 import de.matrixweb.jpeg.internal.io.InputReader;
+import de.matrixweb.jpeg.internal.type.String;
 
 /**
  * @author markusw
@@ -9,14 +10,14 @@ public class AnyChar implements Matcher {
 
   @Override
   public String match(final InputReader reader) {
-    return String.valueOf(reader.read());
+    return new String(reader.read());
   }
 
   /**
    * @see java.lang.Object#toString()
    */
   @Override
-  public String toString() {
+  public java.lang.String toString() {
     return ".";
   }
 
