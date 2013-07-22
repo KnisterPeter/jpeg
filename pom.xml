@@ -49,11 +49,12 @@
       <artifactId>ecj</artifactId>
       <version>4.2.2</version>
     </dependency>
+    
     <dependency>
-      <!-- TODO: Remove -->
-      <groupId>org.apache.velocity</groupId>
-      <artifactId>velocity</artifactId>
-      <version>1.7</version>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -77,12 +78,6 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <version>1.9.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.4</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -7,47 +7,39 @@
 // This is the main entry point into the JPEG grammar.
 // 
 JPEG :
-  ((Rule | Comment) WS*)+ EOI
+  (rules+=Rule | Comment WS*)+ EOI
 ;
 
 // -----------------------------------------------------------------------------
 
 Rule :
-  RuleName WS* RuleReturns? WS* ':' WS* Body WS* ';' WS*
+  name=ID WS* returns=RuleReturns? WS* ':' WS* body=Body WS* ';' WS*
 ;
 
 RuleReturns :
-  'returns' WS* ReturnTypeName
-;
-
-ReturnTypeName :
-  FQTN
-;
-
-// -----------------------------------------------------------------------------
-
-RuleName :
-  value=ID
+  'returns' WS* name=FQTN
 ;
 
 // -----------------------------------------------------------------------------
 
 Body :
-  (ChoiceExpression WS*)+
+  (expressions+=ChoiceExpression WS*)+
 ;
 
 // -----------------------------------------------------------------------------
 
-ChoiceExpression :
-  SequenceExpression ('|' WS* SequenceExpression)*
+ChoiceExpression returns Expression :
+  choices+=SequenceExpression ('|' WS* choices+=SequenceExpression)*
 ;
 
 // -----------------------------------------------------------------------------
 
-SequenceExpression :
+SequenceExpression returns Expression :
   (
+    expressions+=
     (
-      AndPredicateExpression
+        ActionExpression
+      | AndPredicateExpression
       | NotPredicateExpression
       | OneOrMoreExpression
       | ZeroOrMoreExpression
@@ -60,73 +52,104 @@ SequenceExpression :
 
 // -----------------------------------------------------------------------------
 
-AndPredicateExpression :
-  '&' WS* AtomicExpression
+ActionExpression returns Expression :
+  '{'
+  WS* 
+  ( 
+      property=ID WS* op=AssignmentOperator WS* 'current' WS*
+    | name=FQTN
+  ) 
+  WS* 
+  '}'
 ;
 
 // -----------------------------------------------------------------------------
 
-NotPredicateExpression :
-  '!' WS* AtomicExpression
+AndPredicateExpression returns Expression :
+  '&' WS* expr=AtomicExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-OneOrMoreExpression :
-  AtomicExpression WS* '+'
+NotPredicateExpression returns Expression :
+  '!' WS* expr=AtomicExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-ZeroOrMoreExpression :
-  AtomicExpression WS* '*'
+OneOrMoreExpression returns Expression :
+  expr=AtomicExpression WS* '+'
 ;
 
 // -----------------------------------------------------------------------------
 
-OptionalExpression :
-  AtomicExpression WS* '?'
+ZeroOrMoreExpression returns Expression :
+  expr=AtomicExpression WS* '*'
 ;
 
 // -----------------------------------------------------------------------------
 
-AtomicExpression :
-  EndOfInputExpression
+OptionalExpression returns Expression :
+  expr=AtomicExpression WS* '?'
+;
+
+// -----------------------------------------------------------------------------
+
+AtomicExpression returns Expression :
+    EndOfInputExpression
   | AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-AssignableExpression :
-  (ID WS* AssignOperation WS*)?
+AssignableExpression returns Expression :
+  (property=ID WS* op=AssignmentOperator WS*)?
+  expr=
   ( SubExpression
   | RangeExpression
-  | Terminal
+  | TerminalExpression
   | AnyCharExpression
-  | RuleName
+  | RuleReferenceExpression
   )
-;
-AssignOperation :
-    '='
-  | '+='
 ;
 
 // -----------------------------------------------------------------------------
 
-SubExpression :
-  '(' WS* ChoiceExpression WS* ')'
+AssignmentOperator :
+    single='=' 
+  | multi='+='
+;
+
+// -----------------------------------------------------------------------------
+
+SubExpression returns Expression :
+  '(' WS* expr=ChoiceExpression WS* ')'
 ;
 
 // -----------------------------------------------------------------------------
 
 RangeExpression : 
-  '[' '-'? (!']'(!'-' . '-' !'-' . | !'-' .))* ']'
+  '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']'
+;
+
+MinMaxRange returns Range :
+  !'-' min=. '-' !'-' max=.
+;
+
+CharRange returns Range :
+  !'-' char=.
 ;
 
 // -----------------------------------------------------------------------------
 
-AnyCharExpression :
-  '.'
+AnyCharExpression returns Expression :
+  char='.'
+;
+
+// -----------------------------------------------------------------------------
+
+RuleReferenceExpression returns Expression :
+  name=ID
 ;
 
 // -----------------------------------------------------------------------------
@@ -137,11 +160,11 @@ EndOfInputExpression :
 
 // -----------------------------------------------------------------------------
 
-Terminal :
-  '\'' InTerminalChar? '\''
+TerminalExpression returns Expression :
+  '\'' value=InTerminalChar? '\''
 ;
 
-InTerminalChar :
+InTerminalChar returns String :
   ('\\' '\'' | '\\' '\\' | !'\'' .)+
 ;
 
@@ -156,8 +179,8 @@ Comment :
 // 
 // Namespaced type identifier
 // 
-FQTN returns String:
-  name+=ID ('.' name+=ID)*
+FQTN returns String :
+  ID ('.' ID)*
 ;
 
 // 
@@ -165,7 +188,7 @@ FQTN returns String:
 // by letters, digits or underscores.
 // 
 ID returns String :
-  chars+=[a-zA-Z_](chars+=[a-zA-Z0-9_])*
+  [a-zA-Z_]([a-zA-Z0-9_])*
 ;
 
 WS : ' ' | '\n' | '\t' | '\r';
