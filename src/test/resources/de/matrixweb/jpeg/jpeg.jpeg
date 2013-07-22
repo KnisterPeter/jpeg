@@ -27,14 +27,37 @@ Body :
 ;
 
 // -----------------------------------------------------------------------------
+//
+// Just syntactic common base class definition
 
-ChoiceExpression returns Expression :
+Expression :
+    ActionExpression
+  | AndPredicateExpression
+  | AnyCharExpression
+  | AssignableExpression
+  | AtomicExpression
+  | ChoiceExpression
+  | EndOfInputExpression
+  | NotPredicateExpression
+  | OneOrMoreExpression
+  | OptionalExpression
+  | RangeExpression
+  | RuleReferenceExpression
+  | SequenceExpression
+  | SubExpression
+  | TerminalExpression
+  | ZeroOrMoreExpression
+;
+
+// -----------------------------------------------------------------------------
+
+ChoiceExpression :
   choices+=SequenceExpression ('|' WS* choices+=SequenceExpression)*
 ;
 
 // -----------------------------------------------------------------------------
 
-SequenceExpression returns Expression :
+SequenceExpression :
   (
     expressions+=
     (
@@ -52,57 +75,54 @@ SequenceExpression returns Expression :
 
 // -----------------------------------------------------------------------------
 
-ActionExpression returns Expression :
-  '{'
-  WS* 
-  ( 
-      property=ID WS* op=AssignmentOperator WS* 'current' WS*
-    | name=FQTN
+ActionExpression :
+  '{' WS* 
+  ( property=ID WS* op=AssignmentOperator WS* 'current' WS*
+  | name=FQTN
   ) 
-  WS* 
-  '}'
+  WS* '}'
 ;
 
 // -----------------------------------------------------------------------------
 
-AndPredicateExpression returns Expression :
+AndPredicateExpression :
   '&' WS* expr=AtomicExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-NotPredicateExpression returns Expression :
+NotPredicateExpression :
   '!' WS* expr=AtomicExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-OneOrMoreExpression returns Expression :
+OneOrMoreExpression :
   expr=AtomicExpression WS* '+'
 ;
 
 // -----------------------------------------------------------------------------
 
-ZeroOrMoreExpression returns Expression :
+ZeroOrMoreExpression :
   expr=AtomicExpression WS* '*'
 ;
 
 // -----------------------------------------------------------------------------
 
-OptionalExpression returns Expression :
+OptionalExpression :
   expr=AtomicExpression WS* '?'
 ;
 
 // -----------------------------------------------------------------------------
 
-AtomicExpression returns Expression :
+AtomicExpression :
     EndOfInputExpression
   | AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-AssignableExpression returns Expression :
+AssignableExpression :
   (property=ID WS* op=AssignmentOperator WS*)?
   expr=
   ( SubExpression
@@ -122,7 +142,7 @@ AssignmentOperator :
 
 // -----------------------------------------------------------------------------
 
-SubExpression returns Expression :
+SubExpression :
   '(' WS* expr=ChoiceExpression WS* ')'
 ;
 
@@ -142,13 +162,13 @@ CharRange returns Range :
 
 // -----------------------------------------------------------------------------
 
-AnyCharExpression returns Expression :
+AnyCharExpression :
   char='.'
 ;
 
 // -----------------------------------------------------------------------------
 
-RuleReferenceExpression returns Expression :
+RuleReferenceExpression :
   name=ID
 ;
 
@@ -160,7 +180,7 @@ EndOfInputExpression :
 
 // -----------------------------------------------------------------------------
 
-TerminalExpression returns Expression :
+TerminalExpression :
   '\'' value=InTerminalChar? '\''
 ;
 
