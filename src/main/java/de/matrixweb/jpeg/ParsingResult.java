@@ -8,18 +8,19 @@ import de.matrixweb.jpeg.internal.type.Type;
 public interface ParsingResult {
 
   /**
-   * @return
+   * @return Returns true if the parsing finished without error, false otherwise
    */
   boolean isSuccess();
 
   /**
-   * @return
+   * @return Returns a parser error occured during parsing
    */
   Exception getError();
 
   /**
-   * @return
+   * @return Returns the parse tree (AST) if there was no error during parsing,
+   *         null otherwise
    */
-  Type getTree();
+  Type<?> getTree();
 
 }
