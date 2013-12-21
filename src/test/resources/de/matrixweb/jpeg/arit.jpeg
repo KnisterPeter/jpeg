@@ -1,0 +1,11 @@
+Expr:
+  Term ((+|-) Expr)?
+;
+
+Term:
+  Factor ((*|/) Term)?
+;
+
+Factor returns JInt:
+  [0-9]+
+;

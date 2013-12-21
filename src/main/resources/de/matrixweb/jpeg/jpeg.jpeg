@@ -6,7 +6,7 @@
 // 
 // This is the main entry point into the JPEG grammar.
 // 
-JPEG :
+Jpeg :
   (rules+=Rule | Comment WS*)+ EOI
 ;
 
@@ -34,10 +34,8 @@ Expression :
     ActionExpression
   | AndPredicateExpression
   | AnyCharExpression
-  | AssignableExpression
   | AtomicExpression
   | ChoiceExpression
-  | EndOfInputExpression
   | NotPredicateExpression
   | OneOrMoreExpression
   | OptionalExpression
@@ -51,13 +49,13 @@ Expression :
 
 // -----------------------------------------------------------------------------
 
-ChoiceExpression :
+ChoiceExpression returns Expression :
   choices+=SequenceExpression ('|' WS* choices+=SequenceExpression)*
 ;
 
 // -----------------------------------------------------------------------------
 
-SequenceExpression :
+SequenceExpression returns Expression :
   (
     expressions+=
     (
@@ -75,7 +73,7 @@ SequenceExpression :
 
 // -----------------------------------------------------------------------------
 
-ActionExpression :
+ActionExpression returns Expression :
   '{' WS* 
   ( property=ID WS* op=AssignmentOperator WS* 'current' WS*
   | name=FQTN
@@ -85,44 +83,44 @@ ActionExpression :
 
 // -----------------------------------------------------------------------------
 
-AndPredicateExpression :
+AndPredicateExpression returns Expression :
   '&' WS* expr=AtomicExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-NotPredicateExpression :
+NotPredicateExpression returns Expression :
   '!' WS* expr=AtomicExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-OneOrMoreExpression :
+OneOrMoreExpression returns Expression :
   expr=AtomicExpression WS* '+'
 ;
 
 // -----------------------------------------------------------------------------
 
-ZeroOrMoreExpression :
+ZeroOrMoreExpression returns Expression :
   expr=AtomicExpression WS* '*'
 ;
 
 // -----------------------------------------------------------------------------
 
-OptionalExpression :
+OptionalExpression returns Expression :
   expr=AtomicExpression WS* '?'
 ;
 
 // -----------------------------------------------------------------------------
 
-AtomicExpression :
+AtomicExpression returns Expression :
     EndOfInputExpression
   | AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
-AssignableExpression :
+AssignableExpression returns AtomicExpression :
   (property=ID WS* op=AssignmentOperator WS*)?
   expr=
   ( SubExpression
@@ -142,49 +140,49 @@ AssignmentOperator :
 
 // -----------------------------------------------------------------------------
 
-SubExpression :
+SubExpression returns Expression :
   '(' WS* expr=ChoiceExpression WS* ')'
 ;
 
 // -----------------------------------------------------------------------------
 
-RangeExpression : 
+RangeExpression returns Expression : 
   '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']'
 ;
 
-MinMaxRange returns Range :
+MinMaxRange:
   !'-' min=. '-' !'-' max=.
 ;
 
-CharRange returns Range :
+CharRange:
   !'-' char=.
 ;
 
 // -----------------------------------------------------------------------------
 
-AnyCharExpression :
+AnyCharExpression returns Expression :
   char='.'
 ;
 
 // -----------------------------------------------------------------------------
 
-RuleReferenceExpression :
+RuleReferenceExpression returns Expression :
   name=ID
 ;
 
 // -----------------------------------------------------------------------------
 
-EndOfInputExpression :
+EndOfInputExpression returns AtomicExpression :
   'EOI'
 ;
 
 // -----------------------------------------------------------------------------
 
-TerminalExpression :
+TerminalExpression returns Expression :
   '\'' value=InTerminalChar? '\''
 ;
 
-InTerminalChar returns String :
+InTerminalChar:
   ('\\' '\'' | '\\' '\\' | !'\'' .)+
 ;
 
@@ -199,7 +197,7 @@ Comment :
 // 
 // Namespaced type identifier
 // 
-FQTN returns String :
+FQTN:
   ID ('.' ID)*
 ;
 
@@ -207,10 +205,10 @@ FQTN returns String :
 // An ID name must start with an letter or underscore and be followed
 // by letters, digits or underscores.
 // 
-ID returns String :
-  [a-zA-Z_]([a-zA-Z0-9_])*
+ID:
+  [a-zA-Z_] [a-zA-Z0-9_]*
 ;
 
 WS : 
-  char=(' ' | '\n' | '\t' | '\r')
+  ' ' | '\n' | '\t' | '\r'
 ;

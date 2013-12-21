@@ -1,0 +1,15 @@
+Rule:
+  expr+=(ExprA | ExprB)
+;
+
+Expr:
+  ExprA | ExprB
+;
+
+ExprA returns Expr:
+  'a'
+;
+
+ExprB returns Expr:
+  'b'
+;
