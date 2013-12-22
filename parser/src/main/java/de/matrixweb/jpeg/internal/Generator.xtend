@@ -164,7 +164,7 @@ class Generator {
       }
       
       override toString() {
-        parsed
+        parsed.replace('\n', ' ').replaceAll('\\s+', ' ')
       }
     
     }
@@ -329,7 +329,7 @@ class RuleGenerator {
     «ENDIF»
   '''
   
-  def CharSequence generateSimpleChoices(Iterable<SequenceExpression> exprs) '''
+  def CharSequence generateSimpleChoices(Iterable<Expression> exprs) '''
     try {
       return «exprs.head.create()»
     } catch (ParseException «nextException») {
@@ -341,7 +341,7 @@ class RuleGenerator {
     }
   '''
   
-  def CharSequence generateChoices(Iterable<SequenceExpression> exprs) '''
+  def CharSequence generateChoices(Iterable<Expression> exprs) '''
     «val currentBackup = nextBackup»
     «val tailBackup = nextBackup»
     val «currentBackup» = result.copy()

@@ -108,7 +108,7 @@ class RuleWalker {
     rule.body.findNodes(clazz) as Iterable<T>
   }
   
-  static def <T> Iterable<T> findNodesByType(SequenceExpression expr, Class<T> clazz) {
+  static def <T> Iterable<T> findNodesByType(Expression expr, Class<T> clazz) {
     expr.findNodes(clazz) as Iterable<T>
   }
   

@@ -21,9 +21,8 @@ class JPEG {
   }
 
   private def parseAndGenerate(String grammar, String packageName) {
-    var pair = grammar.jpeg()
+    var jpeg = grammar.Jpeg()
     
-    val jpeg = pair.key
     val types = jpeg.createTypes()
     
     val sb = new StringBuilder

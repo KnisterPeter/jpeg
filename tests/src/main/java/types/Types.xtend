@@ -19,25 +19,16 @@ class Parser {
   }
   
   /**
-   * expr+=(ExprA | ExprB)
+   * Rule: expr+=(ExprA | ExprB) ; 
    */
   package static def Pair<? extends Rule, String> rule(String in) {
     var result = new Rule
     var tail = in
     
     // expr+=(ExprA | ExprB)
-    val backup0 = result.copy()
-    val backup1 = tail
-    try {
-      // expr+=(ExprA | ExprB)
-      val result0 = tail.rule_sub0()
-      tail = result0.value
-      result.add(result0.key)
-    } catch (ParseException e2) {
-      result = backup0
-      tail = backup1
-      throw e2
-    }
+    val result0 = tail.rule_sub0()
+    tail = result0.value
+    result.add(result0.key)
     
     result.parsed = in.substring(0, in.length - tail.length)
     return result -> tail
@@ -68,11 +59,11 @@ class Parser {
   }
   
   /**
-   * ExprA | ExprB
+   * Expr: ExprA | ExprB ; 
    */
   package static def Pair<? extends Expr, String> expr(String in) {
     val tail = in
-    // ExprA | ExprB
+    // ExprA | ExprB 
     try {
       return tail.exprA()
     } catch (ParseException e0) {
@@ -96,25 +87,16 @@ class Parser {
   }
   
   /**
-   * 'a'
+   * ExprA returns Expr: 'a' ; 
    */
   package static def Pair<? extends Expr, String> exprA(String in) {
     var result = new ExprA
     var tail = in
     
     // 'a'
-    val backup0 = result.copy()
-    val backup1 = tail
-    try {
-      // 'a'
-      // 'a'
-      val result0 =  tail.terminal('a')
-      tail = result0.value
-    } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
-      throw e0
-    }
+    // 'a'
+    val result0 =  tail.terminal('a')
+    tail = result0.value
     
     result.parsed = in.substring(0, in.length - tail.length)
     return result -> tail
@@ -132,25 +114,16 @@ class Parser {
   }
   
   /**
-   * 'b'
+   * ExprB returns Expr: 'b' ; 
    */
   package static def Pair<? extends Expr, String> exprB(String in) {
     var result = new ExprB
     var tail = in
     
     // 'b'
-    val backup0 = result.copy()
-    val backup1 = tail
-    try {
-      // 'b'
-      // 'b'
-      val result0 =  tail.terminal('b')
-      tail = result0.value
-    } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
-      throw e0
-    }
+    // 'b'
+    val result0 =  tail.terminal('b')
+    tail = result0.value
     
     result.parsed = in.substring(0, in.length - tail.length)
     return result -> tail
@@ -279,7 +252,7 @@ package class Extensions {
     }
     
     override toString() {
-      parsed
+      parsed.replace('\n', ' ').replaceAll('\\s+', ' ')
     }
   
   }
