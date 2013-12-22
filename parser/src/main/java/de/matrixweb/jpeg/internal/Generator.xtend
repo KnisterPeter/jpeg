@@ -12,7 +12,7 @@ import static extension de.matrixweb.jpeg.internal.Optimizer.*
 /**
  * @author markusw
  */
-class JpegGrammarGenerator {
+class Generator {
   
   static int counter = 0
   
@@ -141,13 +141,6 @@ class JpegGrammarGenerator {
         }
       }
     
-      static def <T> operator_plus(List<T> list, T item) {
-        var result = newArrayList
-        if (list != null) result += list
-        result.add(item)
-        return result
-      }
-    
     }
     
   '''
@@ -168,6 +161,10 @@ class JpegGrammarGenerator {
         val out = class.newInstance as T
         out.parsed = (this._parsed ?: '') + in._parsed
         return out
+      }
+      
+      override toString() {
+        parsed
       }
     
     }

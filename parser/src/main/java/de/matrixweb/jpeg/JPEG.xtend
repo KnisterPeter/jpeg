@@ -5,8 +5,8 @@ import java.io.File
 import static com.google.common.base.Charsets.*
 
 import static extension com.google.common.io.Files.*
-import static extension de.matrixweb.jpeg.internal.JpegGrammarGenerator.*
-import static extension de.matrixweb.jpeg.internal.JpegGrammarParser.*
+import static extension de.matrixweb.jpeg.internal.Generator.*
+import static extension de.matrixweb.jpeg.internal.Parser.*
 import static extension de.matrixweb.jpeg.internal.RuleWalker.*
 
 class JPEG {

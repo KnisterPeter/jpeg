@@ -2306,13 +2306,6 @@ package class Extensions {
     }
   }
 
-  static def <T> operator_plus(List<T> list, T item) {
-    var result = newArrayList
-    if (list != null) result += list
-    result.add(item)
-    return result
-  }
-
 }
 
   package class Result {
@@ -2330,6 +2323,10 @@ package class Extensions {
       val out = class.newInstance as T
       out.parsed = (this._parsed ?: '') + in._parsed
       return out
+    }
+    
+    override toString() {
+      parsed
     }
   
   }
