@@ -3,14 +3,14 @@ package de.matrixweb.jpeg.internal
 import java.util.List
 import java.util.Map
 
-import static extension de.matrixweb.jpeg.internal.ChoiceExpressionTester.*
 import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
-import static extension de.matrixweb.jpeg.internal.RuleWalker.*
+import static extension de.matrixweb.jpeg.internal.AstNodeHelper.*
+import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 
 /**
  * @author markusw
  */
-class Optimizer {
+class AstOptimizer {
   
   /**
    * A parser result is optimizable if the following conditions are met:
@@ -33,15 +33,16 @@ class Optimizer {
   }
   
 }
- 
-class RuleWalker {
+
+class TypeGenerator {
   
   static def createTypes(Jpeg jpeg) {
     val map = newHashMap
     val list = newArrayList
     list += jpeg.rules.map[
       val t = new JType
-      t.internal = isInternal()
+      t.internal = isInternal(jpeg)
+      t.generate = true
       t.name = name.parsed
       return t
     ]
@@ -57,18 +58,21 @@ class RuleWalker {
   private static def addPredefinedTypes(List<JType> list) {
     val object = new JType
     object.internal = true
+    object.generate = false
     object.name = 'Object'
     object.supertype = null
     list += object
     
     val result = new JType
     result.internal = true
+    result.generate = false
     result.name = 'Result'
     result.supertype = object
     list += result
     
     val terminal = new JType
     terminal.internal = true
+    terminal.generate = false
     terminal.name = 'Terminal'
     terminal.supertype = result
     list += terminal
@@ -76,7 +80,7 @@ class RuleWalker {
     return list
   }
   
-  static def getAttributes(Rule rule, Jpeg jpeg, Map<String, JType> map) {
+  private static def getAttributes(Rule rule, Jpeg jpeg, Map<String, JType> map) {
     rule.findNodesByType(AssignableExpression).filter[property != null].toMap[property.parsed].values.map[
       val a = new JAttribute
       a.name = if (property.parsed.isKeyword()) '_' + property.parsed else property.parsed
@@ -91,18 +95,17 @@ class RuleWalker {
     ].toList
   }
   
-  def private static isKeyword(String name) {
+  private static def isKeyword(String name) {
     #['char'].contains(name)
   }
   
-
-  static def isTerminal(Rule rule) {
+  private static def isTerminal(Rule rule) {
       rule.name.parsed.toUpperCase == rule.name.parsed
   }
   
-  static def isInternal(Rule rule) {
-    return false
-  }
+}
+ 
+class AstNodeHelper {
   
   static def <T> Iterable<T> findNodesByType(Rule rule, Class<T> clazz) {
     rule.body.findNodes(clazz) as Iterable<T>
@@ -191,7 +194,7 @@ class ExpressionTypeEvaluator {
   
   def static dispatch JType evaluateType(RuleReferenceExpression expr, Jpeg jpeg, Map<String, JType> map) {
     val rule = jpeg.rules.findFirst[it.name.parsed == expr.name.parsed]
-    // TODO: Check if rule.name.parsed is sufficient
+    // Required to use returns type to widening the resulting attribute type
     return map.get(rule?.returns?.name?.parsed ?: rule.name.parsed)
   }
 
@@ -233,7 +236,7 @@ class ExpressionTypeEvaluator {
   
 }
 
-class RuleTester {
+class GeneratorHelper {
   
   /**
    * A simple rule is a rule which contains exactly one simple ChoiceExpression.
@@ -242,10 +245,6 @@ class RuleTester {
     return rule.body.expressions.size == 1
       && rule.body.expressions.head.simpleChoiceExpression
   }
-  
-}
-
-class ChoiceExpressionTester {
   
   /**
    * A simple ChoiceExpression is defined by having no assigned expressions and 
@@ -258,4 +257,21 @@ class ChoiceExpressionTester {
       && (expr as ChoiceExpression).choices.map[findNodesByType(RuleReferenceExpression).size == 1].fold(true, [a, b | a && b])
   }
   
+  /**
+   * A rule is defined as internal if and only if
+   * <ul>
+   * <li>It is a simple rule</li>
+   * <li>No other rule as a rule-reference to this rule</li>
+   * </ul>
+   */
+  static def isInternal(Rule rule, Jpeg jpeg) {
+    return 
+      rule.simpleRule 
+      && jpeg.rules.forall[
+            body.expressions.map[
+              findNodesByType(RuleReferenceExpression).map[name.parsed != rule.name.parsed]
+            ].flatten.fold(true, [a, b | a && b])
+          ]
+  }
+
 }

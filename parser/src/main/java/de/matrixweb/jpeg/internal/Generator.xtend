@@ -4,26 +4,14 @@ import java.util.Collection
 import java.util.List
 import java.util.Map
 
-import static extension de.matrixweb.jpeg.internal.ChoiceExpressionTester.*
+import static extension de.matrixweb.jpeg.internal.AstOptimizer.*
 import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
-import static extension de.matrixweb.jpeg.internal.RuleTester.*
-import static extension de.matrixweb.jpeg.internal.Optimizer.*
+import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 
 /**
  * @author markusw
  */
 class Generator {
-  
-  static int counter = 0
-  
-  static def getVariable() {
-    return 'r' + counter
-  }
-  
-  static def getNextVariable() {
-    counter = counter + 1
-    return 'r' + counter
-  }
   
   static def generateParser(Jpeg jpeg, Map<String, JType> types, String packageName) '''
     package «packageName»
@@ -35,7 +23,7 @@ class Generator {
 
     class Parser {
       
-      «FOR rule : jpeg.rules»
+      «FOR rule : jpeg.rules.filter[!types.get(name.parsed).internal]»
         «new RuleGenerator(rule, jpeg, types).generate()»
       «ENDFOR»
       
@@ -196,7 +184,7 @@ class Generator {
   '''
   
   private static def generateType(JType type) '''
-    «IF !type.internal»
+    «IF type.generate»
       class «type.name»«IF type.supertype != null» extends «type.supertype.name»«ENDIF» {
         
         «FOR attribute : type.attributes»
@@ -267,7 +255,7 @@ class RuleGenerator {
   def generate() '''
     //--------------------------------------------------------------------------
     
-    static def «resultType» «name.toFirstUpper»(String in) {
+    static def «resultType.name» «name.toFirstUpper»(String in) {
       val result = «name.toFirstLower»(in)
       return 
         if (result.value.length == 0) 
@@ -279,7 +267,7 @@ class RuleGenerator {
     /**
      * «rule»
      */
-    package static def Pair<? extends «resultType», String> «name.toFirstLower()»(String in) {
+    package static def Pair<? extends «resultType.name», String> «name.toFirstLower()»(String in) {
       «IF rule.simpleRule»
         «if(true) { inSimpleChoice = true; ''}»
         val tail = in
@@ -301,7 +289,7 @@ class RuleGenerator {
   '''
   
   private def optimize() '''
-    «IF types.get(name).isResultOptimizable(types.get(resultType), types)»
+    «IF types.get(name).isResultOptimizable(resultType, types)»
       «val attr = types.get(name).attributes.head.name»
       if (result.«attr».size() == 1) {
         return result.«attr».get(0) -> tail
@@ -557,7 +545,7 @@ class RuleGenerator {
   }
   
   private def getResultType() {
-    rule?.returns?.name?.parsed ?: name
+    types.get(rule?.returns?.name?.parsed ?: name)
   }
   
   private def getException() {

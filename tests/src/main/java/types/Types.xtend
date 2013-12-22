@@ -49,34 +49,6 @@ class Parser {
   }
   //--------------------------------------------------------------------------
   
-  static def Expr Expr(String in) {
-    val result = expr(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input")
-  }
-  
-  /**
-   * Expr: ExprA | ExprB ; 
-   */
-  package static def Pair<? extends Expr, String> expr(String in) {
-    val tail = in
-    // ExprA | ExprB 
-    try {
-      return tail.exprA()
-    } catch (ParseException e0) {
-      try {
-        return tail.exprB()
-      } catch (ParseException e1) {
-        throw e1
-      }
-    }
-  }
-  
-  //--------------------------------------------------------------------------
-  
   static def Expr ExprA(String in) {
     val result = exprA(in)
     return 
