@@ -1,0 +1,231 @@
+package de.matrixweb.jpeg.arit2
+
+import static extension java.lang.Integer.*
+import de.matrixweb.jpeg.internal.NoParse
+import de.matrixweb.jpeg.internal.Parsed
+import de.matrixweb.jpeg.internal.Result
+
+class Arit2 {
+
+  def Derivs parse(String s) {
+    new Derivs([add(it)], [mul(it)], [pri(it)], [dec(it)],
+      [
+        switch s {
+          case s.length == 0: {
+            new NoParse<String>
+          }
+          default: {
+            new Parsed<String, Derivs>(s.substring(0, 1), parse(s.substring(1)))
+          }
+        }
+      ])
+  }
+
+  def static isStartOf(String match, Derivs d) {
+    switch c:d.dvChar {
+      Parsed<String, Derivs> case c.value == match:
+        match -> c.tail
+      default:
+        null -> d
+    }
+  }
+
+  def Integer Add(String s) {
+    parse(s).dvAdd.value
+  }
+
+  def Result<Integer> add(Derivs d) {
+    val alt2 = [ |
+      d.dvMul
+    ]
+    val alt1 = [ |
+      switch left:d.dvMul {
+        Mul: {
+          switch op:'+'.isStartOf(left.tail) {
+            case op.key != null: {
+              switch right:op.value.dvAdd {
+                Add:
+                  new Add(left.value + right.value, right.tail)
+                default:
+                  alt2.apply
+              }
+            }
+            default:
+              alt2.apply
+          }
+        }
+        default:
+          alt2.apply
+      }
+    ]
+    alt1.apply
+  }
+
+  def Integer Mul(String s) {
+    parse(s).dvMul.value
+  }
+
+  def Result<Integer> mul(Derivs d) {
+    val alt2 = [ |
+      d.dvPri
+    ]
+    val alt1 = [ |
+      switch left:d.dvPri {
+        Pri: {
+          switch op:'*'.isStartOf(left.tail) {
+            case op.key != null: {
+              switch right:op.value.dvMul {
+                Mul: {
+                  new Mul(left.value * right.value, right.tail)
+                }
+                default:
+                  alt2.apply
+              }
+            }
+            default:
+              alt2.apply
+          }
+        }
+        default:
+          alt2.apply
+      }
+    ]
+    alt1.apply
+  }
+
+  def Integer Pri(String s) {
+    parse(s).dvPri.value
+  }
+
+  def Result<Integer> pri(Derivs d) {
+    val alt2 = [ |
+      d.dvDec
+    ]
+    val alt1 = [ |
+      switch res:'('.isStartOf(d) {
+        case res.key != null: {
+          switch add:res.value.dvAdd {
+            Add: {
+              switch res2:')'.isStartOf(add.tail) {
+                case res2 != null:
+                  new Pri(add.value, res2.value)
+                default:
+                  alt2.apply
+              }
+            }
+            default:
+              alt2.apply
+          }
+        }
+        default:
+          alt2.apply
+      }
+    ]
+    alt1.apply
+  }
+
+  def Integer Dec(String s) {
+    parse(s).dvDec.value
+  }
+
+  def Result<Integer> dec(Derivs d) {
+    switch c:d.dvChar {
+      Parsed<String, Derivs>:
+        try {
+          new Dec(c.value.parseInt, c.tail)
+        } catch (NumberFormatException e) {
+          new NoParse<Integer>
+        }
+      NoParse<String>:
+        new NoParse<Integer>
+    }
+  }
+
+}
+
+class Derivs {
+
+  val (Derivs)=>Result<Integer> dvfAdd
+  val (Derivs)=>Result<Integer> dvfMul
+  val (Derivs)=>Result<Integer> dvfPri
+  val (Derivs)=>Result<Integer> dvfDec
+  val (Derivs)=>Result<String> dvfChar
+
+  Result<Integer> dvAdd
+  Result<Integer> dvMul
+  Result<Integer> dvPri
+  Result<Integer> dvDec
+  Result<String> dvChar
+
+  new((Derivs)=>Result<Integer> dvAdd, (Derivs)=>Result<Integer> dvMul, (Derivs)=>Result<Integer> dvPri,
+    (Derivs)=>Result<Integer> dvDec, (Derivs)=>Result<String> dvChar) {
+    this.dvfAdd = dvAdd
+    this.dvfMul = dvMul
+    this.dvfPri = dvPri
+    this.dvfDec = dvDec
+    this.dvfChar = dvChar
+  }
+
+  def getDvAdd() {
+    if (dvAdd == null) {
+      dvAdd = dvfAdd.apply(this)
+    }
+    return dvAdd
+  }
+
+  def getDvMul() {
+    if (dvMul == null) {
+      dvMul = dvfMul.apply(this)
+    }
+    return dvMul
+  }
+
+  def getDvPri() {
+    if (dvPri == null) {
+      dvPri = dvfPri.apply(this)
+    }
+    return dvPri
+  }
+
+  def getDvDec() {
+    if (dvDec == null) {
+      dvDec = dvfDec.apply(this)
+    }
+    return dvDec
+  }
+
+  def getDvChar() {
+    if (dvChar == null) {
+      dvChar = dvfChar.apply(this)
+    }
+    return dvChar
+  }
+}
+
+@Data
+class Add extends Parsed<Integer, Derivs> {
+  new(Integer value, Derivs tail) {
+    super(value, tail)
+  }
+}
+
+@Data
+class Mul extends Add {
+  new(Integer value, Derivs tail) {
+    super(value, tail)
+  }
+}
+
+@Data
+class Pri extends Mul {
+  new(Integer value, Derivs tail) {
+    super(value, tail)
+  }
+}
+
+@Data
+class Dec extends Pri {
+  new(Integer value, Derivs tail) {
+    super(value, tail)
+  }
+}

@@ -2409,7 +2409,8 @@ package class Extensions {
     java.util.List<Expression> expressions
     
     def dispatch void add(Expression __expression) {
-      _expressions = expressions + __expression
+      _expressions = _expressions ?: newArrayList
+      _expressions += __expression
     }
     
     override SequenceExpression copy() {
@@ -2464,7 +2465,8 @@ package class Extensions {
     java.util.List<Result> ranges
     
     def dispatch void add(Result __result) {
-      _ranges = ranges + __result
+      _ranges = _ranges ?: newArrayList
+      _ranges += __result
     }
     
     override RangeExpression copy() {
@@ -2557,7 +2559,8 @@ package class Extensions {
     java.util.List<Expression> expressions
     
     def dispatch void add(Expression __expression) {
-      _expressions = expressions + __expression
+      _expressions = _expressions ?: newArrayList
+      _expressions += __expression
     }
     
     override Body copy() {
@@ -2734,7 +2737,8 @@ package class Extensions {
     java.util.List<Rule> rules
     
     def dispatch void add(Rule __rule) {
-      _rules = rules + __rule
+      _rules = _rules ?: newArrayList
+      _rules += __rule
     }
     
     override Jpeg copy() {
@@ -2775,7 +2779,8 @@ package class Extensions {
     java.util.List<Expression> choices
     
     def dispatch void add(Expression __expression) {
-      _choices = choices + __expression
+      _choices = _choices ?: newArrayList
+      _choices += __expression
     }
     
     override ChoiceExpression copy() {

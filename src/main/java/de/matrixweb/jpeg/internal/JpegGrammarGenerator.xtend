@@ -221,7 +221,8 @@ class JpegGrammarGenerator {
     «val typeParameter = attribute.typeParameter»
     «IF typeParameter != null»
       def dispatch void add(«typeParameter.name» __«typeParameter.name.toFirstLower») {
-        _«name» = «name» + __«typeParameter.name.toFirstLower»
+        _«name» = _«name» ?: newArrayList
+        _«name» += __«typeParameter.name.toFirstLower»
       }
       
     «ENDIF»

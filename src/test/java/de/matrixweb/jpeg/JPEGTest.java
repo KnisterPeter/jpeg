@@ -18,7 +18,7 @@ import static org.hamcrest.CoreMatchers.*;
  * @author markusw
  */
 @SuppressWarnings("javadoc")
-public class JPEG2Test {
+public class JPEGTest {
 
   @Test
   public void testParse() {

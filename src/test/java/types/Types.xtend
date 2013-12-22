@@ -333,7 +333,8 @@ package class Extensions {
     java.util.List<Expr> expr
     
     def dispatch void add(Expr __expr) {
-      _expr = expr + __expr
+      _expr = _expr ?: newArrayList
+      _expr += __expr
     }
     
     override Rule copy() {
