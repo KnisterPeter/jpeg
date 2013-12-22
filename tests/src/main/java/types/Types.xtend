@@ -298,7 +298,6 @@ package class Extensions {
   
   class Rule extends Result {
     
-    
     @Property
     java.util.List<Expr> expr
     

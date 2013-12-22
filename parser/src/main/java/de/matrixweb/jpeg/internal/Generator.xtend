@@ -211,7 +211,6 @@ class Generator {
   
   private static def generateAttribute(JAttribute attribute, JType type) '''
     «val name = attribute.name»
-    
     @Property
     «attribute.type.name»«IF attribute.typeParameter != null»<«attribute.typeParameter.name»>«ENDIF» «name»
     

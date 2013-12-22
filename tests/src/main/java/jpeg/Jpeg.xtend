@@ -2066,7 +2066,6 @@ package class Extensions {
   
   class OptionalExpression extends Expression {
     
-    
     @Property
     Expression expr
     
@@ -2080,14 +2079,11 @@ package class Extensions {
   
   class ActionExpression extends Expression {
     
-    
     @Property
     ID property
     
-    
     @Property
     AssignmentOperator op
-    
     
     @Property
     FQTN name
@@ -2103,7 +2099,6 @@ package class Extensions {
   }
   
   class SequenceExpression extends Expression {
-    
     
     @Property
     java.util.List<Expression> expressions
@@ -2132,14 +2127,11 @@ package class Extensions {
   
   class AssignableExpression extends AtomicExpression {
     
-    
     @Property
     ID property
     
-    
     @Property
     AssignmentOperator op
-    
     
     @Property
     Expression expr
@@ -2156,10 +2148,8 @@ package class Extensions {
   
   class RangeExpression extends Expression {
     
-    
     @Property
     Terminal dash
-    
     
     @Property
     java.util.List<Result> ranges
@@ -2179,7 +2169,6 @@ package class Extensions {
   }
   
   class AnyCharExpression extends Expression {
-    
     
     @Property
     Terminal _char
@@ -2212,7 +2201,6 @@ package class Extensions {
   
   class TerminalExpression extends Expression {
     
-    
     @Property
     InTerminalChar value
     
@@ -2225,7 +2213,6 @@ package class Extensions {
   }
   
   class AndPredicateExpression extends Expression {
-    
     
     @Property
     Expression expr
@@ -2240,7 +2227,6 @@ package class Extensions {
   
   class ZeroOrMoreExpression extends Expression {
     
-    
     @Property
     Expression expr
     
@@ -2253,7 +2239,6 @@ package class Extensions {
   }
   
   class Body extends Result {
-    
     
     @Property
     java.util.List<Expression> expressions
@@ -2273,10 +2258,8 @@ package class Extensions {
   
   class AssignmentOperator extends Result {
     
-    
     @Property
     Terminal single
-    
     
     @Property
     Terminal multi
@@ -2310,7 +2293,6 @@ package class Extensions {
   
   class CharRange extends Result {
     
-    
     @Property
     Object _char
     
@@ -2333,7 +2315,6 @@ package class Extensions {
   
   class SubExpression extends Expression {
     
-    
     @Property
     Expression expr
     
@@ -2347,14 +2328,11 @@ package class Extensions {
   
   class Rule extends Result {
     
-    
     @Property
     ID name
     
-    
     @Property
     RuleReturns returns
-    
     
     @Property
     Body body
@@ -2371,7 +2349,6 @@ package class Extensions {
   
   class RuleReturns extends Result {
     
-    
     @Property
     FQTN name
     
@@ -2385,10 +2362,8 @@ package class Extensions {
   
   class MinMaxRange extends Result {
     
-    
     @Property
     Object min
-    
     
     @Property
     Object max
@@ -2404,7 +2379,6 @@ package class Extensions {
   
   class NotPredicateExpression extends Expression {
     
-    
     @Property
     Expression expr
     
@@ -2418,7 +2392,6 @@ package class Extensions {
   
   class RuleReferenceExpression extends Expression {
     
-    
     @Property
     ID name
     
@@ -2431,7 +2404,6 @@ package class Extensions {
   }
   
   class Jpeg extends Result {
-    
     
     @Property
     java.util.List<Rule> rules
@@ -2450,7 +2422,6 @@ package class Extensions {
   }
   
   class OneOrMoreExpression extends Expression {
-    
     
     @Property
     Expression expr
@@ -2473,7 +2444,6 @@ package class Extensions {
   }
   
   class ChoiceExpression extends Expression {
-    
     
     @Property
     java.util.List<Expression> choices
