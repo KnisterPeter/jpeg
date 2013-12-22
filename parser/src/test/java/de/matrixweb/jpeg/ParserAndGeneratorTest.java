@@ -14,8 +14,6 @@ import com.google.common.io.Files;
 @SuppressWarnings("javadoc")
 public class ParserAndGeneratorTest {
 
-  private final JPEG subject = new JPEG();
-
   @Test
   public void testParseAndGenerate() throws IOException {
     generate("de/matrixweb/jpeg/jpeg.jpeg", "jpeg", "jpeg/Jpeg.xtend");
@@ -28,8 +26,8 @@ public class ParserAndGeneratorTest {
 
   private void generate(final String input, final String packageName,
       final String output) throws IOException {
-    final String code = this.subject.generate(new File("src/test/resources",
-        input), packageName);
+    final String code = JPEG.generate(new File("src/test/resources", input),
+        packageName);
     final File target = new File("../tests/src/main/java", output);
     target.getParentFile().mkdirs();
     Files.write(code, target, Charsets.UTF_8);

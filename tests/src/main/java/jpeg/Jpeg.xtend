@@ -2,26 +2,44 @@ package jpeg
 
 import java.util.List
 
+import static extension jpeg.CharacterConsumer.*
 import static extension jpeg.CharacterRange.*
-import static extension jpeg.Extensions.*
 
 class Parser {
   
+  int line = 1
+  int column = 1
+  
+  package def addMatch(String match) {
+    var s = match
+    var idx = s.indexOf('\n')
+    while (idx != -1) {
+      column = 1
+      line = line + 1
+      s = s.substring(idx + 1)
+    }
+    column = column + s.length
+  }
+  
+  package def getLocation() {
+    line -> column
+  }
+  
   //--------------------------------------------------------------------------
   
-  static def Jpeg Jpeg(String in) {
+  def Jpeg Jpeg(String in) {
     val result = jpeg(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * Jpeg : (rules+=Rule | Comment WS*)+ EOI ; 
    */
-  package static def Pair<? extends Jpeg, String> jpeg(String in) {
+  package def Pair<? extends Jpeg, String> jpeg(String in) {
     var result = new Jpeg
     var tail = in
     
@@ -85,7 +103,7 @@ class Parser {
     }
     
     // EOI
-    val result3 = tail.eoi()
+    val result3 = tail.eoi(this)
     tail = result3.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -94,19 +112,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Rule Rule(String in) {
+  def Rule Rule(String in) {
     val result = rule(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * Rule : name=ID WS* returns=RuleReturns? WS* ':' WS* body=Body WS* ';' WS* ; 
    */
-  package static def Pair<? extends Rule, String> rule(String in) {
+  package def Pair<? extends Rule, String> rule(String in) {
     var result = new Rule
     var tail = in
     
@@ -162,7 +180,7 @@ class Parser {
     
     // ':'
     // ':'
-    val result4 =  tail.terminal(':')
+    val result4 =  tail.terminal(':', this)
     tail = result4.value
     
     // WS*
@@ -204,7 +222,7 @@ class Parser {
     
     // ';'
     // ';'
-    val result8 =  tail.terminal(';')
+    val result8 =  tail.terminal(';', this)
     tail = result8.value
     
     // WS*
@@ -229,25 +247,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def RuleReturns RuleReturns(String in) {
+  def RuleReturns RuleReturns(String in) {
     val result = ruleReturns(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * RuleReturns : 'returns' WS* name=FQTN ; 
    */
-  package static def Pair<? extends RuleReturns, String> ruleReturns(String in) {
+  package def Pair<? extends RuleReturns, String> ruleReturns(String in) {
     var result = new RuleReturns
     var tail = in
     
     // 'returns'
     // 'returns'
-    val result0 =  tail.terminal('returns')
+    val result0 =  tail.terminal('returns', this)
     tail = result0.value
     
     // WS*
@@ -277,19 +295,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Body Body(String in) {
+  def Body Body(String in) {
     val result = body(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * Body : (expressions+=ChoiceExpression WS*)+ ; 
    */
-  package static def Pair<? extends Body, String> body(String in) {
+  package def Pair<? extends Body, String> body(String in) {
     var result = new Body
     var tail = in
     
@@ -339,19 +357,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression ChoiceExpression(String in) {
+  def Expression ChoiceExpression(String in) {
     val result = choiceExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * ChoiceExpression returns Expression : choices+=SequenceExpression ('|' WS* choices+=SequenceExpression)* ; 
    */
-  package static def Pair<? extends Expression, String> choiceExpression(String in) {
+  package def Pair<? extends Expression, String> choiceExpression(String in) {
     var result = new ChoiceExpression
     var tail = in
     
@@ -368,7 +386,7 @@ class Parser {
         // ('|' WS* choices+=SequenceExpression)
         // '|'
         // '|'
-        val result1 =  tail.terminal('|')
+        val result1 =  tail.terminal('|', this)
         tail = result1.value
         
         // WS*
@@ -408,19 +426,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression SequenceExpression(String in) {
+  def Expression SequenceExpression(String in) {
     val result = sequenceExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * SequenceExpression returns Expression : ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression ) WS* )+ ; 
    */
-  package static def Pair<? extends Expression, String> sequenceExpression(String in) {
+  package def Pair<? extends Expression, String> sequenceExpression(String in) {
     var result = new SequenceExpression
     var tail = in
     
@@ -471,7 +489,7 @@ class Parser {
     return result -> tail
   }
   
-  private static  def Pair<? extends Expression, String> sequenceExpression_sub0(String in) {
+  private def Pair<? extends Expression, String> sequenceExpression_sub0(String in) {
     val tail = in
     // ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression 
     try {
@@ -506,25 +524,25 @@ class Parser {
   }
   //--------------------------------------------------------------------------
   
-  static def Expression ActionExpression(String in) {
+  def Expression ActionExpression(String in) {
     val result = actionExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * ActionExpression returns Expression : '{' WS* ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=FQTN ) WS* '}' ; 
    */
-  package static def Pair<? extends Expression, String> actionExpression(String in) {
+  package def Pair<? extends Expression, String> actionExpression(String in) {
     var result = new ActionExpression
     var tail = in
     
     // '{'
     // '{'
-    val result0 =  tail.terminal('{')
+    val result0 =  tail.terminal('{', this)
     tail = result0.value
     
     // WS*
@@ -592,7 +610,7 @@ class Parser {
       
       // 'current'
       // 'current'
-      val result6 =  tail.terminal('current')
+      val result6 =  tail.terminal('current', this)
       tail = result6.value
       
       // WS*
@@ -645,7 +663,7 @@ class Parser {
     
     // '}'
     // '}'
-    val result10 =  tail.terminal('}')
+    val result10 =  tail.terminal('}', this)
     tail = result10.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -654,25 +672,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression AndPredicateExpression(String in) {
+  def Expression AndPredicateExpression(String in) {
     val result = andPredicateExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * AndPredicateExpression returns Expression : '&' WS* expr=AtomicExpression ; 
    */
-  package static def Pair<? extends Expression, String> andPredicateExpression(String in) {
+  package def Pair<? extends Expression, String> andPredicateExpression(String in) {
     var result = new AndPredicateExpression
     var tail = in
     
     // '&'
     // '&'
-    val result0 =  tail.terminal('&')
+    val result0 =  tail.terminal('&', this)
     tail = result0.value
     
     // WS*
@@ -702,25 +720,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression NotPredicateExpression(String in) {
+  def Expression NotPredicateExpression(String in) {
     val result = notPredicateExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * NotPredicateExpression returns Expression : '!' WS* expr=AtomicExpression ; 
    */
-  package static def Pair<? extends Expression, String> notPredicateExpression(String in) {
+  package def Pair<? extends Expression, String> notPredicateExpression(String in) {
     var result = new NotPredicateExpression
     var tail = in
     
     // '!'
     // '!'
-    val result0 =  tail.terminal('!')
+    val result0 =  tail.terminal('!', this)
     tail = result0.value
     
     // WS*
@@ -750,19 +768,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression OneOrMoreExpression(String in) {
+  def Expression OneOrMoreExpression(String in) {
     val result = oneOrMoreExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * OneOrMoreExpression returns Expression : expr=AtomicExpression WS* '+' ; 
    */
-  package static def Pair<? extends Expression, String> oneOrMoreExpression(String in) {
+  package def Pair<? extends Expression, String> oneOrMoreExpression(String in) {
     var result = new OneOrMoreExpression
     var tail = in
     
@@ -789,7 +807,7 @@ class Parser {
     
     // '+'
     // '+'
-    val result2 =  tail.terminal('+')
+    val result2 =  tail.terminal('+', this)
     tail = result2.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -798,19 +816,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression ZeroOrMoreExpression(String in) {
+  def Expression ZeroOrMoreExpression(String in) {
     val result = zeroOrMoreExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * ZeroOrMoreExpression returns Expression : expr=AtomicExpression WS* '*' ; 
    */
-  package static def Pair<? extends Expression, String> zeroOrMoreExpression(String in) {
+  package def Pair<? extends Expression, String> zeroOrMoreExpression(String in) {
     var result = new ZeroOrMoreExpression
     var tail = in
     
@@ -837,7 +855,7 @@ class Parser {
     
     // '*'
     // '*'
-    val result2 =  tail.terminal('*')
+    val result2 =  tail.terminal('*', this)
     tail = result2.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -846,19 +864,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression OptionalExpression(String in) {
+  def Expression OptionalExpression(String in) {
     val result = optionalExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * OptionalExpression returns Expression : expr=AtomicExpression WS* '?' ; 
    */
-  package static def Pair<? extends Expression, String> optionalExpression(String in) {
+  package def Pair<? extends Expression, String> optionalExpression(String in) {
     var result = new OptionalExpression
     var tail = in
     
@@ -885,7 +903,7 @@ class Parser {
     
     // '?'
     // '?'
-    val result2 =  tail.terminal('?')
+    val result2 =  tail.terminal('?', this)
     tail = result2.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -894,19 +912,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression AtomicExpression(String in) {
+  def Expression AtomicExpression(String in) {
     val result = atomicExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * AtomicExpression returns Expression : EndOfInputExpression | AssignableExpression ; 
    */
-  package static def Pair<? extends Expression, String> atomicExpression(String in) {
+  package def Pair<? extends Expression, String> atomicExpression(String in) {
     val tail = in
     // EndOfInputExpression | AssignableExpression 
     try {
@@ -922,19 +940,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def AtomicExpression AssignableExpression(String in) {
+  def AtomicExpression AssignableExpression(String in) {
     val result = assignableExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * AssignableExpression returns AtomicExpression : (property=ID WS* op=AssignmentOperator WS*)? expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) ; 
    */
-  package static def Pair<? extends AtomicExpression, String> assignableExpression(String in) {
+  package def Pair<? extends AtomicExpression, String> assignableExpression(String in) {
     var result = new AssignableExpression
     var tail = in
     
@@ -998,7 +1016,7 @@ class Parser {
     return result -> tail
   }
   
-  private static  def Pair<? extends Expression, String> assignableExpression_sub0(String in) {
+  private def Pair<? extends Expression, String> assignableExpression_sub0(String in) {
     val tail = in
     // SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression 
     try {
@@ -1025,19 +1043,19 @@ class Parser {
   }
   //--------------------------------------------------------------------------
   
-  static def AssignmentOperator AssignmentOperator(String in) {
+  def AssignmentOperator AssignmentOperator(String in) {
     val result = assignmentOperator(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * AssignmentOperator : single='=' | multi='+=' ; 
    */
-  package static def Pair<? extends AssignmentOperator, String> assignmentOperator(String in) {
+  package def Pair<? extends AssignmentOperator, String> assignmentOperator(String in) {
     var result = new AssignmentOperator
     var tail = in
     
@@ -1047,7 +1065,7 @@ class Parser {
     try {
       // single='='
       // '='
-      val result0 =  tail.terminal('=')
+      val result0 =  tail.terminal('=', this)
       tail = result0.value
       result.single = result0.key
     } catch (ParseException e0) {
@@ -1058,7 +1076,7 @@ class Parser {
       try {
         // multi='+='
         // '+='
-        val result1 =  tail.terminal('+=')
+        val result1 =  tail.terminal('+=', this)
         tail = result1.value
         result.multi = result1.key
       } catch (ParseException e1) {
@@ -1074,25 +1092,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression SubExpression(String in) {
+  def Expression SubExpression(String in) {
     val result = subExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * SubExpression returns Expression : '(' WS* expr=ChoiceExpression WS* ')' ; 
    */
-  package static def Pair<? extends Expression, String> subExpression(String in) {
+  package def Pair<? extends Expression, String> subExpression(String in) {
     var result = new SubExpression
     var tail = in
     
     // '('
     // '('
-    val result0 =  tail.terminal('(')
+    val result0 =  tail.terminal('(', this)
     tail = result0.value
     
     // WS*
@@ -1134,7 +1152,7 @@ class Parser {
     
     // ')'
     // ')'
-    val result4 =  tail.terminal(')')
+    val result4 =  tail.terminal(')', this)
     tail = result4.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -1143,25 +1161,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression RangeExpression(String in) {
+  def Expression RangeExpression(String in) {
     val result = rangeExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * RangeExpression returns Expression : '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' ; 
    */
-  package static def Pair<? extends Expression, String> rangeExpression(String in) {
+  package def Pair<? extends Expression, String> rangeExpression(String in) {
     var result = new RangeExpression
     var tail = in
     
     // '['
     // '['
-    val result0 =  tail.terminal('[')
+    val result0 =  tail.terminal('[', this)
     tail = result0.value
     
     // dash='-'?
@@ -1170,7 +1188,7 @@ class Parser {
     try {
       // dash='-'
       // '-'
-      val result1 =  tail.terminal('-')
+      val result1 =  tail.terminal('-', this)
       tail = result1.value
       result.dash = result1.key
     } catch (ParseException e0) {
@@ -1190,10 +1208,10 @@ class Parser {
         try {
           // ']'
           // ']'
-          val result2 =  tail.terminal(']')
+          val result2 =  tail.terminal(']', this)
           tail = result2.value
           loop0 = false
-          throw new ParseException('Expected...')
+          throw new ParseException('Expected...', location)
         } catch (ParseException e1) {
           if (!loop0) throw e1
         } finally {
@@ -1215,14 +1233,14 @@ class Parser {
     
     // ']'
     // ']'
-    val result4 =  tail.terminal(']')
+    val result4 =  tail.terminal(']', this)
     tail = result4.value
     
     result.parsed = in.substring(0, in.length - tail.length)
     return result -> tail
   }
   
-  private static  def Pair<? extends Result, String> rangeExpression_sub0(String in) {
+  private def Pair<? extends Result, String> rangeExpression_sub0(String in) {
     val tail = in
     // MinMaxRange | CharRange
     try {
@@ -1237,19 +1255,19 @@ class Parser {
   }
   //--------------------------------------------------------------------------
   
-  static def MinMaxRange MinMaxRange(String in) {
+  def MinMaxRange MinMaxRange(String in) {
     val result = minMaxRange(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * MinMaxRange: !'-' min=. '-' !'-' max=. ; 
    */
-  package static def Pair<? extends MinMaxRange, String> minMaxRange(String in) {
+  package def Pair<? extends MinMaxRange, String> minMaxRange(String in) {
     var result = new MinMaxRange
     var tail = in
     
@@ -1259,10 +1277,10 @@ class Parser {
     try {
       // '-'
       // '-'
-      val result0 =  tail.terminal('-')
+      val result0 =  tail.terminal('-', this)
       tail = result0.value
       loop0 = false
-      throw new ParseException('Expected...')
+      throw new ParseException('Expected...', location)
     } catch (ParseException e0) {
       if (!loop0) throw e0
     } finally {
@@ -1272,13 +1290,13 @@ class Parser {
     
     // min=.
     // .
-    val result1 =  tail.any()
+    val result1 =  tail.any(this)
     tail = result1.value
     result.min = result1.key
     
     // '-'
     // '-'
-    val result2 =  tail.terminal('-')
+    val result2 =  tail.terminal('-', this)
     tail = result2.value
     
     val backup2 = result.copy()
@@ -1287,10 +1305,10 @@ class Parser {
     try {
       // '-'
       // '-'
-      val result3 =  tail.terminal('-')
+      val result3 =  tail.terminal('-', this)
       tail = result3.value
       loop1 = false
-      throw new ParseException('Expected...')
+      throw new ParseException('Expected...', location)
     } catch (ParseException e1) {
       if (!loop1) throw e1
     } finally {
@@ -1300,7 +1318,7 @@ class Parser {
     
     // max=.
     // .
-    val result4 =  tail.any()
+    val result4 =  tail.any(this)
     tail = result4.value
     result.max = result4.key
     
@@ -1310,44 +1328,77 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def CharRange CharRange(String in) {
+  def CharRange CharRange(String in) {
     val result = charRange(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
-   * CharRange: !'-' char=. ; 
+   * CharRange: char='\\]' | char='\\\\' | !'-' char=. ; 
    */
-  package static def Pair<? extends CharRange, String> charRange(String in) {
+  package def Pair<? extends CharRange, String> charRange(String in) {
     var result = new CharRange
     var tail = in
     
+    // char='\\]' | char='\\\\' | !'-' char=. 
     val backup0 = result.copy()
     val backup1 = tail
-    var loop0 = true
     try {
-      // '-'
-      // '-'
-      val result0 =  tail.terminal('-')
+      // char='\\]'
+      // '\\]'
+      val result0 =  tail.terminal('\\]', this)
       tail = result0.value
-      loop0 = false
-      throw new ParseException('Expected...')
+      result._char = result0.key
     } catch (ParseException e0) {
-      if (!loop0) throw e0
-    } finally {
       result = backup0
       tail = backup1
+      val backup2 = result.copy()
+      val backup3 = tail
+      try {
+        // char='\\\\'
+        // '\\\\'
+        val result1 =  tail.terminal('\\\\', this)
+        tail = result1.value
+        result._char = result1.key
+      } catch (ParseException e1) {
+        result = backup2
+        tail = backup3
+        val backup4 = result.copy()
+        val backup5 = tail
+        try {
+          val backup6 = result.copy()
+          val backup7 = tail
+          var loop0 = true
+          try {
+            // '-'
+            // '-'
+            val result2 =  tail.terminal('-', this)
+            tail = result2.value
+            loop0 = false
+            throw new ParseException('Expected...', location)
+          } catch (ParseException e2) {
+            if (!loop0) throw e2
+          } finally {
+            result = backup6
+            tail = backup7
+          }
+          
+          // char=.
+          // .
+          val result3 =  tail.any(this)
+          tail = result3.value
+          result._char = result3.key
+        } catch (ParseException e3) {
+          result = backup4
+          tail = backup5
+          throw e3
+        }
+      }
     }
-    
-    // char=.
-    // .
-    val result1 =  tail.any()
-    tail = result1.value
-    result._char = result1.key
     
     result.parsed = in.substring(0, in.length - tail.length)
     return result -> tail
@@ -1355,25 +1406,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression AnyCharExpression(String in) {
+  def Expression AnyCharExpression(String in) {
     val result = anyCharExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * AnyCharExpression returns Expression : char='.' ; 
    */
-  package static def Pair<? extends Expression, String> anyCharExpression(String in) {
+  package def Pair<? extends Expression, String> anyCharExpression(String in) {
     var result = new AnyCharExpression
     var tail = in
     
     // char='.'
     // '.'
-    val result0 =  tail.terminal('.')
+    val result0 =  tail.terminal('.', this)
     tail = result0.value
     result._char = result0.key
     
@@ -1383,19 +1434,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression RuleReferenceExpression(String in) {
+  def Expression RuleReferenceExpression(String in) {
     val result = ruleReferenceExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * RuleReferenceExpression returns Expression : name=ID ; 
    */
-  package static def Pair<? extends Expression, String> ruleReferenceExpression(String in) {
+  package def Pair<? extends Expression, String> ruleReferenceExpression(String in) {
     var result = new RuleReferenceExpression
     var tail = in
     
@@ -1410,25 +1461,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def AtomicExpression EndOfInputExpression(String in) {
+  def AtomicExpression EndOfInputExpression(String in) {
     val result = endOfInputExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * EndOfInputExpression returns AtomicExpression : 'EOI' ; 
    */
-  package static def Pair<? extends AtomicExpression, String> endOfInputExpression(String in) {
+  package def Pair<? extends AtomicExpression, String> endOfInputExpression(String in) {
     var result = new EndOfInputExpression
     var tail = in
     
     // 'EOI'
     // 'EOI'
-    val result0 =  tail.terminal('EOI')
+    val result0 =  tail.terminal('EOI', this)
     tail = result0.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -1437,25 +1488,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expression TerminalExpression(String in) {
+  def Expression TerminalExpression(String in) {
     val result = terminalExpression(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * TerminalExpression returns Expression : '\'' value=InTerminalChar? '\'' ; 
    */
-  package static def Pair<? extends Expression, String> terminalExpression(String in) {
+  package def Pair<? extends Expression, String> terminalExpression(String in) {
     var result = new TerminalExpression
     var tail = in
     
     // '\''
     // '\''
-    val result0 =  tail.terminal('\'')
+    val result0 =  tail.terminal('\'', this)
     tail = result0.value
     
     // value=InTerminalChar?
@@ -1473,7 +1524,7 @@ class Parser {
     
     // '\''
     // '\''
-    val result2 =  tail.terminal('\'')
+    val result2 =  tail.terminal('\'', this)
     tail = result2.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -1482,19 +1533,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def InTerminalChar InTerminalChar(String in) {
+  def InTerminalChar InTerminalChar(String in) {
     val result = inTerminalChar(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * InTerminalChar: ('\\' '\'' | '\\' '\\' | !'\'' .)+ ; 
    */
-  package static def Pair<? extends InTerminalChar, String> inTerminalChar(String in) {
+  package def Pair<? extends InTerminalChar, String> inTerminalChar(String in) {
     var result = new InTerminalChar
     var tail = in
     
@@ -1511,12 +1562,12 @@ class Parser {
         try {
           // '\\'
           // '\\'
-          val result0 =  tail.terminal('\\')
+          val result0 =  tail.terminal('\\', this)
           tail = result0.value
           
           // '\''
           // '\''
-          val result1 =  tail.terminal('\'')
+          val result1 =  tail.terminal('\'', this)
           tail = result1.value
         } catch (ParseException e0) {
           result = backup2
@@ -1526,12 +1577,12 @@ class Parser {
           try {
             // '\\'
             // '\\'
-            val result2 =  tail.terminal('\\')
+            val result2 =  tail.terminal('\\', this)
             tail = result2.value
             
             // '\\'
             // '\\'
-            val result3 =  tail.terminal('\\')
+            val result3 =  tail.terminal('\\', this)
             tail = result3.value
           } catch (ParseException e1) {
             result = backup4
@@ -1545,10 +1596,10 @@ class Parser {
               try {
                 // '\''
                 // '\''
-                val result4 =  tail.terminal('\'')
+                val result4 =  tail.terminal('\'', this)
                 tail = result4.value
                 loop1 = false
-                throw new ParseException('Expected...')
+                throw new ParseException('Expected...', location)
               } catch (ParseException e2) {
                 if (!loop1) throw e2
               } finally {
@@ -1558,7 +1609,7 @@ class Parser {
               
               // .
               // .
-              val result5 =  tail.any()
+              val result5 =  tail.any(this)
               tail = result5.value
             } catch (ParseException e3) {
               result = backup6
@@ -1586,25 +1637,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Comment Comment(String in) {
+  def Comment Comment(String in) {
     val result = comment(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * Comment : '//' (!('\r'? '\n') .)* ; 
    */
-  package static def Pair<? extends Comment, String> comment(String in) {
+  package def Pair<? extends Comment, String> comment(String in) {
     var result = new Comment
     var tail = in
     
     // '//'
     // '//'
-    val result0 =  tail.terminal('//')
+    val result0 =  tail.terminal('//', this)
     tail = result0.value
     
     // (!('\r'? '\n') .)*
@@ -1624,7 +1675,7 @@ class Parser {
           try {
             // '\r'
             // '\r'
-            val result1 =  tail.terminal('\r')
+            val result1 =  tail.terminal('\r', this)
             tail = result1.value
           } catch (ParseException e0) {
             result = backup4
@@ -1633,10 +1684,10 @@ class Parser {
           
           // '\n'
           // '\n'
-          val result2 =  tail.terminal('\n')
+          val result2 =  tail.terminal('\n', this)
           tail = result2.value
           loop0 = false
-          throw new ParseException('Expected...')
+          throw new ParseException('Expected...', location)
         } catch (ParseException e1) {
           if (!loop0) throw e1
         } finally {
@@ -1646,7 +1697,7 @@ class Parser {
         
         // .
         // .
-        val result3 =  tail.any()
+        val result3 =  tail.any(this)
         tail = result3.value
         backup0 = result
         backup1 = tail
@@ -1662,19 +1713,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def FQTN FQTN(String in) {
+  def FQTN FQTN(String in) {
     val result = fQTN(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * FQTN: ID ('.' ID)* ; 
    */
-  package static def Pair<? extends FQTN, String> fQTN(String in) {
+  package def Pair<? extends FQTN, String> fQTN(String in) {
     var result = new FQTN
     var tail = in
     
@@ -1690,7 +1741,7 @@ class Parser {
         // ('.' ID)
         // '.'
         // '.'
-        val result1 =  tail.terminal('.')
+        val result1 =  tail.terminal('.', this)
         tail = result1.value
         
         // ID
@@ -1710,19 +1761,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def ID ID(String in) {
+  def ID ID(String in) {
     val result = iD(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * ID: [a-zA-Z_] [a-zA-Z0-9_]* ; 
    */
-  package static def Pair<? extends ID, String> iD(String in) {
+  package def Pair<? extends ID, String> iD(String in) {
     var result = new ID
     var tail = in
     
@@ -1732,7 +1783,7 @@ class Parser {
       ('a'..'z') + 
       ('A'..'Z') + 
       '_'
-      )
+      , this)
     tail = result0.value
     
     // [a-zA-Z0-9_]*
@@ -1747,7 +1798,7 @@ class Parser {
           ('A'..'Z') + 
           ('0'..'9') + 
           '_'
-          )
+          , this)
         tail = result1.value
         backup0 = result
         backup1 = tail
@@ -1763,19 +1814,19 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def WS WS(String in) {
+  def WS WS(String in) {
     val result = wS(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * WS : ' ' | '\n' | '\t' | '\r' ; 
    */
-  package static def Pair<? extends WS, String> wS(String in) {
+  package def Pair<? extends WS, String> wS(String in) {
     var result = new WS
     var tail = in
     
@@ -1785,7 +1836,7 @@ class Parser {
     try {
       // ' '
       // ' '
-      val result0 =  tail.terminal(' ')
+      val result0 =  tail.terminal(' ', this)
       tail = result0.value
     } catch (ParseException e0) {
       result = backup0
@@ -1795,7 +1846,7 @@ class Parser {
       try {
         // '\n'
         // '\n'
-        val result1 =  tail.terminal('\n')
+        val result1 =  tail.terminal('\n', this)
         tail = result1.value
       } catch (ParseException e1) {
         result = backup2
@@ -1805,7 +1856,7 @@ class Parser {
         try {
           // '\t'
           // '\t'
-          val result2 =  tail.terminal('\t')
+          val result2 =  tail.terminal('\t', this)
           tail = result2.value
         } catch (ParseException e2) {
           result = backup4
@@ -1815,7 +1866,7 @@ class Parser {
           try {
             // '\r'
             // '\r'
-            val result3 =  tail.terminal('\r')
+            val result3 =  tail.terminal('\r', this)
             tail = result3.value
           } catch (ParseException e3) {
             result = backup6
@@ -1838,8 +1889,12 @@ class ParseException extends RuntimeException {
   @Property
   List<ParseException> causes
   
-  new(String message) {
+  @Property
+  Pair<Integer, Integer> location
+  
+  new(String message, Pair<Integer, Integer> location) {
     super(message)
+    this.location = location
   }
   
   def add(ParseException e) {
@@ -1848,7 +1903,7 @@ class ParseException extends RuntimeException {
   }
   
   override toString() {
-    super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
+    'ParseException [' + location.key + ',' + location.value + '] ' + super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
   }
   
 }
@@ -1869,7 +1924,7 @@ package class CharacterRange {
     new CharacterRange(r.chars  + s)
   }
 
-  new(char lower, char upper) {
+  private new(char lower, char upper) {
     if (lower > upper) {
       throw new IllegalArgumentException('lower is great than upper bound')
     }
@@ -1897,39 +1952,44 @@ package class CharacterRange {
 
 }
 
-package class Extensions {
+package class CharacterConsumer {
 
-  static def Pair<Eoi, String> eoi(String input) {
+  static def Pair<Eoi, String> eoi(String input, Parser parser) {
     val r0 = new Eoi -> input
 
     if (input.length > 0) {
-      throw new ParseException("Expected EOI")
+      throw new ParseException('Expected EOI', parser.location)
     }
 
     return r0
   }
 
-  static def <T> terminal(String in, String str) {
+  static def <T> terminal(String in, String str, Parser parser) {
     if (in.startsWith(str)) {
+      parser.addMatch(str)
       new Terminal(str) -> in.substring(str.length)
     } else {
-      throw new ParseException('Expected ' + str)
+      throw new ParseException("Expected '" + str + "'", parser.location)
     }
   }
   
-  static def <T> terminal(String in, CharacterRange range) {
+  static def <T> terminal(String in, CharacterRange range, Parser parser) {
     if (range.contains(in)) {
-      new Terminal(in.charAt(0).toString()) -> in.substring(1)
+      val match = in.charAt(0).toString()
+      parser.addMatch(match)
+      new Terminal(match) -> in.substring(1)
     } else {
-      throw new ParseException('Expected ' + range)
+      throw new ParseException('Expected [' + range + ']', parser.location)
     }
   }
 
-  static def <T> any(String in) {
+  static def <T> any(String in, Parser parser) {
     if (in.length > 0) {
-      new Terminal(in.substring(0, 1)) -> in.substring(1)
+      val match = in.substring(0, 1)
+      parser.addMatch(match)
+      new Terminal(match) -> in.substring(1)
     } else {
-      throw new ParseException('Unexpected EOI')
+      throw new ParseException('Unexpected EOI', parser.location)
     }
   }
 
@@ -1958,7 +2018,7 @@ package class Extensions {
   
   }
 
-  package class Terminal extends Result {
+  class Terminal extends Result {
   
     new() {
     }
@@ -2218,7 +2278,7 @@ package class Extensions {
   class CharRange extends Result {
     
     @Property
-    Object _char
+    Terminal _char
     
     override CharRange copy() {
       val r = new CharRange
@@ -2287,10 +2347,10 @@ package class Extensions {
   class MinMaxRange extends Result {
     
     @Property
-    Object min
+    Terminal min
     
     @Property
-    Object max
+    Terminal max
     
     override MinMaxRange copy() {
       val r = new MinMaxRange

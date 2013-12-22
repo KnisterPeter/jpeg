@@ -2,26 +2,44 @@ package types
 
 import java.util.List
 
+import static extension types.CharacterConsumer.*
 import static extension types.CharacterRange.*
-import static extension types.Extensions.*
 
 class Parser {
   
+  int line = 1
+  int column = 1
+  
+  package def addMatch(String match) {
+    var s = match
+    var idx = s.indexOf('\n')
+    while (idx != -1) {
+      column = 1
+      line = line + 1
+      s = s.substring(idx + 1)
+    }
+    column = column + s.length
+  }
+  
+  package def getLocation() {
+    line -> column
+  }
+  
   //--------------------------------------------------------------------------
   
-  static def Rule Rule(String in) {
+  def Rule Rule(String in) {
     val result = rule(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * Rule: expr+=(ExprA | ExprB) ; 
    */
-  package static def Pair<? extends Rule, String> rule(String in) {
+  package def Pair<? extends Rule, String> rule(String in) {
     var result = new Rule
     var tail = in
     
@@ -34,7 +52,7 @@ class Parser {
     return result -> tail
   }
   
-  private static  def Pair<? extends Expr, String> rule_sub0(String in) {
+  private def Pair<? extends Expr, String> rule_sub0(String in) {
     val tail = in
     // ExprA | ExprB
     try {
@@ -49,25 +67,25 @@ class Parser {
   }
   //--------------------------------------------------------------------------
   
-  static def Expr ExprA(String in) {
+  def Expr ExprA(String in) {
     val result = exprA(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * ExprA returns Expr: 'a' ; 
    */
-  package static def Pair<? extends Expr, String> exprA(String in) {
+  package def Pair<? extends Expr, String> exprA(String in) {
     var result = new ExprA
     var tail = in
     
     // 'a'
     // 'a'
-    val result0 =  tail.terminal('a')
+    val result0 =  tail.terminal('a', this)
     tail = result0.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -76,25 +94,25 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  static def Expr ExprB(String in) {
+  def Expr ExprB(String in) {
     val result = exprB(in)
     return 
       if (result.value.length == 0) 
         result.key 
       else 
-        throw new ParseException("Unexpected end of input")
+        throw new ParseException("Unexpected end of input", location)
   }
   
   /**
    * ExprB returns Expr: 'b' ; 
    */
-  package static def Pair<? extends Expr, String> exprB(String in) {
+  package def Pair<? extends Expr, String> exprB(String in) {
     var result = new ExprB
     var tail = in
     
     // 'b'
     // 'b'
-    val result0 =  tail.terminal('b')
+    val result0 =  tail.terminal('b', this)
     tail = result0.value
     
     result.parsed = in.substring(0, in.length - tail.length)
@@ -109,8 +127,12 @@ class ParseException extends RuntimeException {
   @Property
   List<ParseException> causes
   
-  new(String message) {
+  @Property
+  Pair<Integer, Integer> location
+  
+  new(String message, Pair<Integer, Integer> location) {
     super(message)
+    this.location = location
   }
   
   def add(ParseException e) {
@@ -119,7 +141,7 @@ class ParseException extends RuntimeException {
   }
   
   override toString() {
-    super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
+    'ParseException [' + location.key + ',' + location.value + '] ' + super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
   }
   
 }
@@ -140,7 +162,7 @@ package class CharacterRange {
     new CharacterRange(r.chars  + s)
   }
 
-  new(char lower, char upper) {
+  private new(char lower, char upper) {
     if (lower > upper) {
       throw new IllegalArgumentException('lower is great than upper bound')
     }
@@ -168,39 +190,44 @@ package class CharacterRange {
 
 }
 
-package class Extensions {
+package class CharacterConsumer {
 
-  static def Pair<Eoi, String> eoi(String input) {
+  static def Pair<Eoi, String> eoi(String input, Parser parser) {
     val r0 = new Eoi -> input
 
     if (input.length > 0) {
-      throw new ParseException("Expected EOI")
+      throw new ParseException('Expected EOI', parser.location)
     }
 
     return r0
   }
 
-  static def <T> terminal(String in, String str) {
+  static def <T> terminal(String in, String str, Parser parser) {
     if (in.startsWith(str)) {
+      parser.addMatch(str)
       new Terminal(str) -> in.substring(str.length)
     } else {
-      throw new ParseException('Expected ' + str)
+      throw new ParseException("Expected '" + str + "'", parser.location)
     }
   }
   
-  static def <T> terminal(String in, CharacterRange range) {
+  static def <T> terminal(String in, CharacterRange range, Parser parser) {
     if (range.contains(in)) {
-      new Terminal(in.charAt(0).toString()) -> in.substring(1)
+      val match = in.charAt(0).toString()
+      parser.addMatch(match)
+      new Terminal(match) -> in.substring(1)
     } else {
-      throw new ParseException('Expected ' + range)
+      throw new ParseException('Expected [' + range + ']', parser.location)
     }
   }
 
-  static def <T> any(String in) {
+  static def <T> any(String in, Parser parser) {
     if (in.length > 0) {
-      new Terminal(in.substring(0, 1)) -> in.substring(1)
+      val match = in.substring(0, 1)
+      parser.addMatch(match)
+      new Terminal(match) -> in.substring(1)
     } else {
-      throw new ParseException('Unexpected EOI')
+      throw new ParseException('Unexpected EOI', parser.location)
     }
   }
 
@@ -229,7 +256,7 @@ package class Extensions {
   
   }
 
-  package class Terminal extends Result {
+  class Terminal extends Result {
   
     new() {
     }

@@ -18,10 +18,28 @@ class Generator {
     
     import java.util.List
     
+    import static extension «packageName».CharacterConsumer.*
     import static extension «packageName».CharacterRange.*
-    import static extension «packageName».Extensions.*
 
     class Parser {
+      
+      int line = 1
+      int column = 1
+      
+      package def addMatch(String match) {
+        var s = match
+        var idx = s.indexOf('\n')
+        while (idx != -1) {
+          column = 1
+          line = line + 1
+          s = s.substring(idx + 1)
+        }
+        column = column + s.length
+      }
+      
+      package def getLocation() {
+        line -> column
+      }
       
       «FOR rule : jpeg.rules.filter[!types.get(name.parsed).internal]»
         «new RuleGenerator(rule, jpeg, types).generate()»
@@ -34,8 +52,12 @@ class Generator {
       @Property
       List<ParseException> causes
       
-      new(String message) {
+      @Property
+      Pair<Integer, Integer> location
+      
+      new(String message, Pair<Integer, Integer> location) {
         super(message)
+        this.location = location
       }
       
       def add(ParseException e) {
@@ -44,7 +66,7 @@ class Generator {
       }
       
       override toString() {
-        super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
+        'ParseException [' + location.key + ',' + location.value + '] ' + super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
       }
       
     }
@@ -65,7 +87,7 @@ class Generator {
         new CharacterRange(r.chars  + s)
       }
     
-      new(char lower, char upper) {
+      private new(char lower, char upper) {
         if (lower > upper) {
           throw new IllegalArgumentException('lower is great than upper bound')
         }
@@ -93,39 +115,44 @@ class Generator {
     
     }
 
-    package class Extensions {
+    package class CharacterConsumer {
     
-      static def Pair<Eoi, String> eoi(String input) {
+      static def Pair<Eoi, String> eoi(String input, Parser parser) {
         val r0 = new Eoi -> input
     
         if (input.length > 0) {
-          throw new ParseException("Expected EOI")
+          throw new ParseException('Expected EOI', parser.location)
         }
     
         return r0
       }
     
-      static def <T> terminal(String in, String str) {
+      static def <T> terminal(String in, String str, Parser parser) {
         if (in.startsWith(str)) {
+          parser.addMatch(str)
           new Terminal(str) -> in.substring(str.length)
         } else {
-          throw new ParseException('Expected ' + str)
+          throw new ParseException("Expected '" + str + "'", parser.location)
         }
       }
       
-      static def <T> terminal(String in, CharacterRange range) {
+      static def <T> terminal(String in, CharacterRange range, Parser parser) {
         if (range.contains(in)) {
-          new Terminal(in.charAt(0).toString()) -> in.substring(1)
+          val match = in.charAt(0).toString()
+          parser.addMatch(match)
+          new Terminal(match) -> in.substring(1)
         } else {
-          throw new ParseException('Expected ' + range)
+          throw new ParseException('Expected [' + range + ']', parser.location)
         }
       }
     
-      static def <T> any(String in) {
+      static def <T> any(String in, Parser parser) {
         if (in.length > 0) {
-          new Terminal(in.substring(0, 1)) -> in.substring(1)
+          val match = in.substring(0, 1)
+          parser.addMatch(match)
+          new Terminal(match) -> in.substring(1)
         } else {
-          throw new ParseException('Unexpected EOI')
+          throw new ParseException('Unexpected EOI', parser.location)
         }
       }
     
@@ -157,7 +184,7 @@ class Generator {
     
     }
   
-    package class Terminal extends Result {
+    class Terminal extends Result {
     
       new() {
       }
@@ -255,19 +282,19 @@ class RuleGenerator {
   def generate() '''
     //--------------------------------------------------------------------------
     
-    static def «resultType.name» «name.toFirstUpper»(String in) {
+    def «resultType.name» «name.toFirstUpper»(String in) {
       val result = «name.toFirstLower»(in)
       return 
         if (result.value.length == 0) 
           result.key 
         else 
-          throw new ParseException("Unexpected end of input")
+          throw new ParseException("Unexpected end of input", location)
     }
     
     /**
      * «rule»
      */
-    package static def Pair<? extends «resultType.name», String> «name.toFirstLower()»(String in) {
+    package def Pair<? extends «resultType.name», String> «name.toFirstLower()»(String in) {
       «IF rule.simpleRule»
         «if(true) { inSimpleChoice = true; ''}»
         val tail = in
@@ -375,7 +402,7 @@ class RuleGenerator {
     try {
       «expr.expr.create()»
       «currentLoop» = false
-      throw new ParseException('Expected...')
+      throw new ParseException('Expected...', location)
     } catch (ParseException «nextException») {
       if (!«currentLoop») throw «exception»
     } finally {
@@ -473,18 +500,19 @@ class RuleGenerator {
   
   private def String createSubFunction(SubExpression expr, String subFunction) '''
     «val resultType = expr.evaluateType(jpeg, types)»
-    private static  def Pair<? extends «resultType.name», String> «subFunction»(String in) {
+    private def Pair<? extends «resultType.name», String> «subFunction»(String in) {
       «IF expr.expr.simpleChoiceExpression»
         «if(true) { inSimpleChoice = true; ''}»
         val tail = in
         «expr.expr.create()»
         «if(true) { inSimpleChoice = false; ''}»
       «ELSE»
-        var Object result = null
+        var «resultType.name» result = new «resultType.name»
         var tail = in
         
         «expr.expr.create()»
         
+        result.parsed = in.substring(0, in.length - tail.length)
         return result -> tail
       «ENDIF»
     }
@@ -510,7 +538,7 @@ class RuleGenerator {
         «range.create()»
       «ENDFOR»
       «IF expr.dash != null»«IF !expr.ranges.empty» + «ENDIF»'-'«ENDIF»
-      )
+      , this)
     tail = «result».value
   '''
   
@@ -524,19 +552,19 @@ class RuleGenerator {
   
   def dispatch CharSequence create(AnyCharExpression expr) '''
     // «expr»
-    val «nextResult» =  tail.any()
+    val «nextResult» =  tail.any(this)
     tail = «result».value
   '''
   
   def dispatch CharSequence create(TerminalExpression expr) '''
     // «expr»
-    val «nextResult» =  tail.terminal('«expr.value.parsed»')
+    val «nextResult» =  tail.terminal('«expr.value.parsed»', this)
     tail = «result».value
   '''
   
   def dispatch CharSequence create(EndOfInputExpression expr) '''
     // «expr»
-    val «nextResult» = tail.eoi()
+    val «nextResult» = tail.eoi(this)
     tail = «result».value
   '''
   

@@ -3,8 +3,8 @@ package de.matrixweb.jpeg.internal
 import java.util.List
 import java.util.Map
 
-import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
 import static extension de.matrixweb.jpeg.internal.AstNodeHelper.*
+import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
 import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 
 /**
@@ -200,6 +200,7 @@ class ExpressionTypeEvaluator {
 
   def static dispatch JType evaluateType(SequenceExpression expr, Jpeg jpeg, Map<String, JType> map) {
     if (expr.expressions.size == 1) return expr.expressions.head.evaluateType(jpeg, map)
+    if (expr.expressions.forall[evaluateType(jpeg, map).name == 'Terminal']) return map.get('Terminal')
     map.get('Result')
   }
   
@@ -230,6 +231,10 @@ class ExpressionTypeEvaluator {
     map.get('Terminal')
   }
   
+  def static dispatch JType evaluateType(AnyCharExpression expr, Jpeg jpeg, Map<String, JType> map) {
+    map.get('Terminal')
+  }
+  
   def static dispatch JType evaluateType(AssignableExpression expr, Jpeg jpeg, Map<String, JType> map) {
     expr.expr.evaluateType(jpeg, map)
   }
@@ -241,7 +246,7 @@ class GeneratorHelper {
   /**
    * A simple rule is a rule which contains exactly one simple ChoiceExpression.
    */
-  def static isSimpleRule(Rule rule) {
+  static def isSimpleRule(Rule rule) {
     return rule.body.expressions.size == 1
       && rule.body.expressions.head.simpleChoiceExpression
   }
@@ -250,7 +255,7 @@ class GeneratorHelper {
    * A simple ChoiceExpression is defined by having no assigned expressions and 
    * only one rule reference per choice.
    */
-  def static isSimpleChoiceExpression(Expression expr) {
+  static def isSimpleChoiceExpression(Expression expr) {
     return 
       expr instanceof ChoiceExpression
       && (expr as ChoiceExpression).choices.map[findNodesByType(AssignableExpression).forall[property == null]].fold(true, [a, b | a && b])
@@ -274,4 +279,18 @@ class GeneratorHelper {
           ]
   }
 
+}
+
+class AstValidator {
+  
+  static def validate(Jpeg jpeg) {
+    jpeg.rules.forEach[ rule |
+      rule.findNodesByType(RuleReferenceExpression).forEach[ ref |
+        if (!jpeg.rules.exists[name.parsed == ref.name.parsed]) {
+          throw new ParseException("Reference '" + ref.name.parsed + "' undefined")
+        }
+      ]
+    ]
+  }
+  
 }

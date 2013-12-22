@@ -1,0 +1,357 @@
+//-- 6 Source Text -------------------------------------------------------------
+
+SourceCharacter :
+  .
+;
+
+//-- 7 Lexical Conventions -----------------------------------------------------
+
+InputElementDiv :
+    WhiteSpace
+  | LineTerminator
+  | Comment
+  | Token
+  | DivPunctuator
+;
+
+InputElementRegExp :
+    WhiteSpace
+  | LineTerminator
+  | Comment
+  | Token
+  | RegularExpressionLiteral
+;
+
+// TODO: Unicode Category 'Zs' is missing here
+WhiteSpace :
+    '\u0009'
+  | '\u000B'
+  | '\u000C'
+  | '\u0020'
+  | '\u00A0'
+  | '\uFEFF'
+;
+
+LineTerminator :
+    '\u000A'
+  | '\u000D'
+  | '\u2028'
+  | '\u2029'
+;
+
+LineTerminatorSequence :
+    '\u000A'
+  | '\u000D' !'\u000A'
+  | '\u2028'
+  | '\u2029'
+  | '\u000D' '\u000A'
+;
+
+Comment :
+    MultiLineComment
+  | SingleLineComment
+;
+
+MultiLineComment :
+  '/*' MultiLineCommentChars? '*/'
+;
+
+MultiLineCommentChars :
+    MultiLineNotAsteriskChar MultiLineCommentChars?
+  | '*' PostAsteriskCommentChars?
+;
+
+PostAsteriskCommentChars :
+    MultiLineNotForwardSlashOrAsteriskChar MultiLineCommentChars?
+  | '*' PostAsteriskCommentChars?
+;
+
+MultiLineNotAsteriskChar :
+  !'*' SourceCharacter
+;
+
+MultiLineNotForwardSlashOrAsteriskChar :
+  ![/*] SourceCharacter
+;
+
+SingleLineComment :
+  '//' SingleLineCommentChars?
+;
+
+SingleLineCommentChars :
+  SingleLineCommentChar SingleLineCommentChars?
+;
+
+SingleLineCommentChar :
+  !LineTerminator SourceCharacter
+;
+
+Token :
+    IdentifierName
+  | Punctuator
+  | NumericLiteral
+  | StringLiteral
+;
+
+DivPunctuator :
+    '/='
+  | '/' 
+;
+
+//-- 7.8.5 Regular Expression Literals -----------------------------------------
+
+RegularExpressionLiteral :
+  '/' RegularExpressionBody '/' RegularExpressionFlags
+;
+
+RegularExpressionBody :
+  RegularExpressionFirstChar RegularExpressionChars
+;
+
+RegularExpressionChars :
+  RegularExpressionChar*
+;
+
+RegularExpressionFirstChar :
+    ![*\/[] RegularExpressionNonTerminator
+  | RegularExpressionBackslashSequence
+  | RegularExpressionClass
+;
+
+RegularExpressionChar :
+    ![\/[] RegularExpressionNonTerminator
+  | RegularExpressionBackslashSequence
+  | RegularExpressionClass
+;
+
+RegularExpressionBackslashSequence :
+  '\' RegularExpressionNonTerminator
+;
+
+RegularExpressionNonTerminator :
+  !LineTerminator SourceCharacter
+;
+
+RegularExpressionClass :
+  '[' RegularExpressionClassChars ']'
+;
+
+RegularExpressionClassChars :
+  RegularExpressionClassChar*
+;
+
+RegularExpressionClassChar :
+    ![\]\] RegularExpressionNonTerminator
+  | RegularExpressionBackslashSequence
+;
+
+RegularExpressionFlags :
+  IdentifierPart*
+;
+
+//-- 12 Statements -------------------------------------------------------------
+
+Statement :
+    Block
+  | VariableStatement
+  | EmptyStatement
+  | ExpressionStatement
+  | IfStatement
+  | IterationStatement
+  | ContinueStatement
+  | BreakStatement
+  | ReturnStatement
+  | WithStatement
+  | LabelledStatement
+  | SwitchStatement
+  | ThrowStatement
+  | TryStatement
+  | DebuggerStatement
+;
+
+//-- 12.1 Block ----------------------------------------------------------------
+
+Block :
+  '{' StatementList? '}'
+;
+
+StatementList :
+  statement+=Statement statement+=Statement*
+;
+
+//-- 12.2 Variable Statement ---------------------------------------------------
+
+VariableStatement :
+  'var' variableDeclarationList=VariableDeclarationList ';'
+;
+
+VariableDeclarationList :
+  variableDeclaration+=VariableDeclaration (',' variableDeclaration+=VariableDeclaration)*
+;
+
+VariableDeclarationListNoIn :
+  variableDeclarationNoIn+=VariableDeclarationNoIn (',' variableDeclarationNoIn+=VariableDeclarationNoIn)*
+;
+
+VariableDeclaration :
+  identifier=Identifier initialiser=Initialiser?
+;
+
+VariableDeclarationNoIn :
+  identifier=Identifier initialiserNoIn=InitialiserNoIn?
+;
+
+Initialiser :
+  '=' assignmentExpression=AssignmentExpression
+;
+
+InitialiserNoIn :
+  '=' assignmentExpressionNoIn=AssignmentExpressionNoIn
+;
+
+//-- 12.3 Empty Statement ------------------------------------------------------
+
+EmptyStatement :
+  ';'
+;
+
+//-- 12.4 Expression Statement -------------------------------------------------
+
+ExpressionStatement :
+  !('{' | 'function') expression=Expression ';'
+;
+
+//-- 12.5 The if Statement -----------------------------------------------------
+
+IfStatement :
+    'if' '(' expression=Expression ')' ifStatement=Statement 'else' elseStatement=Statement
+  | 'if' '(' expression=Expression ')' ifStatement=Statement
+;
+
+//-- 12.6 Iteration Statements -------------------------------------------------
+
+IterationStatement :
+    'do' Statement 'while' '(' Expression ')' ';'
+  | 'while' '(' Expression ')' Statement
+  | 'for' '(' ExpressionNoIn? ';' Expression? ';' Expression? ')' Statement
+  | 'for' '(' 'var' VariableDeclarationListNoIn ';' Expression? ';' Expression? ')' Statement
+  | 'for' '(' LeftHandSideExpression 'in' Expression ')' Statement
+  | 'for' '(' 'var' VariableDeclarationNoIn 'in' Expression ')' Statement
+;
+
+//-- 12.7 The continue Statement -----------------------------------------------
+
+ContinueStatement :
+    'continue' ';'
+  | 'continue' !LineTerminator identifier=Identifier ';'
+;
+
+//-- 12.8 The break Statement --------------------------------------------------
+
+BreakStatement :
+    'break' ';'
+  | 'break' !LineTerminator identifier=Identifier ';'
+;
+
+//-- 12.9 The return Statement -------------------------------------------------
+
+ReturnStatement :
+    'return' ';'
+  | 'return' !LineTerminator expression=Expression ';'
+;
+
+//-- 12.10 The with Statement --------------------------------------------------
+
+WithStatement :
+  'with' '(' expression=Expression ')' statement=Statement
+;
+
+//-- 12.11 The switch Statement ------------------------------------------------
+
+SwitchStatement :
+  'switch' '(' expression=Expression ')' caseBlock=CaseBlock
+;
+
+CaseBlock :
+    '{' caseClauses=CaseClauses? '}'
+  | '{' caseClauses=CaseClauses? defaultClause=DefaultClause caseClauses=CaseClauses? '}'
+;
+
+CaseClauses :
+  caseClause+=CaseClause caseClause+=CaseClause*
+;
+
+CaseClause :
+  'case' expression=Expression ':' statementList=StatementList?
+;
+
+DefaultClause :
+  'default' ':' statementList=StatementList?
+;
+
+//-- 12.12 Labelled Statements -------------------------------------------------
+
+LabelledStatement :
+  identifier=Identifier ':' statement=Statement
+;
+
+//-- 12.13 The throw Statement -------------------------------------------------
+
+ThrowStatement :
+  'throw' !LineTerminator expression=Expression ';'
+;
+
+//-- 12.14 The try Statement ---------------------------------------------------
+
+TryStatement :
+    'try' block=Block catch=Catch
+  | 'try' block=Block finally=Finally
+  | 'try' block=Block catch=Catch finally=Finally
+;
+
+Catch :
+  'catch' '(' identifier=Identifier ')' block=Block
+;
+
+Finally :
+  'finally' block=Block
+;
+
+//-- 12.15 The debugger statement ----------------------------------------------
+
+DebuggerStatement :
+  'debugger' ';'
+;
+
+//-- 13 Function Definition ----------------------------------------------------
+
+FunctionDeclaration :
+  'function' identifier=Identifier '(' formalParameterList=FormalParameterList? ')' '{' functionBody=FunctionBody '}'
+;
+
+FunctionExpression :
+  'function' identifier=Identifier? '(' formalParameterList=FormalParameterList? ')' '{' functionBody=FunctionBody '}'
+;
+
+FormalParameterList :
+    identifier+=Identifier (',' identifier+=Identifier)*
+;
+
+FunctionBody :
+  sourceElements=SourceElements?
+;
+
+//-- 14 Program ----------------------------------------------------------------
+
+Program :
+  sourceElements=SourceElements?
+;
+
+SourceElements :
+  sourceElement+=SourceElement sourceElement+=SourceElement*
+;
+
+SourceElement :
+    statement=Statement
+  | functionDeclaration=FunctionDeclaration
+;
