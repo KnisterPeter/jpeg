@@ -8,10 +8,12 @@
     <version>7</version>
   </parent>
   <groupId>de.matrixweb.jpeg</groupId>
-  <artifactId>jpeg</artifactId>
+  <artifactId>jpeg-root</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
-  <name>JPEG</name>
+  <name>JPEG Root</name>
+
   <description>
     JPEG is a packrat parser written in Java generating parsers for different
     target languages. The first supported target language is Java.
@@ -40,6 +42,11 @@
     <url>https://github.com/KnisterPeter/jpeg</url>
   </scm>
 
+  <modules>
+    <module>parser</module>
+    <module>tests</module>
+  </modules>
+
   <properties>
     <mavenVersion>2.0</mavenVersion>
 
@@ -53,12 +60,6 @@
       <artifactId>org.eclipse.xtend.lib</artifactId>
       <version>${xtend.version}</version>
     </dependency>
-    <!-- <dependency> -->
-    <!-- <groupId>org.eclipse.jdt.core.compiler</groupId> -->
-    <!-- <artifactId>ecj</artifactId> -->
-    <!-- <version>4.2.2</version> -->
-    <!-- </dependency> -->
-
     <dependency>
       <groupId>org.eclipse.xtend</groupId>
       <artifactId>org.eclipse.xtend.core</artifactId>
@@ -88,41 +89,6 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.eclipse.xtend</groupId>
-        <artifactId>xtend-maven-plugin</artifactId>
-        <version>${xtend.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-              <goal>xtend-install-debug-info</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${basedir}/target/generated-sources/xtend-gen</outputDirectory>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.8</version>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>${basedir}/target/generated-sources/xtend-gen</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
@@ -139,6 +105,41 @@
     </plugins>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.eclipse.xtend</groupId>
+          <artifactId>xtend-maven-plugin</artifactId>
+          <version>${xtend.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>compile</goal>
+                <goal>xtend-install-debug-info</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${basedir}/target/generated-sources/xtend-gen</outputDirectory>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>1.8</version>
+          <executions>
+            <execution>
+              <id>add-source</id>
+              <phase>generate-sources</phase>
+              <goals>
+                <goal>add-source</goal>
+              </goals>
+              <configuration>
+                <sources>
+                  <source>${basedir}/target/generated-sources/xtend-gen</source>
+                </sources>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
