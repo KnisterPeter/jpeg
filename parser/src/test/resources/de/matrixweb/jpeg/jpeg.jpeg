@@ -7,17 +7,17 @@
 // This is the main entry point into the JPEG grammar.
 // 
 Jpeg :
-  (rules+=Rule | Comment WS*)+ EOI
+  (rules+=Rule | Comment)+ EOI
 ;
 
 // -----------------------------------------------------------------------------
 
 Rule :
-  name=ID WS* returns=RuleReturns? WS* ':' WS* body=Body WS* ';' WS*
+  name=ID WS* returns=RuleReturns? ':' WS* body=Body ';' WS*
 ;
 
 RuleReturns :
-  'returns' WS* name=ID
+  'returns' WS* name=ID WS*
 ;
 
 // -----------------------------------------------------------------------------
@@ -74,11 +74,7 @@ SequenceExpression returns Expression :
 // -----------------------------------------------------------------------------
 
 ActionExpression returns Expression :
-  '{' WS* 
-  ( property=ID WS* op=AssignmentOperator WS* 'current' WS*
-  | name=ID
-  ) 
-  WS* '}'
+  '{' WS* (property=ID WS* op=AssignmentOperator 'current' WS* | name=ID WS*) '}'
 ;
 
 // -----------------------------------------------------------------------------
@@ -96,25 +92,25 @@ NotPredicateExpression returns Expression :
 // -----------------------------------------------------------------------------
 
 OneOrMoreExpression returns Expression :
-  expr=AssignableExpression WS* '+'
+  expr=AssignableExpression '+' WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 ZeroOrMoreExpression returns Expression :
-  expr=AssignableExpression WS* '*'
+  expr=AssignableExpression '*' WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 OptionalExpression returns Expression :
-  expr=AssignableExpression WS* '?'
+  expr=AssignableExpression '?' WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 AssignableExpression returns Expression :
-  (property=ID WS* op=AssignmentOperator WS*)?
+  (property=ID WS* op=AssignmentOperator)?
   expr=
   ( SubExpression
   | RangeExpression
@@ -122,25 +118,26 @@ AssignableExpression returns Expression :
   | AnyCharExpression
   | RuleReferenceExpression
   )
+  WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 AssignmentOperator :
-    single='=' 
-  | multi='+='
+  (single='=' | multi='+=')
+  WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 SubExpression returns Expression :
-  '(' WS* expr=ChoiceExpression WS* ')'
+  '(' WS* expr=ChoiceExpression ')' WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 RangeExpression returns Expression : 
-  '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']'
+  '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' WS*
 ;
 
 MinMaxRange:
@@ -162,13 +159,13 @@ AnyCharExpression returns Expression :
 // -----------------------------------------------------------------------------
 
 RuleReferenceExpression returns Expression :
-  name=ID
+  name=ID WS*
 ;
 
 // -----------------------------------------------------------------------------
 
 TerminalExpression returns Expression :
-  '\'' value=InTerminalChar? '\''
+  '\'' value=InTerminalChar? '\'' WS*
 ;
 
 InTerminalChar:
@@ -178,7 +175,7 @@ InTerminalChar:
 // -----------------------------------------------------------------------------
 
 Comment :
-  '//' (!('\r'? '\n') .)*
+  '//' (!('\r'? '\n') .)* WS*
 ;
 
 // -----------------------------------------------------------------------------

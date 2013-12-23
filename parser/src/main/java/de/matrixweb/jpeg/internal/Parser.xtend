@@ -2,7 +2,6 @@ package de.matrixweb.jpeg.internal
 
 import java.util.List
 
-import static extension de.matrixweb.jpeg.internal.CharacterConsumer.*
 import static extension de.matrixweb.jpeg.internal.CharacterRange.*
 
 class Parser {
@@ -19,6 +18,32 @@ class Parser {
       ])
   }
   
+  static def <T> __terminal(Derivation derivation, String str, Parser parser) {
+    var n = 0
+    var d = derivation
+    while (n < str.length) {
+      val r = d.dvChar
+      if (r.node != str.charAt(n)) {
+        throw new ParseException("Expected '" + str + "'")
+      }
+      n = n + 1
+      d = r.derivation
+    }
+    new Result<Terminal>(new Terminal(str), d)
+  }
+  
+  static def <T> __terminal(Derivation derivation, CharacterRange range, Parser parser) {
+    val r = derivation.dvChar
+    return 
+      if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
+      else throw new ParseException('Expected [' + range + ']')
+  }
+
+  static def <T> __any(Derivation derivation, Parser parser) {
+    val r = derivation.dvChar
+    new Result<Terminal>(new Terminal(r.node), r.derivation)
+  }
+
   //--------------------------------------------------------------------------
   
   def Jpeg Jpeg(String in) {
@@ -33,20 +58,20 @@ class Parser {
   }
   
   /**
-   * Jpeg : (rules+=Rule | Comment WS*)+ EOI ; 
+   * Jpeg : (rules+=Rule | Comment)+ EOI ; 
    */
   package def Result<? extends Jpeg> jpeg(Derivation derivation) {
     var node = new Jpeg
     var d = derivation
     
-    // (rules+=Rule | Comment WS*)+
+    // (rules+=Rule | Comment)+
     var backup0 = node.copy()
     var backup1 = d
     var loop0 = false
     try {
       while (true) {
-        // (rules+=Rule | Comment WS*)
-        // rules+=Rule | Comment WS*
+        // (rules+=Rule | Comment)
+        // rules+=Rule | Comment
         val backup2 = node.copy()
         val backup3 = d
         try {
@@ -63,26 +88,10 @@ class Parser {
             // Comment
             val result1 = d.dvComment
             d = result1.derivation
-            
-            // WS*
-            var backup6 = node.copy()
-            var backup7 = d
-            try {
-              while (true) {
-                // WS
-                val result2 = d.dvWS
-                d = result2.derivation
-                backup6 = node.copy()
-                backup7 = d
-              }
-            } catch (ParseException e1) {
-              node = backup6
-              d = backup7
-            }
-          } catch (ParseException e2) {
+          } catch (ParseException e1) {
             node = backup4
             d = backup5
-            throw e2
+            throw e1
           }
         }
         
@@ -90,17 +99,17 @@ class Parser {
         backup0 = node.copy()
         backup1 = d
       }
-    } catch (ParseException e3) {
+    } catch (ParseException e2) {
       if (!loop0) {
         node = backup0
         d = backup1
-        throw e3
+        throw e2
       }
     }
     
     // EOI
-    val result3 = d.eoi(this)
-    d = result3.derivation
+    val result2 = d.dvEOI
+    d = result2.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Jpeg>(node, d)
@@ -120,7 +129,7 @@ class Parser {
   }
   
   /**
-   * Rule : name=ID WS* returns=RuleReturns? WS* ':' WS* body=Body WS* ';' WS* ; 
+   * Rule : name=ID WS* returns=RuleReturns? ':' WS* body=Body ';' WS* ; 
    */
   package def Result<? extends Rule> rule(Derivation derivation) {
     var node = new Rule
@@ -160,14 +169,19 @@ class Parser {
       d = backup3
     }
     
+    // ':'
+    // ':'
+    val result3 =  d.__terminal(':', this)
+    d = result3.derivation
+    
     // WS*
     var backup4 = node.copy()
     var backup5 = d
     try {
       while (true) {
         // WS
-        val result3 = d.dvWS
-        d = result3.derivation
+        val result4 = d.dvWS
+        d = result4.derivation
         backup4 = node.copy()
         backup5 = d
       }
@@ -176,10 +190,15 @@ class Parser {
       d = backup5
     }
     
-    // ':'
-    // ':'
-    val result4 =  d.terminal(':', this)
-    d = result4.derivation
+    // body=Body
+    val result5 = d.dvBody
+    d = result5.derivation
+    node.body = result5.node
+    
+    // ';'
+    // ';'
+    val result6 =  d.__terminal(';', this)
+    d = result6.derivation
     
     // WS*
     var backup6 = node.copy()
@@ -187,56 +206,14 @@ class Parser {
     try {
       while (true) {
         // WS
-        val result5 = d.dvWS
-        d = result5.derivation
+        val result7 = d.dvWS
+        d = result7.derivation
         backup6 = node.copy()
         backup7 = d
       }
     } catch (ParseException e3) {
       node = backup6
       d = backup7
-    }
-    
-    // body=Body
-    val result6 = d.dvBody
-    d = result6.derivation
-    node.body = result6.node
-    
-    // WS*
-    var backup8 = node.copy()
-    var backup9 = d
-    try {
-      while (true) {
-        // WS
-        val result7 = d.dvWS
-        d = result7.derivation
-        backup8 = node.copy()
-        backup9 = d
-      }
-    } catch (ParseException e4) {
-      node = backup8
-      d = backup9
-    }
-    
-    // ';'
-    // ';'
-    val result8 =  d.terminal(';', this)
-    d = result8.derivation
-    
-    // WS*
-    var backup10 = node.copy()
-    var backup11 = d
-    try {
-      while (true) {
-        // WS
-        val result9 = d.dvWS
-        d = result9.derivation
-        backup10 = node.copy()
-        backup11 = d
-      }
-    } catch (ParseException e5) {
-      node = backup10
-      d = backup11
     }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
@@ -257,7 +234,7 @@ class Parser {
   }
   
   /**
-   * RuleReturns : 'returns' WS* name=ID ; 
+   * RuleReturns : 'returns' WS* name=ID WS* ; 
    */
   package def Result<? extends RuleReturns> ruleReturns(Derivation derivation) {
     var node = new RuleReturns
@@ -265,7 +242,7 @@ class Parser {
     
     // 'returns'
     // 'returns'
-    val result0 =  d.terminal('returns', this)
+    val result0 =  d.__terminal('returns', this)
     d = result0.derivation
     
     // WS*
@@ -288,6 +265,22 @@ class Parser {
     val result2 = d.dvID
     d = result2.derivation
     node.name = result2.node
+    
+    // WS*
+    var backup2 = node.copy()
+    var backup3 = d
+    try {
+      while (true) {
+        // WS
+        val result3 = d.dvWS
+        d = result3.derivation
+        backup2 = node.copy()
+        backup3 = d
+      }
+    } catch (ParseException e1) {
+      node = backup2
+      d = backup3
+    }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<RuleReturns>(node, d)
@@ -390,7 +383,7 @@ class Parser {
         // ('|' WS* choices+=SequenceExpression)
         // '|'
         // '|'
-        val result1 =  d.terminal('|', this)
+        val result1 =  d.__terminal('|', this)
         d = result1.derivation
         
         // WS*
@@ -542,7 +535,7 @@ class Parser {
   }
   
   /**
-   * ActionExpression returns Expression : '{' WS* ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=ID ) WS* '}' ; 
+   * ActionExpression returns Expression : '{' WS* (property=ID WS* op=AssignmentOperator 'current' WS* | name=ID WS*) '}' ; 
    */
   package def Result<? extends Expression> actionExpression(Derivation derivation) {
     var node = new ActionExpression
@@ -550,7 +543,7 @@ class Parser {
     
     // '{'
     // '{'
-    val result0 =  d.terminal('{', this)
+    val result0 =  d.__terminal('{', this)
     d = result0.derivation
     
     // WS*
@@ -569,8 +562,8 @@ class Parser {
       d = backup1
     }
     
-    // ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=ID )
-    // property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=ID 
+    // (property=ID WS* op=AssignmentOperator 'current' WS* | name=ID WS*)
+    // property=ID WS* op=AssignmentOperator 'current' WS* | name=ID WS*
     val backup2 = node.copy()
     val backup3 = d
     try {
@@ -600,14 +593,19 @@ class Parser {
       d = result4.derivation
       node.op = result4.node
       
+      // 'current'
+      // 'current'
+      val result5 =  d.__terminal('current', this)
+      d = result5.derivation
+      
       // WS*
       var backup6 = node.copy()
       var backup7 = d
       try {
         while (true) {
           // WS
-          val result5 = d.dvWS
-          d = result5.derivation
+          val result6 = d.dvWS
+          d = result6.derivation
           backup6 = node.copy()
           backup7 = d
         }
@@ -615,64 +613,43 @@ class Parser {
         node = backup6
         d = backup7
       }
-      
-      // 'current'
-      // 'current'
-      val result6 =  d.terminal('current', this)
-      d = result6.derivation
-      
-      // WS*
-      var backup8 = node.copy()
-      var backup9 = d
-      try {
-        while (true) {
-          // WS
-          val result7 = d.dvWS
-          d = result7.derivation
-          backup8 = node.copy()
-          backup9 = d
-        }
-      } catch (ParseException e3) {
-        node = backup8
-        d = backup9
-      }
-    } catch (ParseException e4) {
+    } catch (ParseException e3) {
       node = backup2
       d = backup3
-      val backup10 = node.copy()
-      val backup11 = d
+      val backup8 = node.copy()
+      val backup9 = d
       try {
         // name=ID
-        val result8 = d.dvID
-        d = result8.derivation
-        node.name = result8.node
+        val result7 = d.dvID
+        d = result7.derivation
+        node.name = result7.node
+        
+        // WS*
+        var backup10 = node.copy()
+        var backup11 = d
+        try {
+          while (true) {
+            // WS
+            val result8 = d.dvWS
+            d = result8.derivation
+            backup10 = node.copy()
+            backup11 = d
+          }
+        } catch (ParseException e4) {
+          node = backup10
+          d = backup11
+        }
       } catch (ParseException e5) {
-        node = backup10
-        d = backup11
+        node = backup8
+        d = backup9
         throw e5
       }
     }
     
-    // WS*
-    var backup12 = node.copy()
-    var backup13 = d
-    try {
-      while (true) {
-        // WS
-        val result9 = d.dvWS
-        d = result9.derivation
-        backup12 = node.copy()
-        backup13 = d
-      }
-    } catch (ParseException e6) {
-      node = backup12
-      d = backup13
-    }
-    
     // '}'
     // '}'
-    val result10 =  d.terminal('}', this)
-    d = result10.derivation
+    val result9 =  d.__terminal('}', this)
+    d = result9.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -700,7 +677,7 @@ class Parser {
     
     // '&'
     // '&'
-    val result0 =  d.terminal('&', this)
+    val result0 =  d.__terminal('&', this)
     d = result0.derivation
     
     // WS*
@@ -750,7 +727,7 @@ class Parser {
     
     // '!'
     // '!'
-    val result0 =  d.terminal('!', this)
+    val result0 =  d.__terminal('!', this)
     d = result0.derivation
     
     // WS*
@@ -792,7 +769,7 @@ class Parser {
   }
   
   /**
-   * OneOrMoreExpression returns Expression : expr=AssignableExpression WS* '+' ; 
+   * OneOrMoreExpression returns Expression : expr=AssignableExpression '+' WS* ; 
    */
   package def Result<? extends Expression> oneOrMoreExpression(Derivation derivation) {
     var node = new OneOrMoreExpression
@@ -803,14 +780,19 @@ class Parser {
     d = result0.derivation
     node.expr = result0.node
     
+    // '+'
+    // '+'
+    val result1 =  d.__terminal('+', this)
+    d = result1.derivation
+    
     // WS*
     var backup0 = node.copy()
     var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = d.dvWS
-        d = result1.derivation
+        val result2 = d.dvWS
+        d = result2.derivation
         backup0 = node.copy()
         backup1 = d
       }
@@ -818,11 +800,6 @@ class Parser {
       node = backup0
       d = backup1
     }
-    
-    // '+'
-    // '+'
-    val result2 =  d.terminal('+', this)
-    d = result2.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -842,7 +819,7 @@ class Parser {
   }
   
   /**
-   * ZeroOrMoreExpression returns Expression : expr=AssignableExpression WS* '*' ; 
+   * ZeroOrMoreExpression returns Expression : expr=AssignableExpression '*' WS* ; 
    */
   package def Result<? extends Expression> zeroOrMoreExpression(Derivation derivation) {
     var node = new ZeroOrMoreExpression
@@ -853,14 +830,19 @@ class Parser {
     d = result0.derivation
     node.expr = result0.node
     
+    // '*'
+    // '*'
+    val result1 =  d.__terminal('*', this)
+    d = result1.derivation
+    
     // WS*
     var backup0 = node.copy()
     var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = d.dvWS
-        d = result1.derivation
+        val result2 = d.dvWS
+        d = result2.derivation
         backup0 = node.copy()
         backup1 = d
       }
@@ -868,11 +850,6 @@ class Parser {
       node = backup0
       d = backup1
     }
-    
-    // '*'
-    // '*'
-    val result2 =  d.terminal('*', this)
-    d = result2.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -892,7 +869,7 @@ class Parser {
   }
   
   /**
-   * OptionalExpression returns Expression : expr=AssignableExpression WS* '?' ; 
+   * OptionalExpression returns Expression : expr=AssignableExpression '?' WS* ; 
    */
   package def Result<? extends Expression> optionalExpression(Derivation derivation) {
     var node = new OptionalExpression
@@ -903,14 +880,19 @@ class Parser {
     d = result0.derivation
     node.expr = result0.node
     
+    // '?'
+    // '?'
+    val result1 =  d.__terminal('?', this)
+    d = result1.derivation
+    
     // WS*
     var backup0 = node.copy()
     var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = d.dvWS
-        d = result1.derivation
+        val result2 = d.dvWS
+        d = result2.derivation
         backup0 = node.copy()
         backup1 = d
       }
@@ -918,11 +900,6 @@ class Parser {
       node = backup0
       d = backup1
     }
-    
-    // '?'
-    // '?'
-    val result2 =  d.terminal('?', this)
-    d = result2.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -942,17 +919,17 @@ class Parser {
   }
   
   /**
-   * AssignableExpression returns Expression : (property=ID WS* op=AssignmentOperator WS*)? expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) ; 
+   * AssignableExpression returns Expression : (property=ID WS* op=AssignmentOperator)? expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) WS* ; 
    */
   package def Result<? extends Expression> assignableExpression(Derivation derivation) {
     var node = new AssignableExpression
     var d = derivation
     
-    // (property=ID WS* op=AssignmentOperator WS*)?
+    // (property=ID WS* op=AssignmentOperator)?
     val backup0 = node.copy()
     val backup1 = d
     try {
-      // (property=ID WS* op=AssignmentOperator WS*)
+      // (property=ID WS* op=AssignmentOperator)
       // property=ID
       val result0 = d.dvID
       d = result0.derivation
@@ -978,31 +955,31 @@ class Parser {
       val result2 = d.dvAssignmentOperator
       d = result2.derivation
       node.op = result2.node
-      
-      // WS*
-      var backup4 = node.copy()
-      var backup5 = d
-      try {
-        while (true) {
-          // WS
-          val result3 = d.dvWS
-          d = result3.derivation
-          backup4 = node.copy()
-          backup5 = d
-        }
-      } catch (ParseException e1) {
-        node = backup4
-        d = backup5
-      }
-    } catch (ParseException e2) {
+    } catch (ParseException e1) {
       node = backup0
       d = backup1
     }
     
     // expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression )
-    val result4 = d.assignableExpression_sub0()
-    d = result4.derivation
-    node.expr = result4.node
+    val result3 = d.assignableExpression_sub0()
+    d = result3.derivation
+    node.expr = result3.node
+    
+    // WS*
+    var backup4 = node.copy()
+    var backup5 = d
+    try {
+      while (true) {
+        // WS
+        val result4 = d.dvWS
+        d = result4.derivation
+        backup4 = node.copy()
+        backup5 = d
+      }
+    } catch (ParseException e7) {
+      node = backup4
+      d = backup5
+    }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -1013,20 +990,20 @@ class Parser {
     // SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression 
     try {
       return d.dvSubExpression
-    } catch (ParseException e3) {
+    } catch (ParseException e2) {
       try {
         return d.dvRangeExpression
-      } catch (ParseException e4) {
+      } catch (ParseException e3) {
         try {
           return d.dvTerminalExpression
-        } catch (ParseException e5) {
+        } catch (ParseException e4) {
           try {
             return d.dvAnyCharExpression
-          } catch (ParseException e6) {
+          } catch (ParseException e5) {
             try {
               return d.dvRuleReferenceExpression
-            } catch (ParseException e7) {
-              throw e7
+            } catch (ParseException e6) {
+              throw e6
             }
           }
         }
@@ -1047,19 +1024,20 @@ class Parser {
   }
   
   /**
-   * AssignmentOperator : single='=' | multi='+=' ; 
+   * AssignmentOperator : (single='=' | multi='+=') WS* ; 
    */
   package def Result<? extends AssignmentOperator> assignmentOperator(Derivation derivation) {
     var node = new AssignmentOperator
     var d = derivation
     
-    // single='=' | multi='+=' 
+    // (single='=' | multi='+=')
+    // single='=' | multi='+='
     val backup0 = node.copy()
     val backup1 = d
     try {
       // single='='
       // '='
-      val result0 =  d.terminal('=', this)
+      val result0 =  d.__terminal('=', this)
       d = result0.derivation
       node.single = result0.node
     } catch (ParseException e0) {
@@ -1070,7 +1048,7 @@ class Parser {
       try {
         // multi='+='
         // '+='
-        val result1 =  d.terminal('+=', this)
+        val result1 =  d.__terminal('+=', this)
         d = result1.derivation
         node.multi = result1.node
       } catch (ParseException e1) {
@@ -1078,6 +1056,22 @@ class Parser {
         d = backup3
         throw e1
       }
+    }
+    
+    // WS*
+    var backup4 = node.copy()
+    var backup5 = d
+    try {
+      while (true) {
+        // WS
+        val result2 = d.dvWS
+        d = result2.derivation
+        backup4 = node.copy()
+        backup5 = d
+      }
+    } catch (ParseException e2) {
+      node = backup4
+      d = backup5
     }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
@@ -1098,7 +1092,7 @@ class Parser {
   }
   
   /**
-   * SubExpression returns Expression : '(' WS* expr=ChoiceExpression WS* ')' ; 
+   * SubExpression returns Expression : '(' WS* expr=ChoiceExpression ')' WS* ; 
    */
   package def Result<? extends Expression> subExpression(Derivation derivation) {
     var node = new SubExpression
@@ -1106,7 +1100,7 @@ class Parser {
     
     // '('
     // '('
-    val result0 =  d.terminal('(', this)
+    val result0 =  d.__terminal('(', this)
     d = result0.derivation
     
     // WS*
@@ -1130,14 +1124,19 @@ class Parser {
     d = result2.derivation
     node.expr = result2.node
     
+    // ')'
+    // ')'
+    val result3 =  d.__terminal(')', this)
+    d = result3.derivation
+    
     // WS*
     var backup2 = node.copy()
     var backup3 = d
     try {
       while (true) {
         // WS
-        val result3 = d.dvWS
-        d = result3.derivation
+        val result4 = d.dvWS
+        d = result4.derivation
         backup2 = node.copy()
         backup3 = d
       }
@@ -1145,11 +1144,6 @@ class Parser {
       node = backup2
       d = backup3
     }
-    
-    // ')'
-    // ')'
-    val result4 =  d.terminal(')', this)
-    d = result4.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -1169,7 +1163,7 @@ class Parser {
   }
   
   /**
-   * RangeExpression returns Expression : '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' ; 
+   * RangeExpression returns Expression : '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' WS* ; 
    */
   package def Result<? extends Expression> rangeExpression(Derivation derivation) {
     var node = new RangeExpression
@@ -1177,7 +1171,7 @@ class Parser {
     
     // '['
     // '['
-    val result0 =  d.terminal('[', this)
+    val result0 =  d.__terminal('[', this)
     d = result0.derivation
     
     // dash='-'?
@@ -1186,7 +1180,7 @@ class Parser {
     try {
       // dash='-'
       // '-'
-      val result1 =  d.terminal('-', this)
+      val result1 =  d.__terminal('-', this)
       d = result1.derivation
       node.dash = result1.node
     } catch (ParseException e0) {
@@ -1206,7 +1200,7 @@ class Parser {
         try {
           // ']'
           // ']'
-          val result2 =  d.terminal(']', this)
+          val result2 =  d.__terminal(']', this)
           d = result2.derivation
           loop0 = false
           throw new ParseException('Expected...')
@@ -1231,8 +1225,24 @@ class Parser {
     
     // ']'
     // ']'
-    val result4 =  d.terminal(']', this)
+    val result4 =  d.__terminal(']', this)
     d = result4.derivation
+    
+    // WS*
+    var backup6 = node.copy()
+    var backup7 = d
+    try {
+      while (true) {
+        // WS
+        val result5 = d.dvWS
+        d = result5.derivation
+        backup6 = node.copy()
+        backup7 = d
+      }
+    } catch (ParseException e5) {
+      node = backup6
+      d = backup7
+    }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -1277,7 +1287,7 @@ class Parser {
     try {
       // '-'
       // '-'
-      val result0 =  d.terminal('-', this)
+      val result0 =  d.__terminal('-', this)
       d = result0.derivation
       loop0 = false
       throw new ParseException('Expected...')
@@ -1290,13 +1300,13 @@ class Parser {
     
     // min=.
     // .
-    val result1 =  d.any(this)
+    val result1 =  d.__any(this)
     d = result1.derivation
     node.min = result1.node
     
     // '-'
     // '-'
-    val result2 =  d.terminal('-', this)
+    val result2 =  d.__terminal('-', this)
     d = result2.derivation
     
     val backup2 = node.copy()
@@ -1305,7 +1315,7 @@ class Parser {
     try {
       // '-'
       // '-'
-      val result3 =  d.terminal('-', this)
+      val result3 =  d.__terminal('-', this)
       d = result3.derivation
       loop1 = false
       throw new ParseException('Expected...')
@@ -1318,7 +1328,7 @@ class Parser {
     
     // max=.
     // .
-    val result4 =  d.any(this)
+    val result4 =  d.__any(this)
     d = result4.derivation
     node.max = result4.node
     
@@ -1352,7 +1362,7 @@ class Parser {
     try {
       // char='\\]'
       // '\\]'
-      val result0 =  d.terminal('\\]', this)
+      val result0 =  d.__terminal('\\]', this)
       d = result0.derivation
       node._char = result0.node
     } catch (ParseException e0) {
@@ -1363,7 +1373,7 @@ class Parser {
       try {
         // char='\\\\'
         // '\\\\'
-        val result1 =  d.terminal('\\\\', this)
+        val result1 =  d.__terminal('\\\\', this)
         d = result1.derivation
         node._char = result1.node
       } catch (ParseException e1) {
@@ -1378,7 +1388,7 @@ class Parser {
           try {
             // '-'
             // '-'
-            val result2 =  d.terminal('-', this)
+            val result2 =  d.__terminal('-', this)
             d = result2.derivation
             loop0 = false
             throw new ParseException('Expected...')
@@ -1391,7 +1401,7 @@ class Parser {
           
           // char=.
           // .
-          val result3 =  d.any(this)
+          val result3 =  d.__any(this)
           d = result3.derivation
           node._char = result3.node
         } catch (ParseException e3) {
@@ -1428,7 +1438,7 @@ class Parser {
     
     // char='.'
     // '.'
-    val result0 =  d.terminal('.', this)
+    val result0 =  d.__terminal('.', this)
     d = result0.derivation
     node._char = result0.node
     
@@ -1450,7 +1460,7 @@ class Parser {
   }
   
   /**
-   * RuleReferenceExpression returns Expression : name=ID ; 
+   * RuleReferenceExpression returns Expression : name=ID WS* ; 
    */
   package def Result<? extends Expression> ruleReferenceExpression(Derivation derivation) {
     var node = new RuleReferenceExpression
@@ -1460,6 +1470,22 @@ class Parser {
     val result0 = d.dvID
     d = result0.derivation
     node.name = result0.node
+    
+    // WS*
+    var backup0 = node.copy()
+    var backup1 = d
+    try {
+      while (true) {
+        // WS
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
+      }
+    } catch (ParseException e0) {
+      node = backup0
+      d = backup1
+    }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -1479,7 +1505,7 @@ class Parser {
   }
   
   /**
-   * TerminalExpression returns Expression : '\'' value=InTerminalChar? '\'' ; 
+   * TerminalExpression returns Expression : '\'' value=InTerminalChar? '\'' WS* ; 
    */
   package def Result<? extends Expression> terminalExpression(Derivation derivation) {
     var node = new TerminalExpression
@@ -1487,7 +1513,7 @@ class Parser {
     
     // '\''
     // '\''
-    val result0 =  d.terminal('\'', this)
+    val result0 =  d.__terminal('\'', this)
     d = result0.derivation
     
     // value=InTerminalChar?
@@ -1505,8 +1531,24 @@ class Parser {
     
     // '\''
     // '\''
-    val result2 =  d.terminal('\'', this)
+    val result2 =  d.__terminal('\'', this)
     d = result2.derivation
+    
+    // WS*
+    var backup2 = node.copy()
+    var backup3 = d
+    try {
+      while (true) {
+        // WS
+        val result3 = d.dvWS
+        d = result3.derivation
+        backup2 = node.copy()
+        backup3 = d
+      }
+    } catch (ParseException e1) {
+      node = backup2
+      d = backup3
+    }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
     return new Result<Expression>(node, d)
@@ -1545,12 +1587,12 @@ class Parser {
         try {
           // '\\'
           // '\\'
-          val result0 =  d.terminal('\\', this)
+          val result0 =  d.__terminal('\\', this)
           d = result0.derivation
           
           // '\''
           // '\''
-          val result1 =  d.terminal('\'', this)
+          val result1 =  d.__terminal('\'', this)
           d = result1.derivation
         } catch (ParseException e0) {
           node = backup2
@@ -1560,12 +1602,12 @@ class Parser {
           try {
             // '\\'
             // '\\'
-            val result2 =  d.terminal('\\', this)
+            val result2 =  d.__terminal('\\', this)
             d = result2.derivation
             
             // '\\'
             // '\\'
-            val result3 =  d.terminal('\\', this)
+            val result3 =  d.__terminal('\\', this)
             d = result3.derivation
           } catch (ParseException e1) {
             node = backup4
@@ -1579,7 +1621,7 @@ class Parser {
               try {
                 // '\''
                 // '\''
-                val result4 =  d.terminal('\'', this)
+                val result4 =  d.__terminal('\'', this)
                 d = result4.derivation
                 loop1 = false
                 throw new ParseException('Expected...')
@@ -1592,7 +1634,7 @@ class Parser {
               
               // .
               // .
-              val result5 =  d.any(this)
+              val result5 =  d.__any(this)
               d = result5.derivation
             } catch (ParseException e3) {
               node = backup6
@@ -1632,7 +1674,7 @@ class Parser {
   }
   
   /**
-   * Comment : '//' (!('\r'? '\n') .)* ; 
+   * Comment : '//' (!('\r'? '\n') .)* WS* ; 
    */
   package def Result<? extends Comment> comment(Derivation derivation) {
     var node = new Comment
@@ -1640,7 +1682,7 @@ class Parser {
     
     // '//'
     // '//'
-    val result0 =  d.terminal('//', this)
+    val result0 =  d.__terminal('//', this)
     d = result0.derivation
     
     // (!('\r'? '\n') .)*
@@ -1660,7 +1702,7 @@ class Parser {
           try {
             // '\r'
             // '\r'
-            val result1 =  d.terminal('\r', this)
+            val result1 =  d.__terminal('\r', this)
             d = result1.derivation
           } catch (ParseException e0) {
             node = backup4
@@ -1669,7 +1711,7 @@ class Parser {
           
           // '\n'
           // '\n'
-          val result2 =  d.terminal('\n', this)
+          val result2 =  d.__terminal('\n', this)
           d = result2.derivation
           loop0 = false
           throw new ParseException('Expected...')
@@ -1682,7 +1724,7 @@ class Parser {
         
         // .
         // .
-        val result3 =  d.any(this)
+        val result3 =  d.__any(this)
         d = result3.derivation
         backup0 = node.copy()
         backup1 = d
@@ -1690,6 +1732,22 @@ class Parser {
     } catch (ParseException e2) {
       node = backup0
       d = backup1
+    }
+    
+    // WS*
+    var backup6 = node.copy()
+    var backup7 = d
+    try {
+      while (true) {
+        // WS
+        val result4 = d.dvWS
+        d = result4.derivation
+        backup6 = node.copy()
+        backup7 = d
+      }
+    } catch (ParseException e3) {
+      node = backup6
+      d = backup7
     }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
@@ -1723,7 +1781,7 @@ class Parser {
       // (.)
       // .
       // .
-      val result0 =  d.any(this)
+      val result0 =  d.__any(this)
       d = result0.derivation
       loop0 = false
       throw new ParseException('Expected...')
@@ -1760,7 +1818,7 @@ class Parser {
     
     // [a-zA-Z_]
     // [a-zA-Z_]
-    val result0 = d.terminal(
+    val result0 = d.__terminal(
       ('a'..'z') + 
       ('A'..'Z') + 
       '_'
@@ -1774,7 +1832,7 @@ class Parser {
       while (true) {
         // [a-zA-Z0-9_]
         // [a-zA-Z0-9_]
-        val result1 = d.terminal(
+        val result1 = d.__terminal(
           ('a'..'z') + 
           ('A'..'Z') + 
           ('0'..'9') + 
@@ -1819,7 +1877,7 @@ class Parser {
     try {
       // ' '
       // ' '
-      val result0 =  d.terminal(' ', this)
+      val result0 =  d.__terminal(' ', this)
       d = result0.derivation
     } catch (ParseException e0) {
       node = backup0
@@ -1829,7 +1887,7 @@ class Parser {
       try {
         // '\n'
         // '\n'
-        val result1 =  d.terminal('\n', this)
+        val result1 =  d.__terminal('\n', this)
         d = result1.derivation
       } catch (ParseException e1) {
         node = backup2
@@ -1839,7 +1897,7 @@ class Parser {
         try {
           // '\t'
           // '\t'
-          val result2 =  d.terminal('\t', this)
+          val result2 =  d.__terminal('\t', this)
           d = result2.derivation
         } catch (ParseException e2) {
           node = backup4
@@ -1849,7 +1907,7 @@ class Parser {
           try {
             // '\r'
             // '\r'
-            val result3 =  d.terminal('\r', this)
+            val result3 =  d.__terminal('\r', this)
             d = result3.derivation
           } catch (ParseException e3) {
             node = backup6
@@ -2214,48 +2272,6 @@ package class CharacterRange {
   
   override toString() {
     chars
-  }
-
-}
-
-package class CharacterConsumer {
-
-  static def Result<Eoi> eoi(Derivation derivation, Parser parser) {
-    var exception = false
-    try {
-      derivation.dvChar
-    } catch (ParseException e) {
-      exception = true
-    }
-    return 
-      if (exception) new Result<Eoi>(new Eoi, derivation) 
-      else throw new ParseException('Expected EOI')
-  }
-
-  static def <T> terminal(Derivation derivation, String str, Parser parser) {
-    var n = 0
-    var d = derivation
-    while (n < str.length) {
-      val r = d.dvChar
-      if (r.node != str.charAt(n)) {
-        throw new ParseException("Expected '" + str + "'")
-      }
-      n = n + 1
-      d = r.derivation
-    }
-    new Result<Terminal>(new Terminal(str), d)
-  }
-  
-  static def <T> terminal(Derivation derivation, CharacterRange range, Parser parser) {
-    val r = derivation.dvChar
-    return 
-      if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
-      else throw new ParseException('Expected [' + range + ']')
-  }
-
-  static def <T> any(Derivation derivation, Parser parser) {
-    val r = derivation.dvChar
-    new Result<Terminal>(new Terminal(r.node), r.derivation)
   }
 
 }

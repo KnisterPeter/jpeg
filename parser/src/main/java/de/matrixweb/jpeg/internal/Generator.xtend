@@ -19,7 +19,6 @@ class Generator {
     
     import java.util.List
     
-    import static extension «packageName».CharacterConsumer.*
     import static extension «packageName».CharacterRange.*
 
     class Parser {
@@ -36,6 +35,32 @@ class Generator {
           ])
       }
       
+      static def <T> __terminal(Derivation derivation, String str, Parser parser) {
+        var n = 0
+        var d = derivation
+        while (n < str.length) {
+          val r = d.dvChar
+          if (r.node != str.charAt(n)) {
+            throw new ParseException("Expected '" + str + "'")
+          }
+          n = n + 1
+          d = r.derivation
+        }
+        new Result<Terminal>(new Terminal(str), d)
+      }
+      
+      static def <T> __terminal(Derivation derivation, CharacterRange range, Parser parser) {
+        val r = derivation.dvChar
+        return 
+          if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
+          else throw new ParseException('Expected [' + range + ']')
+      }
+    
+      static def <T> __any(Derivation derivation, Parser parser) {
+        val r = derivation.dvChar
+        new Result<Terminal>(new Terminal(r.node), r.derivation)
+      }
+
       «FOR rule : rules»
         «new RuleGenerator(rule, jpeg, types).generate()»
       «ENDFOR»
@@ -152,48 +177,6 @@ class Generator {
     
     }
 
-    package class CharacterConsumer {
-    
-      static def Result<Eoi> eoi(Derivation derivation, Parser parser) {
-        var exception = false
-        try {
-          derivation.dvChar
-        } catch (ParseException e) {
-          exception = true
-        }
-        return 
-          if (exception) new Result<Eoi>(new Eoi, derivation) 
-          else throw new ParseException('Expected EOI')
-      }
-    
-      static def <T> terminal(Derivation derivation, String str, Parser parser) {
-        var n = 0
-        var d = derivation
-        while (n < str.length) {
-          val r = d.dvChar
-          if (r.node != str.charAt(n)) {
-            throw new ParseException("Expected '" + str + "'")
-          }
-          n = n + 1
-          d = r.derivation
-        }
-        new Result<Terminal>(new Terminal(str), d)
-      }
-      
-      static def <T> terminal(Derivation derivation, CharacterRange range, Parser parser) {
-        val r = derivation.dvChar
-        return 
-          if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
-          else throw new ParseException('Expected [' + range + ']')
-      }
-    
-      static def <T> any(Derivation derivation, Parser parser) {
-        val r = derivation.dvChar
-        new Result<Terminal>(new Terminal(r.node), r.derivation)
-      }
-    
-    }
-    
   '''
   
   static def generateTypes(Collection<JType> types) '''
@@ -590,7 +573,7 @@ class RuleGenerator {
   
   def dispatch CharSequence create(RangeExpression expr) '''
     // «expr»
-    val «nextResult» = d.terminal(
+    val «nextResult» = d.__terminal(
       «FOR range : expr.ranges SEPARATOR ' + '»
         «range.create()»
       «ENDFOR»
@@ -609,13 +592,13 @@ class RuleGenerator {
   
   def dispatch CharSequence create(AnyCharExpression expr) '''
     // «expr»
-    val «nextResult» =  d.any(this)
+    val «nextResult» =  d.__any(this)
     d = «result».derivation
   '''
   
   def dispatch CharSequence create(TerminalExpression expr) '''
     // «expr»
-    val «nextResult» =  d.terminal('«expr.value.parsed»', this)
+    val «nextResult» =  d.__terminal('«expr.value.parsed»', this)
     d = «result».derivation
   '''
   

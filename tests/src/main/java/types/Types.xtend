@@ -2,7 +2,6 @@ package types
 
 import java.util.List
 
-import static extension types.CharacterConsumer.*
 import static extension types.CharacterRange.*
 
 class Parser {
@@ -19,6 +18,32 @@ class Parser {
       ])
   }
   
+  static def <T> __terminal(Derivation derivation, String str, Parser parser) {
+    var n = 0
+    var d = derivation
+    while (n < str.length) {
+      val r = d.dvChar
+      if (r.node != str.charAt(n)) {
+        throw new ParseException("Expected '" + str + "'")
+      }
+      n = n + 1
+      d = r.derivation
+    }
+    new Result<Terminal>(new Terminal(str), d)
+  }
+  
+  static def <T> __terminal(Derivation derivation, CharacterRange range, Parser parser) {
+    val r = derivation.dvChar
+    return 
+      if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
+      else throw new ParseException('Expected [' + range + ']')
+  }
+
+  static def <T> __any(Derivation derivation, Parser parser) {
+    val r = derivation.dvChar
+    new Result<Terminal>(new Terminal(r.node), r.derivation)
+  }
+
   //--------------------------------------------------------------------------
   
   def Rule Rule(String in) {
@@ -39,7 +64,7 @@ class Parser {
     var node = new Rule
     var d = derivation
     
-    // expr+=(ExprA | ExprB)
+    // expr+=(ExprA | ExprB) 
     val result0 = d.rule_sub0()
     d = result0.derivation
     node.add(result0.node)
@@ -81,9 +106,9 @@ class Parser {
     var node = new ExprA
     var d = derivation
     
-    // 'a'
-    // 'a'
-    val result0 =  d.terminal('a', this)
+    // 'a' 
+    // 'a' 
+    val result0 =  d.__terminal('a', this)
     d = result0.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
@@ -110,9 +135,9 @@ class Parser {
     var node = new ExprB
     var d = derivation
     
-    // 'b'
-    // 'b'
-    val result0 =  d.terminal('b', this)
+    // 'b' 
+    // 'b' 
+    val result0 =  d.__terminal('b', this)
     d = result0.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
@@ -239,48 +264,6 @@ package class CharacterRange {
   
   override toString() {
     chars
-  }
-
-}
-
-package class CharacterConsumer {
-
-  static def Result<Eoi> eoi(Derivation derivation, Parser parser) {
-    var exception = false
-    try {
-      derivation.dvChar
-    } catch (ParseException e) {
-      exception = true
-    }
-    return 
-      if (exception) new Result<Eoi>(new Eoi, derivation) 
-      else throw new ParseException('Expected EOI')
-  }
-
-  static def <T> terminal(Derivation derivation, String str, Parser parser) {
-    var n = 0
-    var d = derivation
-    while (n < str.length) {
-      val r = d.dvChar
-      if (r.node != str.charAt(n)) {
-        throw new ParseException("Expected '" + str + "'")
-      }
-      n = n + 1
-      d = r.derivation
-    }
-    new Result<Terminal>(new Terminal(str), d)
-  }
-  
-  static def <T> terminal(Derivation derivation, CharacterRange range, Parser parser) {
-    val r = derivation.dvChar
-    return 
-      if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
-      else throw new ParseException('Expected [' + range + ']')
-  }
-
-  static def <T> any(Derivation derivation, Parser parser) {
-    val r = derivation.dvChar
-    new Result<Terminal>(new Terminal(r.node), r.derivation)
   }
 
 }
