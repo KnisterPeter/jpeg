@@ -290,12 +290,11 @@ class GeneratorHelper {
 
 class AstValidator {
   
-  static def validate(Jpeg jpeg) {
+  static def validate(Jpeg jpeg, extension Parser parser) {
     jpeg.rules.forEach[ rule |
       rule.findNodesByType(RuleReferenceExpression).forEach[ ref |
         if (!jpeg.rules.exists[name.parsed == ref.name.parsed]) {
-          // TODO: Added error location
-          throw new ParseException("Reference '" + ref.name.parsed + "' undefined")
+          throw new ParseException(ref.index.lineAndColumn, "Reference '" + ref.name.parsed + "' undefined")
         }
       ]
     ]

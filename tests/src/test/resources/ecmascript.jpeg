@@ -47,6 +47,8 @@ LineTerminatorSequence :
   | '\u000D' '\u000A'
 ;
 
+//-- 7.4 Comments --------------------------------------------------------------
+
 Comment :
     MultiLineComment
   | SingleLineComment
@@ -86,6 +88,8 @@ SingleLineCommentChar :
   !LineTerminator SourceCharacter
 ;
 
+//-- 7.5 Tokens ----------------------------------------------------------------
+
 Token :
     IdentifierName
   | Punctuator
@@ -96,6 +100,67 @@ Token :
 DivPunctuator :
     '/='
   | '/' 
+;
+
+//-- 7.6 Identifier Names and Identifiers --------------------------------------
+
+Identifier :
+  !ReservedWord IdentifierName
+;
+
+IdentifierName :
+    IdentifierStart IdentifierPart*
+;
+
+IdentifierStart :
+    UnicodeLetter
+  | '$'
+  | '_'
+  | '\\' UnicodeEscapeSequence
+;
+
+IdentifierPart :
+    IdentifierStart
+  | UnicodeCombiningMark
+  | UnicodeDigit
+  | UnicodeConnectorPunctuation
+;
+
+//UnicodeLetter :
+//  any character in the Unicode categories “Uppercase letter (Lu)”, “Lowercase letter (Ll)”, “Titlecase letter (Lt)”, “Modifier letter (Lm)”, “Other letter (Lo)”, or “Letter number (Nl)”.
+//;
+//
+//UnicodeCombiningMark :
+//  any character in the Unicode categories “Non-spacing mark (Mn)” or “Combining spacing mark (Mc)”
+//;
+//
+//UnicodeDigit :
+//  any character in the Unicode category “Decimal number (Nd)”
+//;
+//
+//UnicodeConnectorPunctuation :
+//  any character in the Unicode category “Connector punctuation (Pc)”
+//;
+
+//-- 7.7 Punctuators -----------------------------------------------------------
+
+Punctuator :
+    '{'    | '}'    | '('    | ')' 
+  | '['    | ']'    | '.'    | ';'
+  | ','    | '<'    | '>'    | '<='
+  | '>='   | '=='   | '!='   | '==='
+  | '!=='  | '+'    | '-'    | '*'
+  | '%'    | '++'   | '--'   | '<<'
+  | '>>'   | '>>>'  | '&'    | '|'
+  | '^'    | '!'    | '~'    | '&&'
+  | '||'   | '?'    | ':'    | '='
+  | '+='   | '-='   | '*='   | '%='
+  | '<<='  | '>>='  | '>>>=' | '&='
+  | '|='   | '^='
+;
+
+DivPunctuator :
+  '/' | '/='
 ;
 
 //-- 7.8.5 Regular Expression Literals -----------------------------------------
@@ -141,7 +206,7 @@ RegularExpressionClassChars :
 ;
 
 RegularExpressionClassChar :
-    ![\]\] RegularExpressionNonTerminator
+    ![\]\\] RegularExpressionNonTerminator
   | RegularExpressionBackslashSequence
 ;
 

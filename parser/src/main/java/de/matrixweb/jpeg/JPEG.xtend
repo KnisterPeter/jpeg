@@ -24,7 +24,7 @@ class JPEG {
   static private def parseAndGenerate(String grammar, String packageName) {
     extension val parser = new Parser
     var jpeg = grammar.Jpeg()
-    jpeg.validate()
+    jpeg.validate(parser)
     val types = jpeg.createTypes()
 
     val sb = new StringBuilder
