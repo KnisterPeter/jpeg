@@ -1,13 +1,13 @@
 package jpeg
 
-import java.util.List
+import java.util.Set
 
 import static extension jpeg.CharacterRange.*
 
 class Parser {
   
-  static Result<Object> CONTINUE = new Result<Object>(new Object, null)
-  static Result<Object> BREAK = new Result<Object>(null, null)
+  static Result<Object> CONTINUE = new Result<Object>(new Object, null, new ParseInfo(0))
+  static Result<Object> BREAK = new Result<Object>(null, null, new ParseInfo(0))
   
   char[] chars
   
@@ -15,8 +15,8 @@ class Parser {
     new Derivation(idx, [jpeg()],[rule()],[ruleReturns()],[body()],[choiceExpression()],[sequenceExpression()],[actionExpression()],[andPredicateExpression()],[notPredicateExpression()],[oneOrMoreExpression()],[zeroOrMoreExpression()],[optionalExpression()],[assignableExpression()],[assignmentOperator()],[subExpression()],[rangeExpression()],[minMaxRange()],[charRange()],[anyCharExpression()],[ruleReferenceExpression()],[terminalExpression()],[inTerminalChar()],[comment()],[eOI()],[iD()],[wS()],
       [
         return 
-          if (chars.length == idx) new Result<Character>(null, parse(idx))
-          else new Result<Character>(chars.get(idx), parse(idx + 1))
+          if (idx < chars.length) new Result<Character>(chars.get(idx), parse(idx + 1), new ParseInfo(idx))
+          else new Result<Character>(null, parse(idx), new ParseInfo(idx, 'Unexpected end of input'))
       ])
   }
   
@@ -25,27 +25,27 @@ class Parser {
     var d = derivation
     while (n < str.length) {
       val r = d.dvChar
+      d = r.derivation
       if (r.node == null || r.node != str.charAt(n)) {
-        return new Result<Terminal>(null, derivation)
+        return new Result<Terminal>(null, derivation, new ParseInfo(d.index, "Expected '" + str + "'"))
       }
       n = n + 1
-      d = r.derivation
     }
-    new Result<Terminal>(new Terminal(str), d)
+    new Result<Terminal>(new Terminal(str), d, new ParseInfo(d.index))
   }
   
   static def <T> __oneOfThese(Derivation derivation, CharacterRange range, Parser parser) {
     val r = derivation.dvChar
     return 
-      if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
-      else new Result<Terminal>(null, derivation)
+      if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
+      else new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, "Expected one of '" + range + "'"))
   }
 
   static def <T> __any(Derivation derivation, Parser parser) {
     val r = derivation.dvChar
     return
-      if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation)
-      else  new Result<Terminal>(null, derivation)
+      if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
+      else  new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, 'Unexpected end of input'))
   }
 
   //--------------------------------------------------------------------------
@@ -55,7 +55,7 @@ class Parser {
     val result = jpeg(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -80,7 +80,7 @@ class Parser {
       // rules+=Rule 
       val result0 = d.dvRule
       d = result0.derivation
-      result = result0
+      result = result0.joinErrors(result)
       if (result.node != null) {
         node.add(result0.node)
       }
@@ -93,7 +93,7 @@ class Parser {
         // Comment
         val result1 = d.dvComment
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node == null) {
           node = backup4
           d = backup5
@@ -117,14 +117,14 @@ class Parser {
       // EOI 
       val result2 = d.dvEOI
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
     }
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Jpeg>(node, d)
+      return new Result<Jpeg>(node, d, result.info)
     }
-    return new Result<Jpeg>(null, derivation)
+    return new Result<Jpeg>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -134,7 +134,7 @@ class Parser {
     val result = rule(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -148,7 +148,7 @@ class Parser {
     // name=ID 
     val result0 = d.dvID
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.name = result0.node
     }
@@ -162,7 +162,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -181,7 +181,7 @@ class Parser {
       // returns=RuleReturns
       val result2 = d.dvRuleReturns
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
       if (result.node != null) {
         node.returns = result2.node
       }
@@ -196,7 +196,7 @@ class Parser {
       // ':' 
       val result3 =  d.__terminal(':', this)
       d = result3.derivation
-      result = result3
+      result = result3.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -208,7 +208,7 @@ class Parser {
         // WS
         val result4 = d.dvWS
         d = result4.derivation
-        result = result4
+        result = result4.joinErrors(result)
         if (result.node != null) {
           backup4 = node.copy()
           backup5 = d
@@ -223,7 +223,7 @@ class Parser {
       // body=Body 
       val result5 = d.dvBody
       d = result5.derivation
-      result = result5
+      result = result5.joinErrors(result)
       if (result.node != null) {
         node.body = result5.node
       }
@@ -233,7 +233,7 @@ class Parser {
       // ';' 
       val result6 =  d.__terminal(';', this)
       d = result6.derivation
-      result = result6
+      result = result6.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -245,7 +245,7 @@ class Parser {
         // WS
         val result7 = d.dvWS
         d = result7.derivation
-        result = result7
+        result = result7.joinErrors(result)
         if (result.node != null) {
           backup6 = node.copy()
           backup7 = d
@@ -258,9 +258,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Rule>(node, d)
+      return new Result<Rule>(node, d, result.info)
     }
-    return new Result<Rule>(null, derivation)
+    return new Result<Rule>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -270,7 +270,7 @@ class Parser {
     val result = ruleReturns(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -284,7 +284,7 @@ class Parser {
     // 'returns' 
     val result0 =  d.__terminal('returns', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // WS* 
@@ -295,7 +295,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -310,7 +310,7 @@ class Parser {
       // name=ID 
       val result2 = d.dvID
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
       if (result.node != null) {
         node.name = result2.node
       }
@@ -325,7 +325,7 @@ class Parser {
         // WS
         val result3 = d.dvWS
         d = result3.derivation
-        result = result3
+        result = result3.joinErrors(result)
         if (result.node != null) {
           backup2 = node.copy()
           backup3 = d
@@ -338,9 +338,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<RuleReturns>(node, d)
+      return new Result<RuleReturns>(node, d, result.info)
     }
-    return new Result<RuleReturns>(null, derivation)
+    return new Result<RuleReturns>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -350,7 +350,7 @@ class Parser {
     val result = body(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -371,7 +371,7 @@ class Parser {
       // expressions+=ChoiceExpression 
       val result0 = d.dvChoiceExpression
       d = result0.derivation
-      result = result0
+      result = result0.joinErrors(result)
       if (result.node != null) {
         node.add(result0.node)
       }
@@ -385,7 +385,7 @@ class Parser {
           // WS
           val result1 = d.dvWS
           d = result1.derivation
-          result = result1
+          result = result1.joinErrors(result)
           if (result.node != null) {
             backup2 = node.copy()
             backup3 = d
@@ -411,9 +411,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Body>(node, d)
+      return new Result<Body>(node, d, result.info)
     }
-    return new Result<Body>(null, derivation)
+    return new Result<Body>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -423,7 +423,7 @@ class Parser {
     val result = choiceExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -437,7 +437,7 @@ class Parser {
     // choices+=SequenceExpression 
     val result0 = d.dvSequenceExpression
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.add(result0.node)
     }
@@ -452,7 +452,7 @@ class Parser {
         // '|' 
         val result1 =  d.__terminal('|', this)
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         
         if (result.node != null) {
           // WS* 
@@ -463,7 +463,7 @@ class Parser {
             // WS
             val result2 = d.dvWS
             d = result2.derivation
-            result = result2
+            result = result2.joinErrors(result)
             if (result.node != null) {
               backup2 = node.copy()
               backup3 = d
@@ -478,7 +478,7 @@ class Parser {
           // choices+=SequenceExpression
           val result3 = d.dvSequenceExpression
           d = result3.derivation
-          result = result3
+          result = result3.joinErrors(result)
           if (result.node != null) {
             node.add(result3.node)
           }
@@ -495,12 +495,12 @@ class Parser {
     
     if (result.node != null) {
       if (node.choices.size() == 1) {
-        return new Result<Expression>(node.choices.get(0), d)
+        return new Result<Expression>(node.choices.get(0), d, result.info)
       }
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -510,7 +510,7 @@ class Parser {
     val result = sequenceExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -531,7 +531,7 @@ class Parser {
       // expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) 
       val result0 = d.sequenceExpression_sub0()
       d = result0.derivation
-      result = result0
+      result = result0.joinErrors(result)
       if (result.node != null) {
         node.add(result0.node)
       }
@@ -545,7 +545,7 @@ class Parser {
           // WS
           val result1 = d.dvWS
           d = result1.derivation
-          result = result1
+          result = result1.joinErrors(result)
           if (result.node != null) {
             backup2 = node.copy()
             backup3 = d
@@ -571,12 +571,12 @@ class Parser {
     
     if (result.node != null) {
       if (node.expressions.size() == 1) {
-        return new Result<Expression>(node.expressions.get(0), d)
+        return new Result<Expression>(node.expressions.get(0), d, result.info)
       }
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   private def Result<? extends Expression> sequenceExpression_sub0(Derivation derivation) {
@@ -584,18 +584,25 @@ class Parser {
     val d = derivation
     // ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression 
     result = d.dvActionExpression
+    .joinErrors(result)
     if (result.node == null) {
       result = d.dvAndPredicateExpression
+      .joinErrors(result)
       if (result.node == null) {
         result = d.dvNotPredicateExpression
+        .joinErrors(result)
         if (result.node == null) {
           result = d.dvOneOrMoreExpression
+          .joinErrors(result)
           if (result.node == null) {
             result = d.dvZeroOrMoreExpression
+            .joinErrors(result)
             if (result.node == null) {
               result = d.dvOptionalExpression
+              .joinErrors(result)
               if (result.node == null) {
                 result = d.dvAssignableExpression
+                .joinErrors(result)
                 if (result.node == null) {
                 }
               }
@@ -613,7 +620,7 @@ class Parser {
     val result = actionExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -627,7 +634,7 @@ class Parser {
     // '{' 
     val result0 =  d.__terminal('{', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // WS* 
@@ -638,7 +645,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -658,7 +665,7 @@ class Parser {
       // property=ID 
       val result2 = d.dvID
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
       if (result.node != null) {
         node.property = result2.node
       }
@@ -672,7 +679,7 @@ class Parser {
           // WS
           val result3 = d.dvWS
           d = result3.derivation
-          result = result3
+          result = result3.joinErrors(result)
           if (result.node != null) {
             backup4 = node.copy()
             backup5 = d
@@ -687,7 +694,7 @@ class Parser {
         // op=AssignmentOperator 
         val result4 = d.dvAssignmentOperator
         d = result4.derivation
-        result = result4
+        result = result4.joinErrors(result)
         if (result.node != null) {
           node.op = result4.node
         }
@@ -697,7 +704,7 @@ class Parser {
         // 'current' 
         val result5 =  d.__terminal('current', this)
         d = result5.derivation
-        result = result5
+        result = result5.joinErrors(result)
       }
       
       if (result.node != null) {
@@ -709,7 +716,7 @@ class Parser {
           // WS
           val result6 = d.dvWS
           d = result6.derivation
-          result = result6
+          result = result6.joinErrors(result)
           if (result.node != null) {
             backup6 = node.copy()
             backup7 = d
@@ -728,7 +735,7 @@ class Parser {
         // name=ID 
         val result7 = d.dvID
         d = result7.derivation
-        result = result7
+        result = result7.joinErrors(result)
         if (result.node != null) {
           node.name = result7.node
         }
@@ -742,7 +749,7 @@ class Parser {
             // WS
             val result8 = d.dvWS
             d = result8.derivation
-            result = result8
+            result = result8.joinErrors(result)
             if (result.node != null) {
               backup10 = node.copy()
               backup11 = d
@@ -763,14 +770,14 @@ class Parser {
       // '}' 
       val result9 =  d.__terminal('}', this)
       d = result9.derivation
-      result = result9
+      result = result9.joinErrors(result)
     }
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -780,7 +787,7 @@ class Parser {
     val result = andPredicateExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -794,7 +801,7 @@ class Parser {
     // '&' 
     val result0 =  d.__terminal('&', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // WS* 
@@ -805,7 +812,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -820,7 +827,7 @@ class Parser {
       // expr=AssignableExpression 
       val result2 = d.dvAssignableExpression
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
       if (result.node != null) {
         node.expr = result2.node
       }
@@ -828,9 +835,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -840,7 +847,7 @@ class Parser {
     val result = notPredicateExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -854,7 +861,7 @@ class Parser {
     // '!' 
     val result0 =  d.__terminal('!', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // WS* 
@@ -865,7 +872,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -880,7 +887,7 @@ class Parser {
       // expr=AssignableExpression 
       val result2 = d.dvAssignableExpression
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
       if (result.node != null) {
         node.expr = result2.node
       }
@@ -888,9 +895,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -900,7 +907,7 @@ class Parser {
     val result = oneOrMoreExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -914,7 +921,7 @@ class Parser {
     // expr=AssignableExpression 
     val result0 = d.dvAssignableExpression
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.expr = result0.node
     }
@@ -923,7 +930,7 @@ class Parser {
       // '+' 
       val result1 =  d.__terminal('+', this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -935,7 +942,7 @@ class Parser {
         // WS
         val result2 = d.dvWS
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -948,9 +955,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -960,7 +967,7 @@ class Parser {
     val result = zeroOrMoreExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -974,7 +981,7 @@ class Parser {
     // expr=AssignableExpression 
     val result0 = d.dvAssignableExpression
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.expr = result0.node
     }
@@ -983,7 +990,7 @@ class Parser {
       // '*' 
       val result1 =  d.__terminal('*', this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -995,7 +1002,7 @@ class Parser {
         // WS
         val result2 = d.dvWS
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -1008,9 +1015,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1020,7 +1027,7 @@ class Parser {
     val result = optionalExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1034,7 +1041,7 @@ class Parser {
     // expr=AssignableExpression 
     val result0 = d.dvAssignableExpression
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.expr = result0.node
     }
@@ -1043,7 +1050,7 @@ class Parser {
       // '?' 
       val result1 =  d.__terminal('?', this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -1055,7 +1062,7 @@ class Parser {
         // WS
         val result2 = d.dvWS
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -1068,9 +1075,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1080,7 +1087,7 @@ class Parser {
     val result = assignableExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1099,7 +1106,7 @@ class Parser {
     // property=ID 
     val result0 = d.dvID
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.property = result0.node
     }
@@ -1113,7 +1120,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup2 = node.copy()
           backup3 = d
@@ -1128,7 +1135,7 @@ class Parser {
       // op=AssignmentOperator
       val result2 = d.dvAssignmentOperator
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
       if (result.node != null) {
         node.op = result2.node
       }
@@ -1143,7 +1150,7 @@ class Parser {
       // expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) 
       val result3 = d.assignableExpression_sub0()
       d = result3.derivation
-      result = result3
+      result = result3.joinErrors(result)
       if (result.node != null) {
         node.expr = result3.node
       }
@@ -1158,7 +1165,7 @@ class Parser {
         // WS
         val result4 = d.dvWS
         d = result4.derivation
-        result = result4
+        result = result4.joinErrors(result)
         if (result.node != null) {
           backup4 = node.copy()
           backup5 = d
@@ -1171,9 +1178,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   private def Result<? extends Expression> assignableExpression_sub0(Derivation derivation) {
@@ -1181,14 +1188,19 @@ class Parser {
     val d = derivation
     // SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression 
     result = d.dvSubExpression
+    .joinErrors(result)
     if (result.node == null) {
       result = d.dvRangeExpression
+      .joinErrors(result)
       if (result.node == null) {
         result = d.dvTerminalExpression
+        .joinErrors(result)
         if (result.node == null) {
           result = d.dvAnyCharExpression
+          .joinErrors(result)
           if (result.node == null) {
             result = d.dvRuleReferenceExpression
+            .joinErrors(result)
             if (result.node == null) {
             }
           }
@@ -1204,7 +1216,7 @@ class Parser {
     val result = assignmentOperator(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1223,7 +1235,7 @@ class Parser {
     // single='=' 
     val result0 =  d.__terminal('=', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.single = result0.node
     }
@@ -1236,7 +1248,7 @@ class Parser {
       // multi='+='
       val result1 =  d.__terminal('+=', this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
       if (result.node != null) {
         node.multi = result1.node
       }
@@ -1255,7 +1267,7 @@ class Parser {
         // WS
         val result2 = d.dvWS
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         if (result.node != null) {
           backup4 = node.copy()
           backup5 = d
@@ -1268,9 +1280,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<AssignmentOperator>(node, d)
+      return new Result<AssignmentOperator>(node, d, result.info)
     }
-    return new Result<AssignmentOperator>(null, derivation)
+    return new Result<AssignmentOperator>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1280,7 +1292,7 @@ class Parser {
     val result = subExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1294,7 +1306,7 @@ class Parser {
     // '(' 
     val result0 =  d.__terminal('(', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // WS* 
@@ -1305,7 +1317,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -1320,7 +1332,7 @@ class Parser {
       // expr=ChoiceExpression 
       val result2 = d.dvChoiceExpression
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
       if (result.node != null) {
         node.expr = result2.node
       }
@@ -1330,7 +1342,7 @@ class Parser {
       // ')' 
       val result3 =  d.__terminal(')', this)
       d = result3.derivation
-      result = result3
+      result = result3.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -1342,7 +1354,7 @@ class Parser {
         // WS
         val result4 = d.dvWS
         d = result4.derivation
-        result = result4
+        result = result4.joinErrors(result)
         if (result.node != null) {
           backup2 = node.copy()
           backup3 = d
@@ -1355,9 +1367,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1367,7 +1379,7 @@ class Parser {
     val result = rangeExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1381,7 +1393,7 @@ class Parser {
     // '[' 
     val result0 =  d.__terminal('[', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // dash='-'? 
@@ -1391,7 +1403,7 @@ class Parser {
       // dash='-'
       val result1 =  d.__terminal('-', this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
       if (result.node != null) {
         node.dash = result1.node
       }
@@ -1414,7 +1426,7 @@ class Parser {
         // ']' 
         val result2 =  d.__terminal(']', this)
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         node = backup4
         d = backup5
         if (result.node != null) {
@@ -1427,7 +1439,7 @@ class Parser {
           // ranges+=(MinMaxRange | CharRange)
           val result3 = d.rangeExpression_sub0()
           d = result3.derivation
-          result = result3
+          result = result3.joinErrors(result)
           if (result.node != null) {
             node.add(result3.node)
           }
@@ -1446,7 +1458,7 @@ class Parser {
       // ']' 
       val result4 =  d.__terminal(']', this)
       d = result4.derivation
-      result = result4
+      result = result4.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -1458,7 +1470,7 @@ class Parser {
         // WS
         val result5 = d.dvWS
         d = result5.derivation
-        result = result5
+        result = result5.joinErrors(result)
         if (result.node != null) {
           backup6 = node.copy()
           backup7 = d
@@ -1471,9 +1483,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   private def Result<? extends Node> rangeExpression_sub0(Derivation derivation) {
@@ -1481,8 +1493,10 @@ class Parser {
     val d = derivation
     // MinMaxRange | CharRange
     result = d.dvMinMaxRange
+    .joinErrors(result)
     if (result.node == null) {
       result = d.dvCharRange
+      .joinErrors(result)
       if (result.node == null) {
       }
     }
@@ -1495,7 +1509,7 @@ class Parser {
     val result = minMaxRange(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1511,7 +1525,7 @@ class Parser {
     // '-' 
     val result0 =  d.__terminal('-', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     node = backup0
     d = backup1
     if (result.node != null) {
@@ -1525,7 +1539,7 @@ class Parser {
       // .
       val result1 =  d.__any(this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
       if (result.node != null) {
         node.min = result1.node
       }
@@ -1535,7 +1549,7 @@ class Parser {
       // '-' 
       val result2 =  d.__terminal('-', this)
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -1544,7 +1558,7 @@ class Parser {
       // '-' 
       val result3 =  d.__terminal('-', this)
       d = result3.derivation
-      result = result3
+      result = result3.joinErrors(result)
       node = backup2
       d = backup3
       if (result.node != null) {
@@ -1559,7 +1573,7 @@ class Parser {
       // .
       val result4 =  d.__any(this)
       d = result4.derivation
-      result = result4
+      result = result4.joinErrors(result)
       if (result.node != null) {
         node.max = result4.node
       }
@@ -1567,9 +1581,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<MinMaxRange>(node, d)
+      return new Result<MinMaxRange>(node, d, result.info)
     }
-    return new Result<MinMaxRange>(null, derivation)
+    return new Result<MinMaxRange>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1579,7 +1593,7 @@ class Parser {
     val result = charRange(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1597,7 +1611,7 @@ class Parser {
     // char='\\]' 
     val result0 =  d.__terminal('\\]', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node._char = result0.node
     }
@@ -1610,7 +1624,7 @@ class Parser {
       // char='\\\\' 
       val result1 =  d.__terminal('\\\\', this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
       if (result.node != null) {
         node._char = result1.node
       }
@@ -1625,7 +1639,7 @@ class Parser {
         // '-' 
         val result2 =  d.__terminal('-', this)
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         node = backup6
         d = backup7
         if (result.node != null) {
@@ -1639,7 +1653,7 @@ class Parser {
           // .
           val result3 =  d.__any(this)
           d = result3.derivation
-          result = result3
+          result = result3.joinErrors(result)
           if (result.node != null) {
             node._char = result3.node
           }
@@ -1653,9 +1667,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<CharRange>(node, d)
+      return new Result<CharRange>(node, d, result.info)
     }
-    return new Result<CharRange>(null, derivation)
+    return new Result<CharRange>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1665,7 +1679,7 @@ class Parser {
     val result = anyCharExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1679,16 +1693,16 @@ class Parser {
     // char='.' 
     val result0 =  d.__terminal('.', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node._char = result0.node
     }
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1698,7 +1712,7 @@ class Parser {
     val result = ruleReferenceExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1712,7 +1726,7 @@ class Parser {
     // name=ID 
     val result0 = d.dvID
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.name = result0.node
     }
@@ -1726,7 +1740,7 @@ class Parser {
         // WS
         val result1 = d.dvWS
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -1739,9 +1753,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1751,7 +1765,7 @@ class Parser {
     val result = terminalExpression(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1765,7 +1779,7 @@ class Parser {
     // '\'' 
     val result0 =  d.__terminal('\'', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // value=InTerminalChar? 
@@ -1775,7 +1789,7 @@ class Parser {
       // value=InTerminalChar
       val result1 = d.dvInTerminalChar
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
       if (result.node != null) {
         node.value = result1.node
       }
@@ -1790,7 +1804,7 @@ class Parser {
       // '\'' 
       val result2 =  d.__terminal('\'', this)
       d = result2.derivation
-      result = result2
+      result = result2.joinErrors(result)
     }
     
     if (result.node != null) {
@@ -1802,7 +1816,7 @@ class Parser {
         // WS
         val result3 = d.dvWS
         d = result3.derivation
-        result = result3
+        result = result3.joinErrors(result)
         if (result.node != null) {
           backup2 = node.copy()
           backup3 = d
@@ -1815,9 +1829,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expression>(node, d)
+      return new Result<Expression>(node, d, result.info)
     }
-    return new Result<Expression>(null, derivation)
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1827,7 +1841,7 @@ class Parser {
     val result = inTerminalChar(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1852,13 +1866,13 @@ class Parser {
       // '\\' 
       val result0 =  d.__terminal('\\', this)
       d = result0.derivation
-      result = result0
+      result = result0.joinErrors(result)
       
       if (result.node != null) {
         // '\'' 
         val result1 =  d.__terminal('\'', this)
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
       }
       if (result.node == null) {
         node = backup2
@@ -1869,13 +1883,13 @@ class Parser {
         // '\\' 
         val result2 =  d.__terminal('\\', this)
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         
         if (result.node != null) {
           // '\\' 
           val result3 =  d.__terminal('\\', this)
           d = result3.derivation
-          result = result3
+          result = result3.joinErrors(result)
         }
         if (result.node == null) {
           node = backup4
@@ -1888,7 +1902,7 @@ class Parser {
           // '\'' 
           val result4 =  d.__terminal('\'', this)
           d = result4.derivation
-          result = result4
+          result = result4.joinErrors(result)
           node = backup8
           d = backup9
           if (result.node != null) {
@@ -1902,7 +1916,7 @@ class Parser {
             // .
             val result5 =  d.__any(this)
             d = result5.derivation
-            result = result5
+            result = result5.joinErrors(result)
           }
           if (result.node == null) {
             node = backup6
@@ -1926,9 +1940,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<InTerminalChar>(node, d)
+      return new Result<InTerminalChar>(node, d, result.info)
     }
-    return new Result<InTerminalChar>(null, derivation)
+    return new Result<InTerminalChar>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -1938,7 +1952,7 @@ class Parser {
     val result = comment(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -1952,7 +1966,7 @@ class Parser {
     // '//' 
     val result0 =  d.__terminal('//', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // (!('\r'? '\n') .)* 
@@ -1971,7 +1985,7 @@ class Parser {
         // '\r'
         val result1 =  d.__terminal('\r', this)
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node == null) {
           node = backup4
           d = backup5
@@ -1982,7 +1996,7 @@ class Parser {
           // '\n'
           val result2 =  d.__terminal('\n', this)
           d = result2.derivation
-          result = result2
+          result = result2.joinErrors(result)
         }
         node = backup2
         d = backup3
@@ -1997,7 +2011,7 @@ class Parser {
           // .
           val result3 =  d.__any(this)
           d = result3.derivation
-          result = result3
+          result = result3.joinErrors(result)
         }
         if (result.node != null) {
           backup0 = node.copy()
@@ -2018,7 +2032,7 @@ class Parser {
         // WS
         val result4 = d.dvWS
         d = result4.derivation
-        result = result4
+        result = result4.joinErrors(result)
         if (result.node != null) {
           backup6 = node.copy()
           backup7 = d
@@ -2031,9 +2045,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Comment>(node, d)
+      return new Result<Comment>(node, d, result.info)
     }
-    return new Result<Comment>(null, derivation)
+    return new Result<Comment>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -2043,7 +2057,7 @@ class Parser {
     val result = eOI(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -2061,7 +2075,7 @@ class Parser {
     // .
     val result0 =  d.__any(this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     node = backup0
     d = backup1
     if (result.node != null) {
@@ -2072,9 +2086,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<EOI>(node, d)
+      return new Result<EOI>(node, d, result.info)
     }
-    return new Result<EOI>(null, derivation)
+    return new Result<EOI>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -2084,7 +2098,7 @@ class Parser {
     val result = iD(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -2103,7 +2117,7 @@ class Parser {
       '_'
       , this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       // [a-zA-Z0-9_]* 
@@ -2120,7 +2134,7 @@ class Parser {
           '_'
           , this)
         d = result1.derivation
-        result = result1
+        result = result1.joinErrors(result)
         if (result.node != null) {
           backup0 = node.copy()
           backup1 = d
@@ -2133,9 +2147,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<ID>(node, d)
+      return new Result<ID>(node, d, result.info)
     }
-    return new Result<ID>(null, derivation)
+    return new Result<ID>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -2145,7 +2159,7 @@ class Parser {
     val result = wS(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -2163,7 +2177,7 @@ class Parser {
     // ' ' 
     val result0 =  d.__terminal(' ', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node == null) {
       node = backup0
       d = backup1
@@ -2173,7 +2187,7 @@ class Parser {
       // '\n' 
       val result1 =  d.__terminal('\n', this)
       d = result1.derivation
-      result = result1
+      result = result1.joinErrors(result)
       if (result.node == null) {
         node = backup2
         d = backup3
@@ -2183,7 +2197,7 @@ class Parser {
         // '\t' 
         val result2 =  d.__terminal('\t', this)
         d = result2.derivation
-        result = result2
+        result = result2.joinErrors(result)
         if (result.node == null) {
           node = backup4
           d = backup5
@@ -2193,7 +2207,7 @@ class Parser {
           // '\r' 
           val result3 =  d.__terminal('\r', this)
           d = result3.derivation
-          result = result3
+          result = result3.joinErrors(result)
           if (result.node == null) {
             node = backup6
             d = backup7
@@ -2204,9 +2218,9 @@ class Parser {
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<WS>(node, d)
+      return new Result<WS>(node, d, result.info)
     }
-    return new Result<WS>(null, derivation)
+    return new Result<WS>(null, derivation, result.info)
   }
   
   
@@ -2501,20 +2515,12 @@ package class Derivation {
 
 class ParseException extends RuntimeException {
   
-  @Property
-  List<ParseException> causes
-  
   new(String message) {
     super(message)
   }
   
-  def add(ParseException e) {
-    causes = causes ?: newArrayList
-    causes += e
-  }
-  
-  override toString() {
-    'ParseException ' + super.localizedMessage + if (causes != null) ':\n' + causes.join('\n') else ''
+  override getMessage() {
+    'ParseException' + super.message
   }
   
 }
@@ -2563,445 +2569,482 @@ package class CharacterRange {
 
 }
 
-  @Data
-  package class Result<T> {
-    
-    T node
-    
-    Derivation derivation
-    
+package class Result<T> {
+  
+  T node
+  
+  Derivation derivation
+  
+  ParseInfo info
+  
+  new(T node, Derivation derivation, ParseInfo info) {
+    this.node = node
+    this.derivation = derivation
+    this.info = info
+  }
+  
+  def getNode() { node }
+  def getDerivation() { derivation }
+  def getInfo() { info }
+  
+  def joinErrors(Result<?> r2) {
+    if (r2 != null) {
+      info = if (info.position > r2.info.position || r2.info.messages == null) info
+      else if (info.position < r2.info.position || info.messages == null) r2.info
+      else new ParseInfo(info.position, info.messages + r2.info.messages)
+    }
+    return this
+  }
+  
+}
+
+@Data
+package class ParseInfo {
+  
+  int position
+  
+  Set<String> messages
+  
+  new(int position, String... messages) {
+    this(position, if (messages != null) newHashSet(messages)) 
+  }
+  
+  new(int position, Set<String> messages) {
+    this._position = position
+    this._messages = messages
+  }
+}
+
+package class Node {
+  
+  @Property
+  String parsed
+  
+  def Node copy() {
+    val r = new Node
+    r._parsed = _parsed
+    return r
+  }
+  
+  def <T extends Node> T add(Node in) {
+    val out = class.newInstance as T
+    out.parsed = (this._parsed ?: '') + in._parsed
+    return out
+  }
+  
+  override toString() {
+    parsed.replace('\n', ' ').replaceAll('\\s+', ' ')
   }
 
-  package class Node {
-    
-    @Property
-    String parsed
-    
-    def Node copy() {
-      val r = new Node
-      r._parsed = _parsed
-      return r
-    }
-    
-    def <T extends Node> T add(Node in) {
-      val out = class.newInstance as T
-      out.parsed = (this._parsed ?: '') + in._parsed
-      return out
-    }
-    
-    override toString() {
-      parsed.replace('\n', ' ').replaceAll('\\s+', ' ')
-    }
-  
+}
+
+class Terminal extends Node {
+
+  new() {
   }
 
-  class Terminal extends Node {
-  
-    new() {
-    }
-  
-    new(Character parsed) {
-      this.parsed = parsed.toString()
-    }
-  
-    new(String parsed) {
-      this.parsed = parsed
-    }
-  
-    override Terminal copy() {
-      val r = new Terminal
-      r.parsed = parsed
-      return r
-    }
-    
-  
+  new(Character parsed) {
+    this.parsed = parsed.toString()
+  }
+
+  new(String parsed) {
+    this.parsed = parsed
+  }
+
+  override Terminal copy() {
+    val r = new Terminal
+    r.parsed = parsed
+    return r
   }
   
-  class OptionalExpression extends Expression {
-    
-    @Property
-    Expression expr
-    
-    override OptionalExpression copy() {
-      val r = new OptionalExpression
-      r._expr = _expr
-      return r
-    }
-    
+
+}
+
+class OptionalExpression extends Expression {
+  
+  @Property
+  Expression expr
+  
+  override OptionalExpression copy() {
+    val r = new OptionalExpression
+    r._expr = _expr
+    return r
   }
   
-  class ActionExpression extends Expression {
-    
-    @Property
-    ID property
-    
-    @Property
-    AssignmentOperator op
-    
-    @Property
-    ID name
-    
-    override ActionExpression copy() {
-      val r = new ActionExpression
-      r._property = _property
-      r._op = _op
-      r._name = _name
-      return r
-    }
-    
+}
+
+class ActionExpression extends Expression {
+  
+  @Property
+  ID property
+  
+  @Property
+  AssignmentOperator op
+  
+  @Property
+  ID name
+  
+  override ActionExpression copy() {
+    val r = new ActionExpression
+    r._property = _property
+    r._op = _op
+    r._name = _name
+    return r
   }
   
-  class SequenceExpression extends Expression {
-    
-    @Property
-    java.util.List<Expression> expressions
-    
-    def dispatch void add(Expression __expression) {
-      _expressions = _expressions ?: newArrayList
-      _expressions += __expression
-    }
-    
-    override SequenceExpression copy() {
-      val r = new SequenceExpression
-      r._expressions = _expressions
-      return r
-    }
-    
+}
+
+class SequenceExpression extends Expression {
+  
+  @Property
+  java.util.List<Expression> expressions
+  
+  def dispatch void add(Expression __expression) {
+    _expressions = _expressions ?: newArrayList
+    _expressions += __expression
   }
   
-  class AssignableExpression extends Expression {
-    
-    @Property
-    ID property
-    
-    @Property
-    AssignmentOperator op
-    
-    @Property
-    Expression expr
-    
-    override AssignableExpression copy() {
-      val r = new AssignableExpression
-      r._property = _property
-      r._op = _op
-      r._expr = _expr
-      return r
-    }
-    
+  override SequenceExpression copy() {
+    val r = new SequenceExpression
+    r._expressions = _expressions
+    return r
   }
   
-  class RangeExpression extends Expression {
-    
-    @Property
-    Terminal dash
-    
-    @Property
-    java.util.List<Node> ranges
-    
-    def dispatch void add(Node __node) {
-      _ranges = _ranges ?: newArrayList
-      _ranges += __node
-    }
-    
-    override RangeExpression copy() {
-      val r = new RangeExpression
-      r._dash = _dash
-      r._ranges = _ranges
-      return r
-    }
-    
+}
+
+class AssignableExpression extends Expression {
+  
+  @Property
+  ID property
+  
+  @Property
+  AssignmentOperator op
+  
+  @Property
+  Expression expr
+  
+  override AssignableExpression copy() {
+    val r = new AssignableExpression
+    r._property = _property
+    r._op = _op
+    r._expr = _expr
+    return r
   }
   
-  class AnyCharExpression extends Expression {
-    
-    @Property
-    Terminal _char
-    
-    override AnyCharExpression copy() {
-      val r = new AnyCharExpression
-      r.__char = __char
-      return r
-    }
-    
+}
+
+class RangeExpression extends Expression {
+  
+  @Property
+  Terminal dash
+  
+  @Property
+  java.util.List<Node> ranges
+  
+  def dispatch void add(Node __node) {
+    _ranges = _ranges ?: newArrayList
+    _ranges += __node
   }
   
-  class ID extends Node {
-    
-    override ID copy() {
-      val r = new ID
-      return r
-    }
-    
+  override RangeExpression copy() {
+    val r = new RangeExpression
+    r._dash = _dash
+    r._ranges = _ranges
+    return r
   }
   
-  class EOI extends Node {
-    
-    override EOI copy() {
-      val r = new EOI
-      return r
-    }
-    
+}
+
+class AnyCharExpression extends Expression {
+  
+  @Property
+  Terminal _char
+  
+  override AnyCharExpression copy() {
+    val r = new AnyCharExpression
+    r.__char = __char
+    return r
   }
   
-  class Expression extends Node {
-    
-    override Expression copy() {
-      val r = new Expression
-      return r
-    }
-    
+}
+
+class ID extends Node {
+  
+  override ID copy() {
+    val r = new ID
+    return r
   }
   
-  class TerminalExpression extends Expression {
-    
-    @Property
-    InTerminalChar value
-    
-    override TerminalExpression copy() {
-      val r = new TerminalExpression
-      r._value = _value
-      return r
-    }
-    
+}
+
+class EOI extends Node {
+  
+  override EOI copy() {
+    val r = new EOI
+    return r
   }
   
-  class AndPredicateExpression extends Expression {
-    
-    @Property
-    Expression expr
-    
-    override AndPredicateExpression copy() {
-      val r = new AndPredicateExpression
-      r._expr = _expr
-      return r
-    }
-    
+}
+
+class Expression extends Node {
+  
+  override Expression copy() {
+    val r = new Expression
+    return r
   }
   
-  class ZeroOrMoreExpression extends Expression {
-    
-    @Property
-    Expression expr
-    
-    override ZeroOrMoreExpression copy() {
-      val r = new ZeroOrMoreExpression
-      r._expr = _expr
-      return r
-    }
-    
+}
+
+class TerminalExpression extends Expression {
+  
+  @Property
+  InTerminalChar value
+  
+  override TerminalExpression copy() {
+    val r = new TerminalExpression
+    r._value = _value
+    return r
   }
   
-  class Body extends Node {
-    
-    @Property
-    java.util.List<Expression> expressions
-    
-    def dispatch void add(Expression __expression) {
-      _expressions = _expressions ?: newArrayList
-      _expressions += __expression
-    }
-    
-    override Body copy() {
-      val r = new Body
-      r._expressions = _expressions
-      return r
-    }
-    
+}
+
+class AndPredicateExpression extends Expression {
+  
+  @Property
+  Expression expr
+  
+  override AndPredicateExpression copy() {
+    val r = new AndPredicateExpression
+    r._expr = _expr
+    return r
   }
   
-  class AssignmentOperator extends Node {
-    
-    @Property
-    Terminal single
-    
-    @Property
-    Terminal multi
-    
-    override AssignmentOperator copy() {
-      val r = new AssignmentOperator
-      r._single = _single
-      r._multi = _multi
-      return r
-    }
-    
+}
+
+class ZeroOrMoreExpression extends Expression {
+  
+  @Property
+  Expression expr
+  
+  override ZeroOrMoreExpression copy() {
+    val r = new ZeroOrMoreExpression
+    r._expr = _expr
+    return r
   }
   
-  class WS extends Node {
-    
-    override WS copy() {
-      val r = new WS
-      return r
-    }
-    
+}
+
+class Body extends Node {
+  
+  @Property
+  java.util.List<Expression> expressions
+  
+  def dispatch void add(Expression __expression) {
+    _expressions = _expressions ?: newArrayList
+    _expressions += __expression
   }
   
-  class CharRange extends Node {
-    
-    @Property
-    Terminal _char
-    
-    override CharRange copy() {
-      val r = new CharRange
-      r.__char = __char
-      return r
-    }
-    
+  override Body copy() {
+    val r = new Body
+    r._expressions = _expressions
+    return r
   }
   
-  class Comment extends Node {
-    
-    override Comment copy() {
-      val r = new Comment
-      return r
-    }
-    
+}
+
+class AssignmentOperator extends Node {
+  
+  @Property
+  Terminal single
+  
+  @Property
+  Terminal multi
+  
+  override AssignmentOperator copy() {
+    val r = new AssignmentOperator
+    r._single = _single
+    r._multi = _multi
+    return r
   }
   
-  class SubExpression extends Expression {
-    
-    @Property
-    Expression expr
-    
-    override SubExpression copy() {
-      val r = new SubExpression
-      r._expr = _expr
-      return r
-    }
-    
+}
+
+class WS extends Node {
+  
+  override WS copy() {
+    val r = new WS
+    return r
   }
   
-  class Rule extends Node {
-    
-    @Property
-    ID name
-    
-    @Property
-    RuleReturns returns
-    
-    @Property
-    Body body
-    
-    override Rule copy() {
-      val r = new Rule
-      r._name = _name
-      r._returns = _returns
-      r._body = _body
-      return r
-    }
-    
+}
+
+class CharRange extends Node {
+  
+  @Property
+  Terminal _char
+  
+  override CharRange copy() {
+    val r = new CharRange
+    r.__char = __char
+    return r
   }
   
-  class RuleReturns extends Node {
-    
-    @Property
-    ID name
-    
-    override RuleReturns copy() {
-      val r = new RuleReturns
-      r._name = _name
-      return r
-    }
-    
+}
+
+class Comment extends Node {
+  
+  override Comment copy() {
+    val r = new Comment
+    return r
   }
   
-  class MinMaxRange extends Node {
-    
-    @Property
-    Terminal min
-    
-    @Property
-    Terminal max
-    
-    override MinMaxRange copy() {
-      val r = new MinMaxRange
-      r._min = _min
-      r._max = _max
-      return r
-    }
-    
+}
+
+class SubExpression extends Expression {
+  
+  @Property
+  Expression expr
+  
+  override SubExpression copy() {
+    val r = new SubExpression
+    r._expr = _expr
+    return r
   }
   
-  class NotPredicateExpression extends Expression {
-    
-    @Property
-    Expression expr
-    
-    override NotPredicateExpression copy() {
-      val r = new NotPredicateExpression
-      r._expr = _expr
-      return r
-    }
-    
+}
+
+class Rule extends Node {
+  
+  @Property
+  ID name
+  
+  @Property
+  RuleReturns returns
+  
+  @Property
+  Body body
+  
+  override Rule copy() {
+    val r = new Rule
+    r._name = _name
+    r._returns = _returns
+    r._body = _body
+    return r
   }
   
-  class RuleReferenceExpression extends Expression {
-    
-    @Property
-    ID name
-    
-    override RuleReferenceExpression copy() {
-      val r = new RuleReferenceExpression
-      r._name = _name
-      return r
-    }
-    
+}
+
+class RuleReturns extends Node {
+  
+  @Property
+  ID name
+  
+  override RuleReturns copy() {
+    val r = new RuleReturns
+    r._name = _name
+    return r
   }
   
-  class Jpeg extends Node {
-    
-    @Property
-    java.util.List<Rule> rules
-    
-    def dispatch void add(Rule __rule) {
-      _rules = _rules ?: newArrayList
-      _rules += __rule
-    }
-    
-    override Jpeg copy() {
-      val r = new Jpeg
-      r._rules = _rules
-      return r
-    }
-    
+}
+
+class MinMaxRange extends Node {
+  
+  @Property
+  Terminal min
+  
+  @Property
+  Terminal max
+  
+  override MinMaxRange copy() {
+    val r = new MinMaxRange
+    r._min = _min
+    r._max = _max
+    return r
   }
   
-  class OneOrMoreExpression extends Expression {
-    
-    @Property
-    Expression expr
-    
-    override OneOrMoreExpression copy() {
-      val r = new OneOrMoreExpression
-      r._expr = _expr
-      return r
-    }
-    
+}
+
+class NotPredicateExpression extends Expression {
+  
+  @Property
+  Expression expr
+  
+  override NotPredicateExpression copy() {
+    val r = new NotPredicateExpression
+    r._expr = _expr
+    return r
   }
   
-  class InTerminalChar extends Node {
-    
-    override InTerminalChar copy() {
-      val r = new InTerminalChar
-      return r
-    }
-    
+}
+
+class RuleReferenceExpression extends Expression {
+  
+  @Property
+  ID name
+  
+  override RuleReferenceExpression copy() {
+    val r = new RuleReferenceExpression
+    r._name = _name
+    return r
   }
   
-  class ChoiceExpression extends Expression {
-    
-    @Property
-    java.util.List<Expression> choices
-    
-    def dispatch void add(Expression __expression) {
-      _choices = _choices ?: newArrayList
-      _choices += __expression
-    }
-    
-    override ChoiceExpression copy() {
-      val r = new ChoiceExpression
-      r._choices = _choices
-      return r
-    }
-    
+}
+
+class Jpeg extends Node {
+  
+  @Property
+  java.util.List<Rule> rules
+  
+  def dispatch void add(Rule __rule) {
+    _rules = _rules ?: newArrayList
+    _rules += __rule
   }
   
+  override Jpeg copy() {
+    val r = new Jpeg
+    r._rules = _rules
+    return r
+  }
+  
+}
+
+class OneOrMoreExpression extends Expression {
+  
+  @Property
+  Expression expr
+  
+  override OneOrMoreExpression copy() {
+    val r = new OneOrMoreExpression
+    r._expr = _expr
+    return r
+  }
+  
+}
+
+class InTerminalChar extends Node {
+  
+  override InTerminalChar copy() {
+    val r = new InTerminalChar
+    return r
+  }
+  
+}
+
+class ChoiceExpression extends Expression {
+  
+  @Property
+  java.util.List<Expression> choices
+  
+  def dispatch void add(Expression __expression) {
+    _choices = _choices ?: newArrayList
+    _choices += __expression
+  }
+  
+  override ChoiceExpression copy() {
+    val r = new ChoiceExpression
+    r._choices = _choices
+    return r
+  }
+  
+}
+

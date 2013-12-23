@@ -17,14 +17,14 @@ class Generator {
     «val rules = jpeg.rules.filter[!types.get(name.parsed).internal]»
     package «packageName»
     
-    import java.util.List
+    import java.util.Set
     
     import static extension «packageName».CharacterRange.*
 
     class Parser {
       
-      static Result<Object> CONTINUE = new Result<Object>(new Object, null)
-      static Result<Object> BREAK = new Result<Object>(null, null)
+      static Result<Object> CONTINUE = new Result<Object>(new Object, null, new ParseInfo(0))
+      static Result<Object> BREAK = new Result<Object>(null, null, new ParseInfo(0))
       
       char[] chars
       
@@ -32,8 +32,8 @@ class Generator {
         new Derivation(idx, «FOR rule : rules SEPARATOR ','»[«rule.name.parsed.toFirstLower»()]«ENDFOR»,
           [
             return 
-              if (chars.length == idx) new Result<Character>(null, parse(idx))
-              else new Result<Character>(chars.get(idx), parse(idx + 1))
+              if (idx < chars.length) new Result<Character>(chars.get(idx), parse(idx + 1), new ParseInfo(idx))
+              else new Result<Character>(null, parse(idx), new ParseInfo(idx, 'Unexpected end of input'))
           ])
       }
       
@@ -42,27 +42,27 @@ class Generator {
         var d = derivation
         while (n < str.length) {
           val r = d.dvChar
+          d = r.derivation
           if (r.node == null || r.node != str.charAt(n)) {
-            return new Result<Terminal>(null, derivation)
+            return new Result<Terminal>(null, derivation, new ParseInfo(d.index, "Expected '" + str + "'"))
           }
           n = n + 1
-          d = r.derivation
         }
-        new Result<Terminal>(new Terminal(str), d)
+        new Result<Terminal>(new Terminal(str), d, new ParseInfo(d.index))
       }
       
       static def <T> __oneOfThese(Derivation derivation, CharacterRange range, Parser parser) {
         val r = derivation.dvChar
         return 
-          if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
-          else new Result<Terminal>(null, derivation)
+          if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
+          else new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, "Expected one of '" + range + "'"))
       }
     
       static def <T> __any(Derivation derivation, Parser parser) {
         val r = derivation.dvChar
         return
-          if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation)
-          else  new Result<Terminal>(null, derivation)
+          if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
+          else  new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, 'Unexpected end of input'))
       }
 
       «FOR rule : rules»
@@ -119,20 +119,12 @@ class Generator {
     
     class ParseException extends RuntimeException {
       
-      @Property
-      List<ParseException> causes
-      
       new(String message) {
         super(message)
       }
       
-      def add(ParseException e) {
-        causes = causes ?: newArrayList
-        causes += e
-      }
-      
-      override toString() {
-        'ParseException ' + super.localizedMessage + if (causes != null) ':\n' + causes.join('\n') else ''
+      override getMessage() {
+        'ParseException' + super.message
       }
       
     }
@@ -181,18 +173,55 @@ class Generator {
     
     }
 
-  '''
-  
-  static def generateTypes(Collection<JType> types) '''
-    @Data
     package class Result<T> {
       
       T node
       
       Derivation derivation
       
+      ParseInfo info
+      
+      new(T node, Derivation derivation, ParseInfo info) {
+        this.node = node
+        this.derivation = derivation
+        this.info = info
+      }
+      
+      def getNode() { node }
+      def getDerivation() { derivation }
+      def getInfo() { info }
+      
+      def joinErrors(Result<?> r2) {
+        if (r2 != null) {
+          info = if (info.position > r2.info.position || r2.info.messages == null) info
+          else if (info.position < r2.info.position || info.messages == null) r2.info
+          else new ParseInfo(info.position, info.messages + r2.info.messages)
+        }
+        return this
+      }
+      
     }
+    
+    @Data
+    package class ParseInfo {
+      
+      int position
+      
+      Set<String> messages
+      
+      new(int position, String... messages) {
+        this(position, if (messages != null) newHashSet(messages)) 
+      }
+      
+      new(int position, Set<String> messages) {
+        this._position = position
+        this._messages = messages
+      }
+    }
+    
+  '''
   
+  static def generateTypes(Collection<JType> types) '''
     package class Node {
       
       @Property
@@ -215,7 +244,7 @@ class Generator {
       }
     
     }
-  
+    
     class Terminal extends Node {
     
       new() {
@@ -298,8 +327,6 @@ class RuleGenerator {
   
   List<String> subFunctions = newArrayList
   
-  int exceptionCounter = -1
-  
   int resultCounter = -1
   
   int loopCounter = -1
@@ -326,7 +353,7 @@ class RuleGenerator {
       val result = «name.toFirstLower»(parse(0))
       return
         if (result.derivation.dvChar.node == null) result.node
-        else throw new ParseException("Unexpected end of input")
+        else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
     }
     
     /**
@@ -348,9 +375,9 @@ class RuleGenerator {
         if (result.node != null) {
           «optimize()»
           node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-          return new Result<«resultType.name»>(node, d)
+          return new Result<«resultType.name»>(node, d, result.info)
         }
-        return new Result<«resultType.name»>(null, derivation)
+        return new Result<«resultType.name»>(null, derivation, result.info)
       «ENDIF»
     }
     
@@ -361,13 +388,13 @@ class RuleGenerator {
     «IF type.isResultOptimizable(resultType, types)»
       «val attr = type.attributes.head.name»
       if (node.«attr».size() == 1) {
-        return new Result<«resultType.name»>(node.«attr».get(0), d)
+        return new Result<«resultType.name»>(node.«attr».get(0), d, result.info)
       }
     «ENDIF»
   '''
   
   def dispatch CharSequence create(Object o) '''
-    // TODO: «o.class»
+    throw new IllegalArgumentException('Unable to create ' + o.name)
   '''
   
   def dispatch CharSequence create(Body body) '''
@@ -386,7 +413,7 @@ class RuleGenerator {
   '''
   
   def CharSequence generateSimpleChoices(Iterable<Expression> exprs) '''
-    result = «exprs.head.create()»
+    result = «exprs.head.create()».joinErrors(result)
     if (result.node == null) {
       «IF !exprs.tail.empty»
         «exprs.tail.generateSimpleChoices()»
@@ -519,7 +546,7 @@ class RuleGenerator {
         «if(subFunctions += (expr.expr as SubExpression).createSubFunction(currentSubFunction)) '' else ''»
         val «nextResult» = d.«currentSubFunction»()
         d = «result».derivation
-        result = «result»
+        result = «result».joinErrors(result)
       «ELSE»
         «expr.expr.create()»
       «ENDIF»
@@ -561,9 +588,9 @@ class RuleGenerator {
         
         if (result.node != null) {
           node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-          return new Result<«resultType.name»>(node, d)
+          return new Result<«resultType.name»>(node, d, result.info)
         }
-        return new Result<«resultType.name»>(null, derivation)
+        return new Result<«resultType.name»>(null, derivation, result.info)
       «ENDIF»
     }
   '''
@@ -578,7 +605,7 @@ class RuleGenerator {
     «ELSE»
       val «nextResult» = d.dv«expr.name.parsed.toFirstUpper»
       d = «result».derivation
-      result = «result»
+      result = «result».joinErrors(result)
     «ENDIF»
   '''
   
@@ -591,7 +618,7 @@ class RuleGenerator {
       «IF expr.dash != null»«IF !expr.ranges.empty» + «ENDIF»'-'«ENDIF»
       , this)
     d = «result».derivation
-    result = «result»
+    result = «result».joinErrors(result)
   '''
   
   def dispatch CharSequence create(MinMaxRange range) '''
@@ -606,26 +633,17 @@ class RuleGenerator {
     // «expr»
     val «nextResult» =  d.__any(this)
     d = «result».derivation
-    result = «result»
+    result = «result».joinErrors(result)
   '''
   
   def dispatch CharSequence create(TerminalExpression expr) '''
     val «nextResult» =  d.__terminal('«expr.value.parsed»', this)
     d = «result».derivation
-    result = «result»
+    result = «result».joinErrors(result)
   '''
   
   private def getName() {
     rule.name.parsed
-  }
-  
-  private def getException() {
-    return 'e' + exceptionCounter
-  }
-  
-  private def nextException() {
-    exceptionCounter = exceptionCounter + 1
-    return getException()
   }
   
   private def getResult() {

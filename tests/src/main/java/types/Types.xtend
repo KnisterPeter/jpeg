@@ -1,13 +1,13 @@
 package types
 
-import java.util.List
+import java.util.Set
 
 import static extension types.CharacterRange.*
 
 class Parser {
   
-  static Result<Object> CONTINUE = new Result<Object>(new Object, null)
-  static Result<Object> BREAK = new Result<Object>(null, null)
+  static Result<Object> CONTINUE = new Result<Object>(new Object, null, new ParseInfo(0))
+  static Result<Object> BREAK = new Result<Object>(null, null, new ParseInfo(0))
   
   char[] chars
   
@@ -15,8 +15,8 @@ class Parser {
     new Derivation(idx, [rule()],[exprA()],[exprB()],
       [
         return 
-          if (chars.length == idx) new Result<Character>(null, parse(idx))
-          else new Result<Character>(chars.get(idx), parse(idx + 1))
+          if (idx < chars.length) new Result<Character>(chars.get(idx), parse(idx + 1), new ParseInfo(idx))
+          else new Result<Character>(null, parse(idx), new ParseInfo(idx, 'Unexpected end of input'))
       ])
   }
   
@@ -25,27 +25,27 @@ class Parser {
     var d = derivation
     while (n < str.length) {
       val r = d.dvChar
+      d = r.derivation
       if (r.node == null || r.node != str.charAt(n)) {
-        return new Result<Terminal>(null, derivation)
+        return new Result<Terminal>(null, derivation, new ParseInfo(d.index, "Expected '" + str + "'"))
       }
       n = n + 1
-      d = r.derivation
     }
-    new Result<Terminal>(new Terminal(str), d)
+    new Result<Terminal>(new Terminal(str), d, new ParseInfo(d.index))
   }
   
   static def <T> __oneOfThese(Derivation derivation, CharacterRange range, Parser parser) {
     val r = derivation.dvChar
     return 
-      if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
-      else new Result<Terminal>(null, derivation)
+      if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
+      else new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, "Expected one of '" + range + "'"))
   }
 
   static def <T> __any(Derivation derivation, Parser parser) {
     val r = derivation.dvChar
     return
-      if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation)
-      else  new Result<Terminal>(null, derivation)
+      if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
+      else  new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, 'Unexpected end of input'))
   }
 
   //--------------------------------------------------------------------------
@@ -55,7 +55,7 @@ class Parser {
     val result = rule(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -69,16 +69,16 @@ class Parser {
     // expr+=(ExprA | ExprB) 
     val result0 = d.rule_sub0()
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     if (result.node != null) {
       node.add(result0.node)
     }
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Rule>(node, d)
+      return new Result<Rule>(node, d, result.info)
     }
-    return new Result<Rule>(null, derivation)
+    return new Result<Rule>(null, derivation, result.info)
   }
   
   private def Result<? extends Expr> rule_sub0(Derivation derivation) {
@@ -86,8 +86,10 @@ class Parser {
     val d = derivation
     // ExprA | ExprB
     result = d.dvExprA
+    .joinErrors(result)
     if (result.node == null) {
       result = d.dvExprB
+      .joinErrors(result)
       if (result.node == null) {
       }
     }
@@ -100,7 +102,7 @@ class Parser {
     val result = exprA(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -114,13 +116,13 @@ class Parser {
     // 'a' 
     val result0 =  d.__terminal('a', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expr>(node, d)
+      return new Result<Expr>(node, d, result.info)
     }
-    return new Result<Expr>(null, derivation)
+    return new Result<Expr>(null, derivation, result.info)
   }
   
   //--------------------------------------------------------------------------
@@ -130,7 +132,7 @@ class Parser {
     val result = exprB(parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
-      else throw new ParseException("Unexpected end of input")
+      else throw new ParseException("[" + result.info.position + "] " + result.info.messages.join(' '))
   }
   
   /**
@@ -144,13 +146,13 @@ class Parser {
     // 'b' 
     val result0 =  d.__terminal('b', this)
     d = result0.derivation
-    result = result0
+    result = result0.joinErrors(result)
     
     if (result.node != null) {
       node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-      return new Result<Expr>(node, d)
+      return new Result<Expr>(node, d, result.info)
     }
-    return new Result<Expr>(null, derivation)
+    return new Result<Expr>(null, derivation, result.info)
   }
   
   
@@ -215,20 +217,12 @@ package class Derivation {
 
 class ParseException extends RuntimeException {
   
-  @Property
-  List<ParseException> causes
-  
   new(String message) {
     super(message)
   }
   
-  def add(ParseException e) {
-    causes = causes ?: newArrayList
-    causes += e
-  }
-  
-  override toString() {
-    'ParseException ' + super.localizedMessage + if (causes != null) ':\n' + causes.join('\n') else ''
+  override getMessage() {
+    'ParseException' + super.message
   }
   
 }
@@ -277,102 +271,139 @@ package class CharacterRange {
 
 }
 
-  @Data
-  package class Result<T> {
-    
-    T node
-    
-    Derivation derivation
-    
+package class Result<T> {
+  
+  T node
+  
+  Derivation derivation
+  
+  ParseInfo info
+  
+  new(T node, Derivation derivation, ParseInfo info) {
+    this.node = node
+    this.derivation = derivation
+    this.info = info
+  }
+  
+  def getNode() { node }
+  def getDerivation() { derivation }
+  def getInfo() { info }
+  
+  def joinErrors(Result<?> r2) {
+    if (r2 != null) {
+      info = if (info.position > r2.info.position || r2.info.messages == null) info
+      else if (info.position < r2.info.position || info.messages == null) r2.info
+      else new ParseInfo(info.position, info.messages + r2.info.messages)
+    }
+    return this
+  }
+  
+}
+
+@Data
+package class ParseInfo {
+  
+  int position
+  
+  Set<String> messages
+  
+  new(int position, String... messages) {
+    this(position, if (messages != null) newHashSet(messages)) 
+  }
+  
+  new(int position, Set<String> messages) {
+    this._position = position
+    this._messages = messages
+  }
+}
+
+package class Node {
+  
+  @Property
+  String parsed
+  
+  def Node copy() {
+    val r = new Node
+    r._parsed = _parsed
+    return r
+  }
+  
+  def <T extends Node> T add(Node in) {
+    val out = class.newInstance as T
+    out.parsed = (this._parsed ?: '') + in._parsed
+    return out
+  }
+  
+  override toString() {
+    parsed.replace('\n', ' ').replaceAll('\\s+', ' ')
   }
 
-  package class Node {
-    
-    @Property
-    String parsed
-    
-    def Node copy() {
-      val r = new Node
-      r._parsed = _parsed
-      return r
-    }
-    
-    def <T extends Node> T add(Node in) {
-      val out = class.newInstance as T
-      out.parsed = (this._parsed ?: '') + in._parsed
-      return out
-    }
-    
-    override toString() {
-      parsed.replace('\n', ' ').replaceAll('\\s+', ' ')
-    }
-  
+}
+
+class Terminal extends Node {
+
+  new() {
   }
 
-  class Terminal extends Node {
-  
-    new() {
-    }
-  
-    new(Character parsed) {
-      this.parsed = parsed.toString()
-    }
-  
-    new(String parsed) {
-      this.parsed = parsed
-    }
-  
-    override Terminal copy() {
-      val r = new Terminal
-      r.parsed = parsed
-      return r
-    }
-    
-  
+  new(Character parsed) {
+    this.parsed = parsed.toString()
+  }
+
+  new(String parsed) {
+    this.parsed = parsed
+  }
+
+  override Terminal copy() {
+    val r = new Terminal
+    r.parsed = parsed
+    return r
   }
   
-  class ExprA extends Expr {
-    
-    override ExprA copy() {
-      val r = new ExprA
-      return r
-    }
-    
+
+}
+
+class ExprA extends Expr {
+  
+  override ExprA copy() {
+    val r = new ExprA
+    return r
   }
   
-  class ExprB extends Expr {
-    
-    override ExprB copy() {
-      val r = new ExprB
-      return r
-    }
-    
+}
+
+class ExprB extends Expr {
+  
+  override ExprB copy() {
+    val r = new ExprB
+    return r
   }
   
-  class Rule extends Node {
-    
-    @Property
-    java.util.List<Expr> expr
-    
-    def dispatch void add(Expr __expr) {
-      _expr = _expr ?: newArrayList
-      _expr += __expr
-    }
-    
-    override Rule copy() {
-      val r = new Rule
-      r._expr = _expr
-      return r
-    }
-    
+}
+
+class Rule extends Node {
+  
+  @Property
+  java.util.List<Expr> expr
+  
+  def dispatch void add(Expr __expr) {
+    _expr = _expr ?: newArrayList
+    _expr += __expr
   }
   
-  class Expr extends Node {
-    
-    override Expr copy() {
-      val r = new Expr
-      return r
-    }
-    
+  override Rule copy() {
+    val r = new Rule
+    r._expr = _expr
+    return r
   }
   
+}
+
+class Expr extends Node {
+  
+  override Expr copy() {
+    val r = new Expr
+    return r
+  }
+  
+}
+

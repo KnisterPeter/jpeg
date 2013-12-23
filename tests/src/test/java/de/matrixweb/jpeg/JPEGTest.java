@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import jpeg.Jpeg;
+import jpeg.ParseException;
 import jpeg.Parser;
 
 import org.junit.Before;
@@ -55,6 +56,20 @@ public class JPEGTest {
         + ": " + (end - start) + "ms");
     assertThat(r, is(notNullValue()));
     assertThat(r.getRules().size(), is(2));
+  }
+
+  @Test
+  public void testParseError() {
+    try {
+      final long start = System.currentTimeMillis();
+      this.parser.Jpeg("Rule: []];");
+      final long end = System.currentTimeMillis();
+      System.out.println("Parser Time for Test " + this.name.getMethodName()
+          + ": " + (end - start) + "ms");
+      fail("Expected ParseException");
+    } catch (final ParseException e) {
+      assertThat(e.getMessage(), is("ParseException[9] Expected ';'"));
+    }
   }
 
   @Test
