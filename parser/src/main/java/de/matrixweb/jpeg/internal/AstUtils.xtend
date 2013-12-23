@@ -50,7 +50,7 @@ class TypeGenerator {
     jpeg.rules.forEach[
       val type = map.get(name.parsed)
       type.attributes = getAttributes(jpeg, map)
-      type.supertype = map.get(if (isTerminal()) 'Terminal' else (returns?.name?.parsed ?: 'Result'))
+      type.supertype = map.get(if (isTerminal()) 'Terminal' else (returns?.name?.parsed ?: 'Node'))
     ]
     return map
   }
@@ -66,7 +66,7 @@ class TypeGenerator {
     val result = new JType
     result.internal = true
     result.generate = false
-    result.name = 'Result'
+    result.name = 'Node'
     result.supertype = object
     list += result
     
@@ -201,7 +201,7 @@ class ExpressionTypeEvaluator {
   def static dispatch JType evaluateType(SequenceExpression expr, Jpeg jpeg, Map<String, JType> map) {
     if (expr.expressions.size == 1) return expr.expressions.head.evaluateType(jpeg, map)
     if (expr.expressions.forall[evaluateType(jpeg, map).name == 'Terminal']) return map.get('Terminal')
-    map.get('Result')
+    map.get('Node')
   }
   
   def static dispatch JType evaluateType(ChoiceExpression expr, Jpeg jpeg, Map<String, JType> map) {
@@ -211,7 +211,7 @@ class ExpressionTypeEvaluator {
       if (expr.choices.forall[evaluateType(jpeg, map).isAssignableTo(finalType, map)]) return finalType
       type = map.get(type.supertype)
     }
-    map.get('Result')
+    map.get('Node')
   }
   
   def static boolean isAssignableTo(JType test, JType to, Map<String, JType> map) {
@@ -278,6 +278,21 @@ class GeneratorHelper {
             ].flatten.fold(true, [a, b | a && b])
           ]
   }
+  
+  /**
+   * Returns the type of the given rule.
+   */
+  static def getType(Rule rule, Map<String, JType> types) {
+    types.get(rule.name.parsed)
+  }
+
+  /**
+   * Returns the result type of the given rule (either the type of the rule or 
+   * a more widening type).
+   */
+  static def getResultType(Rule rule, Map<String, JType> types) {
+    types.get(rule?.returns?.name?.parsed ?: rule.name.parsed)
+  }
 
 }
 
@@ -287,6 +302,7 @@ class AstValidator {
     jpeg.rules.forEach[ rule |
       rule.findNodesByType(RuleReferenceExpression).forEach[ ref |
         if (!jpeg.rules.exists[name.parsed == ref.name.parsed]) {
+          // TODO: Added error location
           throw new ParseException("Reference '" + ref.name.parsed + "' undefined")
         }
       ]

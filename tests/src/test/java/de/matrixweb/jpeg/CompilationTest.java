@@ -3,6 +3,7 @@ package de.matrixweb.jpeg;
 import java.io.File;
 import java.io.IOException;
 
+import org.eclipse.xtend.lib.Data;
 import org.eclipse.xtext.xbase.compiler.CompilationTestHelper.Result;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 import org.junit.Test;
@@ -24,7 +25,7 @@ import static org.hamcrest.CoreMatchers.*;
 public class CompilationTest {
 
   private final XtendCompilerUtil compiler = XtendCompilerUtil
-      .newXtendCompilerUtil(Objects.class, Exceptions.class);
+      .newXtendCompilerUtil(Objects.class, Exceptions.class, Data.class);
 
   @Test
   public void testCompileJpeg() throws IOException {

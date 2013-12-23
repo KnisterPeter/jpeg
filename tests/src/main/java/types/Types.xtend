@@ -7,59 +7,55 @@ import static extension types.CharacterRange.*
 
 class Parser {
   
-  int line = 1
-  int column = 1
+  char[] chars
   
-  package def addMatch(String match) {
-    var s = match
-    var idx = s.indexOf('\n')
-    while (idx != -1) {
-      column = 1
-      line = line + 1
-      s = s.substring(idx + 1)
-    }
-    column = column + s.length
-  }
-  
-  package def getLocation() {
-    line -> column
+  package def Derivation parse(int idx) {
+    new Derivation(idx, [rule()],[exprA()],[exprB()],
+      [
+        if (chars.length == idx) {
+          throw new ParseException('Unexpected end of input')
+        }
+        new Result<Character>(chars.get(idx), parse(idx + 1))
+      ])
   }
   
   //--------------------------------------------------------------------------
   
   def Rule Rule(String in) {
-    val result = rule(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = rule(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * Rule: expr+=(ExprA | ExprB) ; 
    */
-  package def Pair<? extends Rule, String> rule(String in) {
-    var result = new Rule
-    var tail = in
+  package def Result<? extends Rule> rule(Derivation derivation) {
+    var node = new Rule
+    var d = derivation
     
     // expr+=(ExprA | ExprB)
-    val result0 = tail.rule_sub0()
-    tail = result0.value
-    result.add(result0.key)
+    val result0 = d.rule_sub0()
+    d = result0.derivation
+    node.add(result0.node)
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Rule>(node, d)
   }
   
-  private def Pair<? extends Expr, String> rule_sub0(String in) {
-    val tail = in
+  private def Result<? extends Expr> rule_sub0(Derivation derivation) {
+    val d = derivation
     // ExprA | ExprB
     try {
-      return tail.exprA()
+      return d.dvExprA
     } catch (ParseException e0) {
       try {
-        return tail.exprB()
+        return d.dvExprB
       } catch (ParseException e1) {
         throw e1
       }
@@ -68,58 +64,119 @@ class Parser {
   //--------------------------------------------------------------------------
   
   def Expr ExprA(String in) {
-    val result = exprA(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = exprA(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * ExprA returns Expr: 'a' ; 
    */
-  package def Pair<? extends Expr, String> exprA(String in) {
-    var result = new ExprA
-    var tail = in
+  package def Result<? extends Expr> exprA(Derivation derivation) {
+    var node = new ExprA
+    var d = derivation
     
     // 'a'
     // 'a'
-    val result0 =  tail.terminal('a', this)
-    tail = result0.value
+    val result0 =  d.terminal('a', this)
+    d = result0.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expr>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expr ExprB(String in) {
-    val result = exprB(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = exprB(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * ExprB returns Expr: 'b' ; 
    */
-  package def Pair<? extends Expr, String> exprB(String in) {
-    var result = new ExprB
-    var tail = in
+  package def Result<? extends Expr> exprB(Derivation derivation) {
+    var node = new ExprB
+    var d = derivation
     
     // 'b'
     // 'b'
-    val result0 =  tail.terminal('b', this)
-    tail = result0.value
+    val result0 =  d.terminal('b', this)
+    d = result0.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expr>(node, d)
   }
   
   
+}
+
+package class Derivation {
+  
+  int idx
+  
+  val (Derivation)=>Result<? extends Rule> dvfRule
+  val (Derivation)=>Result<? extends Expr> dvfExprA
+  val (Derivation)=>Result<? extends Expr> dvfExprB
+  val (Derivation)=>Result<Character> dvfChar
+  
+  Result<? extends Rule> dvRule
+  Result<? extends Expr> dvExprA
+  Result<? extends Expr> dvExprB
+  Result<Character> dvChar
+  
+  new(int idx, (Derivation)=>Result<? extends Rule> dvfRule, (Derivation)=>Result<? extends Expr> dvfExprA, (Derivation)=>Result<? extends Expr> dvfExprB, (Derivation)=>Result<Character> dvfChar) {
+    this.idx = idx
+    this.dvfRule = dvfRule
+    this.dvfExprA = dvfExprA
+    this.dvfExprB = dvfExprB
+    this.dvfChar = dvfChar
+  }
+  
+  def getIndex() {
+    idx
+  }
+  
+  def getDvRule() {
+    if (dvRule == null) {
+      dvRule = dvfRule.apply(this)
+    }
+    return dvRule
+  }
+  
+  def getDvExprA() {
+    if (dvExprA == null) {
+      dvExprA = dvfExprA.apply(this)
+    }
+    return dvExprA
+  }
+  
+  def getDvExprB() {
+    if (dvExprB == null) {
+      dvExprB = dvfExprB.apply(this)
+    }
+    return dvExprB
+  }
+  
+  
+  def getDvChar() {
+    if (dvChar == null) {
+      dvChar = dvfChar.apply(this)
+    }
+    return dvChar
+  }
+
 }
 
 class ParseException extends RuntimeException {
@@ -127,12 +184,8 @@ class ParseException extends RuntimeException {
   @Property
   List<ParseException> causes
   
-  @Property
-  Pair<Integer, Integer> location
-  
-  new(String message, Pair<Integer, Integer> location) {
+  new(String message) {
     super(message)
-    this.location = location
   }
   
   def add(ParseException e) {
@@ -141,7 +194,7 @@ class ParseException extends RuntimeException {
   }
   
   override toString() {
-    'ParseException [' + location.key + ',' + location.value + '] ' + super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
+    'ParseException ' + super.localizedMessage + if (causes != null) ':\n' + causes.join('\n') else ''
   }
   
 }
@@ -180,8 +233,8 @@ package class CharacterRange {
     this.chars = chars
   }
 
-  def contains(String s) {
-    s.length > 0 && chars.contains(s.substring(0, 1))
+  def contains(Character c) {
+    chars.indexOf(c) != -1
   }
   
   override toString() {
@@ -192,59 +245,67 @@ package class CharacterRange {
 
 package class CharacterConsumer {
 
-  static def Pair<Eoi, String> eoi(String input, Parser parser) {
-    val r0 = new Eoi -> input
-
-    if (input.length > 0) {
-      throw new ParseException('Expected EOI', parser.location)
+  static def Result<Eoi> eoi(Derivation derivation, Parser parser) {
+    var exception = false
+    try {
+      derivation.dvChar
+    } catch (ParseException e) {
+      exception = true
     }
-
-    return r0
+    return 
+      if (exception) new Result<Eoi>(new Eoi, derivation) 
+      else throw new ParseException('Expected EOI')
   }
 
-  static def <T> terminal(String in, String str, Parser parser) {
-    if (in.startsWith(str)) {
-      parser.addMatch(str)
-      new Terminal(str) -> in.substring(str.length)
-    } else {
-      throw new ParseException("Expected '" + str + "'", parser.location)
+  static def <T> terminal(Derivation derivation, String str, Parser parser) {
+    var n = 0
+    var d = derivation
+    while (n < str.length) {
+      val r = d.dvChar
+      if (r.node != str.charAt(n)) {
+        throw new ParseException("Expected '" + str + "'")
+      }
+      n = n + 1
+      d = r.derivation
     }
+    new Result<Terminal>(new Terminal(str), d)
   }
   
-  static def <T> terminal(String in, CharacterRange range, Parser parser) {
-    if (range.contains(in)) {
-      val match = in.charAt(0).toString()
-      parser.addMatch(match)
-      new Terminal(match) -> in.substring(1)
-    } else {
-      throw new ParseException('Expected [' + range + ']', parser.location)
-    }
+  static def <T> terminal(Derivation derivation, CharacterRange range, Parser parser) {
+    val r = derivation.dvChar
+    return 
+      if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
+      else throw new ParseException('Expected [' + range + ']')
   }
 
-  static def <T> any(String in, Parser parser) {
-    if (in.length > 0) {
-      val match = in.substring(0, 1)
-      parser.addMatch(match)
-      new Terminal(match) -> in.substring(1)
-    } else {
-      throw new ParseException('Unexpected EOI', parser.location)
-    }
+  static def <T> any(Derivation derivation, Parser parser) {
+    val r = derivation.dvChar
+    new Result<Terminal>(new Terminal(r.node), r.derivation)
   }
 
 }
 
-  package class Result {
+  @Data
+  package class Result<T> {
+    
+    T node
+    
+    Derivation derivation
+    
+  }
+
+  package class Node {
     
     @Property
     String parsed
     
-    def Result copy() {
-      val r = new Result
+    def Node copy() {
+      val r = new Node
       r._parsed = _parsed
       return r
     }
     
-    def <T extends Result> T add(Result in) {
+    def <T extends Node> T add(Node in) {
       val out = class.newInstance as T
       out.parsed = (this._parsed ?: '') + in._parsed
       return out
@@ -256,9 +317,13 @@ package class CharacterConsumer {
   
   }
 
-  class Terminal extends Result {
+  class Terminal extends Node {
   
     new() {
+    }
+  
+    new(Character parsed) {
+      this.parsed = parsed.toString()
     }
   
     new(String parsed) {
@@ -295,7 +360,7 @@ package class CharacterConsumer {
     
   }
   
-  class Rule extends Result {
+  class Rule extends Node {
     
     @Property
     java.util.List<Expr> expr
@@ -313,7 +378,7 @@ package class CharacterConsumer {
     
   }
   
-  class Expr extends Result {
+  class Expr extends Node {
     
     override Expr copy() {
       val r = new Expr

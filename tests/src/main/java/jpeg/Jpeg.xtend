@@ -7,511 +7,517 @@ import static extension jpeg.CharacterRange.*
 
 class Parser {
   
-  int line = 1
-  int column = 1
+  char[] chars
   
-  package def addMatch(String match) {
-    var s = match
-    var idx = s.indexOf('\n')
-    while (idx != -1) {
-      column = 1
-      line = line + 1
-      s = s.substring(idx + 1)
-    }
-    column = column + s.length
-  }
-  
-  package def getLocation() {
-    line -> column
+  package def Derivation parse(int idx) {
+    new Derivation(idx, [jpeg()],[rule()],[ruleReturns()],[body()],[choiceExpression()],[sequenceExpression()],[actionExpression()],[andPredicateExpression()],[notPredicateExpression()],[oneOrMoreExpression()],[zeroOrMoreExpression()],[optionalExpression()],[atomicExpression()],[assignableExpression()],[assignmentOperator()],[subExpression()],[rangeExpression()],[minMaxRange()],[charRange()],[anyCharExpression()],[ruleReferenceExpression()],[endOfInputExpression()],[terminalExpression()],[inTerminalChar()],[comment()],[fQTN()],[iD()],[wS()],
+      [
+        if (chars.length == idx) {
+          throw new ParseException('Unexpected end of input')
+        }
+        new Result<Character>(chars.get(idx), parse(idx + 1))
+      ])
   }
   
   //--------------------------------------------------------------------------
   
   def Jpeg Jpeg(String in) {
-    val result = jpeg(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = jpeg(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * Jpeg : (rules+=Rule | Comment WS*)+ EOI ; 
    */
-  package def Pair<? extends Jpeg, String> jpeg(String in) {
-    var result = new Jpeg
-    var tail = in
+  package def Result<? extends Jpeg> jpeg(Derivation derivation) {
+    var node = new Jpeg
+    var d = derivation
     
     // (rules+=Rule | Comment WS*)+
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     var loop0 = false
     try {
       while (true) {
         // (rules+=Rule | Comment WS*)
         // rules+=Rule | Comment WS*
-        val backup2 = result.copy()
-        val backup3 = tail
+        val backup2 = node.copy()
+        val backup3 = d
         try {
           // rules+=Rule
-          val result0 = tail.rule()
-          tail = result0.value
-          result.add(result0.key)
+          val result0 = d.dvRule
+          d = result0.derivation
+          node.add(result0.node)
         } catch (ParseException e0) {
-          result = backup2
-          tail = backup3
-          val backup4 = result.copy()
-          val backup5 = tail
+          node = backup2
+          d = backup3
+          val backup4 = node.copy()
+          val backup5 = d
           try {
             // Comment
-            val result1 = tail.comment()
-            tail = result1.value
+            val result1 = d.dvComment
+            d = result1.derivation
             
             // WS*
-            var backup6 = result
-            var backup7 = tail
+            var backup6 = node.copy()
+            var backup7 = d
             try {
               while (true) {
                 // WS
-                val result2 = tail.wS()
-                tail = result2.value
-                backup6 = result
-                backup7 = tail
+                val result2 = d.dvWS
+                d = result2.derivation
+                backup6 = node.copy()
+                backup7 = d
               }
             } catch (ParseException e1) {
-              result = backup6
-              tail = backup7
+              node = backup6
+              d = backup7
             }
           } catch (ParseException e2) {
-            result = backup4
-            tail = backup5
+            node = backup4
+            d = backup5
             throw e2
           }
         }
         
         loop0 = true
-        backup0 = result
-        backup1 = tail
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e3) {
       if (!loop0) {
-        result = backup0
-        tail = backup1
+        node = backup0
+        d = backup1
         throw e3
       }
     }
     
     // EOI
-    val result3 = tail.eoi(this)
-    tail = result3.value
+    val result3 = d.eoi(this)
+    d = result3.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Jpeg>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Rule Rule(String in) {
-    val result = rule(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = rule(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * Rule : name=ID WS* returns=RuleReturns? WS* ':' WS* body=Body WS* ';' WS* ; 
    */
-  package def Pair<? extends Rule, String> rule(String in) {
-    var result = new Rule
-    var tail = in
+  package def Result<? extends Rule> rule(Derivation derivation) {
+    var node = new Rule
+    var d = derivation
     
     // name=ID
-    val result0 = tail.iD()
-    tail = result0.value
-    result.name = result0.key
+    val result0 = d.dvID
+    d = result0.derivation
+    node.name = result0.node
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // returns=RuleReturns?
-    val backup2 = result.copy()
-    val backup3 = tail
+    val backup2 = node.copy()
+    val backup3 = d
     try {
       // returns=RuleReturns
-      val result2 = tail.ruleReturns()
-      tail = result2.value
-      result.returns = result2.key
+      val result2 = d.dvRuleReturns
+      d = result2.derivation
+      node.returns = result2.node
     } catch (ParseException e1) {
-      result = backup2
-      tail = backup3
+      node = backup2
+      d = backup3
     }
     
     // WS*
-    var backup4 = result
-    var backup5 = tail
+    var backup4 = node.copy()
+    var backup5 = d
     try {
       while (true) {
         // WS
-        val result3 = tail.wS()
-        tail = result3.value
-        backup4 = result
-        backup5 = tail
+        val result3 = d.dvWS
+        d = result3.derivation
+        backup4 = node.copy()
+        backup5 = d
       }
     } catch (ParseException e2) {
-      result = backup4
-      tail = backup5
+      node = backup4
+      d = backup5
     }
     
     // ':'
     // ':'
-    val result4 =  tail.terminal(':', this)
-    tail = result4.value
+    val result4 =  d.terminal(':', this)
+    d = result4.derivation
     
     // WS*
-    var backup6 = result
-    var backup7 = tail
+    var backup6 = node.copy()
+    var backup7 = d
     try {
       while (true) {
         // WS
-        val result5 = tail.wS()
-        tail = result5.value
-        backup6 = result
-        backup7 = tail
+        val result5 = d.dvWS
+        d = result5.derivation
+        backup6 = node.copy()
+        backup7 = d
       }
     } catch (ParseException e3) {
-      result = backup6
-      tail = backup7
+      node = backup6
+      d = backup7
     }
     
     // body=Body
-    val result6 = tail.body()
-    tail = result6.value
-    result.body = result6.key
+    val result6 = d.dvBody
+    d = result6.derivation
+    node.body = result6.node
     
     // WS*
-    var backup8 = result
-    var backup9 = tail
+    var backup8 = node.copy()
+    var backup9 = d
     try {
       while (true) {
         // WS
-        val result7 = tail.wS()
-        tail = result7.value
-        backup8 = result
-        backup9 = tail
+        val result7 = d.dvWS
+        d = result7.derivation
+        backup8 = node.copy()
+        backup9 = d
       }
     } catch (ParseException e4) {
-      result = backup8
-      tail = backup9
+      node = backup8
+      d = backup9
     }
     
     // ';'
     // ';'
-    val result8 =  tail.terminal(';', this)
-    tail = result8.value
+    val result8 =  d.terminal(';', this)
+    d = result8.derivation
     
     // WS*
-    var backup10 = result
-    var backup11 = tail
+    var backup10 = node.copy()
+    var backup11 = d
     try {
       while (true) {
         // WS
-        val result9 = tail.wS()
-        tail = result9.value
-        backup10 = result
-        backup11 = tail
+        val result9 = d.dvWS
+        d = result9.derivation
+        backup10 = node.copy()
+        backup11 = d
       }
     } catch (ParseException e5) {
-      result = backup10
-      tail = backup11
+      node = backup10
+      d = backup11
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Rule>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def RuleReturns RuleReturns(String in) {
-    val result = ruleReturns(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = ruleReturns(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * RuleReturns : 'returns' WS* name=FQTN ; 
    */
-  package def Pair<? extends RuleReturns, String> ruleReturns(String in) {
-    var result = new RuleReturns
-    var tail = in
+  package def Result<? extends RuleReturns> ruleReturns(Derivation derivation) {
+    var node = new RuleReturns
+    var d = derivation
     
     // 'returns'
     // 'returns'
-    val result0 =  tail.terminal('returns', this)
-    tail = result0.value
+    val result0 =  d.terminal('returns', this)
+    d = result0.derivation
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // name=FQTN
-    val result2 = tail.fQTN()
-    tail = result2.value
-    result.name = result2.key
+    val result2 = d.dvFQTN
+    d = result2.derivation
+    node.name = result2.node
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<RuleReturns>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Body Body(String in) {
-    val result = body(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = body(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * Body : (expressions+=ChoiceExpression WS*)+ ; 
    */
-  package def Pair<? extends Body, String> body(String in) {
-    var result = new Body
-    var tail = in
+  package def Result<? extends Body> body(Derivation derivation) {
+    var node = new Body
+    var d = derivation
     
     // (expressions+=ChoiceExpression WS*)+
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     var loop0 = false
     try {
       while (true) {
         // (expressions+=ChoiceExpression WS*)
         // expressions+=ChoiceExpression
-        val result0 = tail.choiceExpression()
-        tail = result0.value
-        result.add(result0.key)
+        val result0 = d.dvChoiceExpression
+        d = result0.derivation
+        node.add(result0.node)
         
         // WS*
-        var backup2 = result
-        var backup3 = tail
+        var backup2 = node.copy()
+        var backup3 = d
         try {
           while (true) {
             // WS
-            val result1 = tail.wS()
-            tail = result1.value
-            backup2 = result
-            backup3 = tail
+            val result1 = d.dvWS
+            d = result1.derivation
+            backup2 = node.copy()
+            backup3 = d
           }
         } catch (ParseException e0) {
-          result = backup2
-          tail = backup3
+          node = backup2
+          d = backup3
         }
         
         loop0 = true
-        backup0 = result
-        backup1 = tail
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e1) {
       if (!loop0) {
-        result = backup0
-        tail = backup1
+        node = backup0
+        d = backup1
         throw e1
       }
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Body>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression ChoiceExpression(String in) {
-    val result = choiceExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = choiceExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * ChoiceExpression returns Expression : choices+=SequenceExpression ('|' WS* choices+=SequenceExpression)* ; 
    */
-  package def Pair<? extends Expression, String> choiceExpression(String in) {
-    var result = new ChoiceExpression
-    var tail = in
+  package def Result<? extends Expression> choiceExpression(Derivation derivation) {
+    var node = new ChoiceExpression
+    var d = derivation
     
     // choices+=SequenceExpression
-    val result0 = tail.sequenceExpression()
-    tail = result0.value
-    result.add(result0.key)
+    val result0 = d.dvSequenceExpression
+    d = result0.derivation
+    node.add(result0.node)
     
     // ('|' WS* choices+=SequenceExpression)*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // ('|' WS* choices+=SequenceExpression)
         // '|'
         // '|'
-        val result1 =  tail.terminal('|', this)
-        tail = result1.value
+        val result1 =  d.terminal('|', this)
+        d = result1.derivation
         
         // WS*
-        var backup2 = result
-        var backup3 = tail
+        var backup2 = node.copy()
+        var backup3 = d
         try {
           while (true) {
             // WS
-            val result2 = tail.wS()
-            tail = result2.value
-            backup2 = result
-            backup3 = tail
+            val result2 = d.dvWS
+            d = result2.derivation
+            backup2 = node.copy()
+            backup3 = d
           }
         } catch (ParseException e0) {
-          result = backup2
-          tail = backup3
+          node = backup2
+          d = backup3
         }
         
         // choices+=SequenceExpression
-        val result3 = tail.sequenceExpression()
-        tail = result3.value
-        result.add(result3.key)
-        backup0 = result
-        backup1 = tail
+        val result3 = d.dvSequenceExpression
+        d = result3.derivation
+        node.add(result3.node)
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e1) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
-    if (result.choices.size() == 1) {
-      return result.choices.get(0) -> tail
+    if (node.choices.size() == 1) {
+      return new Result<Expression>(node.choices.get(0), d)
     }
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression SequenceExpression(String in) {
-    val result = sequenceExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = sequenceExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * SequenceExpression returns Expression : ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression ) WS* )+ ; 
    */
-  package def Pair<? extends Expression, String> sequenceExpression(String in) {
-    var result = new SequenceExpression
-    var tail = in
+  package def Result<? extends Expression> sequenceExpression(Derivation derivation) {
+    var node = new SequenceExpression
+    var d = derivation
     
     // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression ) WS* )+
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     var loop0 = false
     try {
       while (true) {
         // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression ) WS* )
         // expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression )
-        val result0 = tail.sequenceExpression_sub0()
-        tail = result0.value
-        result.add(result0.key)
+        val result0 = d.sequenceExpression_sub0()
+        d = result0.derivation
+        node.add(result0.node)
         
         // WS*
-        var backup2 = result
-        var backup3 = tail
+        var backup2 = node.copy()
+        var backup3 = d
         try {
           while (true) {
             // WS
-            val result1 = tail.wS()
-            tail = result1.value
-            backup2 = result
-            backup3 = tail
+            val result1 = d.dvWS
+            d = result1.derivation
+            backup2 = node.copy()
+            backup3 = d
           }
         } catch (ParseException e7) {
-          result = backup2
-          tail = backup3
+          node = backup2
+          d = backup3
         }
         
         loop0 = true
-        backup0 = result
-        backup1 = tail
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e8) {
       if (!loop0) {
-        result = backup0
-        tail = backup1
+        node = backup0
+        d = backup1
         throw e8
       }
     }
     
-    if (result.expressions.size() == 1) {
-      return result.expressions.get(0) -> tail
+    if (node.expressions.size() == 1) {
+      return new Result<Expression>(node.expressions.get(0), d)
     }
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
-  private def Pair<? extends Expression, String> sequenceExpression_sub0(String in) {
-    val tail = in
+  private def Result<? extends Expression> sequenceExpression_sub0(Derivation derivation) {
+    val d = derivation
     // ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression 
     try {
-      return tail.actionExpression()
+      return d.dvActionExpression
     } catch (ParseException e0) {
       try {
-        return tail.andPredicateExpression()
+        return d.dvAndPredicateExpression
       } catch (ParseException e1) {
         try {
-          return tail.notPredicateExpression()
+          return d.dvNotPredicateExpression
         } catch (ParseException e2) {
           try {
-            return tail.oneOrMoreExpression()
+            return d.dvOneOrMoreExpression
           } catch (ParseException e3) {
             try {
-              return tail.zeroOrMoreExpression()
+              return d.dvZeroOrMoreExpression
             } catch (ParseException e4) {
               try {
-                return tail.optionalExpression()
+                return d.dvOptionalExpression
               } catch (ParseException e5) {
                 try {
-                  return tail.atomicExpression()
+                  return d.dvAtomicExpression
                 } catch (ParseException e6) {
                   throw e6
                 }
@@ -525,413 +531,427 @@ class Parser {
   //--------------------------------------------------------------------------
   
   def Expression ActionExpression(String in) {
-    val result = actionExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = actionExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * ActionExpression returns Expression : '{' WS* ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=FQTN ) WS* '}' ; 
    */
-  package def Pair<? extends Expression, String> actionExpression(String in) {
-    var result = new ActionExpression
-    var tail = in
+  package def Result<? extends Expression> actionExpression(Derivation derivation) {
+    var node = new ActionExpression
+    var d = derivation
     
     // '{'
     // '{'
-    val result0 =  tail.terminal('{', this)
-    tail = result0.value
+    val result0 =  d.terminal('{', this)
+    d = result0.derivation
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=FQTN )
     // property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=FQTN 
-    val backup2 = result.copy()
-    val backup3 = tail
+    val backup2 = node.copy()
+    val backup3 = d
     try {
       // property=ID
-      val result2 = tail.iD()
-      tail = result2.value
-      result.property = result2.key
+      val result2 = d.dvID
+      d = result2.derivation
+      node.property = result2.node
       
       // WS*
-      var backup4 = result
-      var backup5 = tail
+      var backup4 = node.copy()
+      var backup5 = d
       try {
         while (true) {
           // WS
-          val result3 = tail.wS()
-          tail = result3.value
-          backup4 = result
-          backup5 = tail
+          val result3 = d.dvWS
+          d = result3.derivation
+          backup4 = node.copy()
+          backup5 = d
         }
       } catch (ParseException e1) {
-        result = backup4
-        tail = backup5
+        node = backup4
+        d = backup5
       }
       
       // op=AssignmentOperator
-      val result4 = tail.assignmentOperator()
-      tail = result4.value
-      result.op = result4.key
+      val result4 = d.dvAssignmentOperator
+      d = result4.derivation
+      node.op = result4.node
       
       // WS*
-      var backup6 = result
-      var backup7 = tail
+      var backup6 = node.copy()
+      var backup7 = d
       try {
         while (true) {
           // WS
-          val result5 = tail.wS()
-          tail = result5.value
-          backup6 = result
-          backup7 = tail
+          val result5 = d.dvWS
+          d = result5.derivation
+          backup6 = node.copy()
+          backup7 = d
         }
       } catch (ParseException e2) {
-        result = backup6
-        tail = backup7
+        node = backup6
+        d = backup7
       }
       
       // 'current'
       // 'current'
-      val result6 =  tail.terminal('current', this)
-      tail = result6.value
+      val result6 =  d.terminal('current', this)
+      d = result6.derivation
       
       // WS*
-      var backup8 = result
-      var backup9 = tail
+      var backup8 = node.copy()
+      var backup9 = d
       try {
         while (true) {
           // WS
-          val result7 = tail.wS()
-          tail = result7.value
-          backup8 = result
-          backup9 = tail
+          val result7 = d.dvWS
+          d = result7.derivation
+          backup8 = node.copy()
+          backup9 = d
         }
       } catch (ParseException e3) {
-        result = backup8
-        tail = backup9
+        node = backup8
+        d = backup9
       }
     } catch (ParseException e4) {
-      result = backup2
-      tail = backup3
-      val backup10 = result.copy()
-      val backup11 = tail
+      node = backup2
+      d = backup3
+      val backup10 = node.copy()
+      val backup11 = d
       try {
         // name=FQTN
-        val result8 = tail.fQTN()
-        tail = result8.value
-        result.name = result8.key
+        val result8 = d.dvFQTN
+        d = result8.derivation
+        node.name = result8.node
       } catch (ParseException e5) {
-        result = backup10
-        tail = backup11
+        node = backup10
+        d = backup11
         throw e5
       }
     }
     
     // WS*
-    var backup12 = result
-    var backup13 = tail
+    var backup12 = node.copy()
+    var backup13 = d
     try {
       while (true) {
         // WS
-        val result9 = tail.wS()
-        tail = result9.value
-        backup12 = result
-        backup13 = tail
+        val result9 = d.dvWS
+        d = result9.derivation
+        backup12 = node.copy()
+        backup13 = d
       }
     } catch (ParseException e6) {
-      result = backup12
-      tail = backup13
+      node = backup12
+      d = backup13
     }
     
     // '}'
     // '}'
-    val result10 =  tail.terminal('}', this)
-    tail = result10.value
+    val result10 =  d.terminal('}', this)
+    d = result10.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression AndPredicateExpression(String in) {
-    val result = andPredicateExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = andPredicateExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * AndPredicateExpression returns Expression : '&' WS* expr=AtomicExpression ; 
    */
-  package def Pair<? extends Expression, String> andPredicateExpression(String in) {
-    var result = new AndPredicateExpression
-    var tail = in
+  package def Result<? extends Expression> andPredicateExpression(Derivation derivation) {
+    var node = new AndPredicateExpression
+    var d = derivation
     
     // '&'
     // '&'
-    val result0 =  tail.terminal('&', this)
-    tail = result0.value
+    val result0 =  d.terminal('&', this)
+    d = result0.derivation
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // expr=AtomicExpression
-    val result2 = tail.atomicExpression()
-    tail = result2.value
-    result.expr = result2.key
+    val result2 = d.dvAtomicExpression
+    d = result2.derivation
+    node.expr = result2.node
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression NotPredicateExpression(String in) {
-    val result = notPredicateExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = notPredicateExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * NotPredicateExpression returns Expression : '!' WS* expr=AtomicExpression ; 
    */
-  package def Pair<? extends Expression, String> notPredicateExpression(String in) {
-    var result = new NotPredicateExpression
-    var tail = in
+  package def Result<? extends Expression> notPredicateExpression(Derivation derivation) {
+    var node = new NotPredicateExpression
+    var d = derivation
     
     // '!'
     // '!'
-    val result0 =  tail.terminal('!', this)
-    tail = result0.value
+    val result0 =  d.terminal('!', this)
+    d = result0.derivation
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // expr=AtomicExpression
-    val result2 = tail.atomicExpression()
-    tail = result2.value
-    result.expr = result2.key
+    val result2 = d.dvAtomicExpression
+    d = result2.derivation
+    node.expr = result2.node
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression OneOrMoreExpression(String in) {
-    val result = oneOrMoreExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = oneOrMoreExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * OneOrMoreExpression returns Expression : expr=AtomicExpression WS* '+' ; 
    */
-  package def Pair<? extends Expression, String> oneOrMoreExpression(String in) {
-    var result = new OneOrMoreExpression
-    var tail = in
+  package def Result<? extends Expression> oneOrMoreExpression(Derivation derivation) {
+    var node = new OneOrMoreExpression
+    var d = derivation
     
     // expr=AtomicExpression
-    val result0 = tail.atomicExpression()
-    tail = result0.value
-    result.expr = result0.key
+    val result0 = d.dvAtomicExpression
+    d = result0.derivation
+    node.expr = result0.node
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // '+'
     // '+'
-    val result2 =  tail.terminal('+', this)
-    tail = result2.value
+    val result2 =  d.terminal('+', this)
+    d = result2.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression ZeroOrMoreExpression(String in) {
-    val result = zeroOrMoreExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = zeroOrMoreExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * ZeroOrMoreExpression returns Expression : expr=AtomicExpression WS* '*' ; 
    */
-  package def Pair<? extends Expression, String> zeroOrMoreExpression(String in) {
-    var result = new ZeroOrMoreExpression
-    var tail = in
+  package def Result<? extends Expression> zeroOrMoreExpression(Derivation derivation) {
+    var node = new ZeroOrMoreExpression
+    var d = derivation
     
     // expr=AtomicExpression
-    val result0 = tail.atomicExpression()
-    tail = result0.value
-    result.expr = result0.key
+    val result0 = d.dvAtomicExpression
+    d = result0.derivation
+    node.expr = result0.node
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // '*'
     // '*'
-    val result2 =  tail.terminal('*', this)
-    tail = result2.value
+    val result2 =  d.terminal('*', this)
+    d = result2.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression OptionalExpression(String in) {
-    val result = optionalExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = optionalExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * OptionalExpression returns Expression : expr=AtomicExpression WS* '?' ; 
    */
-  package def Pair<? extends Expression, String> optionalExpression(String in) {
-    var result = new OptionalExpression
-    var tail = in
+  package def Result<? extends Expression> optionalExpression(Derivation derivation) {
+    var node = new OptionalExpression
+    var d = derivation
     
     // expr=AtomicExpression
-    val result0 = tail.atomicExpression()
-    tail = result0.value
-    result.expr = result0.key
+    val result0 = d.dvAtomicExpression
+    d = result0.derivation
+    node.expr = result0.node
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // '?'
     // '?'
-    val result2 =  tail.terminal('?', this)
-    tail = result2.value
+    val result2 =  d.terminal('?', this)
+    d = result2.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression AtomicExpression(String in) {
-    val result = atomicExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = atomicExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * AtomicExpression returns Expression : EndOfInputExpression | AssignableExpression ; 
    */
-  package def Pair<? extends Expression, String> atomicExpression(String in) {
-    val tail = in
+  package def Result<? extends Expression> atomicExpression(Derivation derivation) {
+    val d = derivation
     // EndOfInputExpression | AssignableExpression 
     try {
-      return tail.endOfInputExpression()
+      return d.dvEndOfInputExpression
     } catch (ParseException e0) {
       try {
-        return tail.assignableExpression()
+        return d.dvAssignableExpression
       } catch (ParseException e1) {
         throw e1
       }
@@ -941,98 +961,100 @@ class Parser {
   //--------------------------------------------------------------------------
   
   def AtomicExpression AssignableExpression(String in) {
-    val result = assignableExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = assignableExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * AssignableExpression returns AtomicExpression : (property=ID WS* op=AssignmentOperator WS*)? expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) ; 
    */
-  package def Pair<? extends AtomicExpression, String> assignableExpression(String in) {
-    var result = new AssignableExpression
-    var tail = in
+  package def Result<? extends AtomicExpression> assignableExpression(Derivation derivation) {
+    var node = new AssignableExpression
+    var d = derivation
     
     // (property=ID WS* op=AssignmentOperator WS*)?
-    val backup0 = result.copy()
-    val backup1 = tail
+    val backup0 = node.copy()
+    val backup1 = d
     try {
       // (property=ID WS* op=AssignmentOperator WS*)
       // property=ID
-      val result0 = tail.iD()
-      tail = result0.value
-      result.property = result0.key
+      val result0 = d.dvID
+      d = result0.derivation
+      node.property = result0.node
       
       // WS*
-      var backup2 = result
-      var backup3 = tail
+      var backup2 = node.copy()
+      var backup3 = d
       try {
         while (true) {
           // WS
-          val result1 = tail.wS()
-          tail = result1.value
-          backup2 = result
-          backup3 = tail
+          val result1 = d.dvWS
+          d = result1.derivation
+          backup2 = node.copy()
+          backup3 = d
         }
       } catch (ParseException e0) {
-        result = backup2
-        tail = backup3
+        node = backup2
+        d = backup3
       }
       
       // op=AssignmentOperator
-      val result2 = tail.assignmentOperator()
-      tail = result2.value
-      result.op = result2.key
+      val result2 = d.dvAssignmentOperator
+      d = result2.derivation
+      node.op = result2.node
       
       // WS*
-      var backup4 = result
-      var backup5 = tail
+      var backup4 = node.copy()
+      var backup5 = d
       try {
         while (true) {
           // WS
-          val result3 = tail.wS()
-          tail = result3.value
-          backup4 = result
-          backup5 = tail
+          val result3 = d.dvWS
+          d = result3.derivation
+          backup4 = node.copy()
+          backup5 = d
         }
       } catch (ParseException e1) {
-        result = backup4
-        tail = backup5
+        node = backup4
+        d = backup5
       }
     } catch (ParseException e2) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression )
-    val result4 = tail.assignableExpression_sub0()
-    tail = result4.value
-    result.expr = result4.key
+    val result4 = d.assignableExpression_sub0()
+    d = result4.derivation
+    node.expr = result4.node
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<AtomicExpression>(node, d)
   }
   
-  private def Pair<? extends Expression, String> assignableExpression_sub0(String in) {
-    val tail = in
+  private def Result<? extends Expression> assignableExpression_sub0(Derivation derivation) {
+    val d = derivation
     // SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression 
     try {
-      return tail.subExpression()
+      return d.dvSubExpression
     } catch (ParseException e3) {
       try {
-        return tail.rangeExpression()
+        return d.dvRangeExpression
       } catch (ParseException e4) {
         try {
-          return tail.terminalExpression()
+          return d.dvTerminalExpression
         } catch (ParseException e5) {
           try {
-            return tail.anyCharExpression()
+            return d.dvAnyCharExpression
           } catch (ParseException e6) {
             try {
-              return tail.ruleReferenceExpression()
+              return d.dvRuleReferenceExpression
             } catch (ParseException e7) {
               throw e7
             }
@@ -1044,210 +1066,216 @@ class Parser {
   //--------------------------------------------------------------------------
   
   def AssignmentOperator AssignmentOperator(String in) {
-    val result = assignmentOperator(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = assignmentOperator(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * AssignmentOperator : single='=' | multi='+=' ; 
    */
-  package def Pair<? extends AssignmentOperator, String> assignmentOperator(String in) {
-    var result = new AssignmentOperator
-    var tail = in
+  package def Result<? extends AssignmentOperator> assignmentOperator(Derivation derivation) {
+    var node = new AssignmentOperator
+    var d = derivation
     
     // single='=' | multi='+=' 
-    val backup0 = result.copy()
-    val backup1 = tail
+    val backup0 = node.copy()
+    val backup1 = d
     try {
       // single='='
       // '='
-      val result0 =  tail.terminal('=', this)
-      tail = result0.value
-      result.single = result0.key
+      val result0 =  d.terminal('=', this)
+      d = result0.derivation
+      node.single = result0.node
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
-      val backup2 = result.copy()
-      val backup3 = tail
+      node = backup0
+      d = backup1
+      val backup2 = node.copy()
+      val backup3 = d
       try {
         // multi='+='
         // '+='
-        val result1 =  tail.terminal('+=', this)
-        tail = result1.value
-        result.multi = result1.key
+        val result1 =  d.terminal('+=', this)
+        d = result1.derivation
+        node.multi = result1.node
       } catch (ParseException e1) {
-        result = backup2
-        tail = backup3
+        node = backup2
+        d = backup3
         throw e1
       }
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<AssignmentOperator>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression SubExpression(String in) {
-    val result = subExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = subExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * SubExpression returns Expression : '(' WS* expr=ChoiceExpression WS* ')' ; 
    */
-  package def Pair<? extends Expression, String> subExpression(String in) {
-    var result = new SubExpression
-    var tail = in
+  package def Result<? extends Expression> subExpression(Derivation derivation) {
+    var node = new SubExpression
+    var d = derivation
     
     // '('
     // '('
-    val result0 =  tail.terminal('(', this)
-    tail = result0.value
+    val result0 =  d.terminal('(', this)
+    d = result0.derivation
     
     // WS*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // WS
-        val result1 = tail.wS()
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        val result1 = d.dvWS
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // expr=ChoiceExpression
-    val result2 = tail.choiceExpression()
-    tail = result2.value
-    result.expr = result2.key
+    val result2 = d.dvChoiceExpression
+    d = result2.derivation
+    node.expr = result2.node
     
     // WS*
-    var backup2 = result
-    var backup3 = tail
+    var backup2 = node.copy()
+    var backup3 = d
     try {
       while (true) {
         // WS
-        val result3 = tail.wS()
-        tail = result3.value
-        backup2 = result
-        backup3 = tail
+        val result3 = d.dvWS
+        d = result3.derivation
+        backup2 = node.copy()
+        backup3 = d
       }
     } catch (ParseException e1) {
-      result = backup2
-      tail = backup3
+      node = backup2
+      d = backup3
     }
     
     // ')'
     // ')'
-    val result4 =  tail.terminal(')', this)
-    tail = result4.value
+    val result4 =  d.terminal(')', this)
+    d = result4.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression RangeExpression(String in) {
-    val result = rangeExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = rangeExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * RangeExpression returns Expression : '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' ; 
    */
-  package def Pair<? extends Expression, String> rangeExpression(String in) {
-    var result = new RangeExpression
-    var tail = in
+  package def Result<? extends Expression> rangeExpression(Derivation derivation) {
+    var node = new RangeExpression
+    var d = derivation
     
     // '['
     // '['
-    val result0 =  tail.terminal('[', this)
-    tail = result0.value
+    val result0 =  d.terminal('[', this)
+    d = result0.derivation
     
     // dash='-'?
-    val backup0 = result.copy()
-    val backup1 = tail
+    val backup0 = node.copy()
+    val backup1 = d
     try {
       // dash='-'
       // '-'
-      val result1 =  tail.terminal('-', this)
-      tail = result1.value
-      result.dash = result1.key
+      val result1 =  d.terminal('-', this)
+      d = result1.derivation
+      node.dash = result1.node
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // (!']' ranges+=(MinMaxRange | CharRange))*
-    var backup2 = result
-    var backup3 = tail
+    var backup2 = node.copy()
+    var backup3 = d
     try {
       while (true) {
         // (!']' ranges+=(MinMaxRange | CharRange))
-        val backup4 = result.copy()
-        val backup5 = tail
+        val backup4 = node.copy()
+        val backup5 = d
         var loop0 = true
         try {
           // ']'
           // ']'
-          val result2 =  tail.terminal(']', this)
-          tail = result2.value
+          val result2 =  d.terminal(']', this)
+          d = result2.derivation
           loop0 = false
-          throw new ParseException('Expected...', location)
+          throw new ParseException('Expected...')
         } catch (ParseException e1) {
           if (!loop0) throw e1
         } finally {
-          result = backup4
-          tail = backup5
+          node = backup4
+          d = backup5
         }
         
         // ranges+=(MinMaxRange | CharRange)
-        val result3 = tail.rangeExpression_sub0()
-        tail = result3.value
-        result.add(result3.key)
-        backup2 = result
-        backup3 = tail
+        val result3 = d.rangeExpression_sub0()
+        d = result3.derivation
+        node.add(result3.node)
+        backup2 = node.copy()
+        backup3 = d
       }
     } catch (ParseException e4) {
-      result = backup2
-      tail = backup3
+      node = backup2
+      d = backup3
     }
     
     // ']'
     // ']'
-    val result4 =  tail.terminal(']', this)
-    tail = result4.value
+    val result4 =  d.terminal(']', this)
+    d = result4.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
-  private def Pair<? extends Result, String> rangeExpression_sub0(String in) {
-    val tail = in
+  private def Result<? extends Node> rangeExpression_sub0(Derivation derivation) {
+    val d = derivation
     // MinMaxRange | CharRange
     try {
-      return tail.minMaxRange()
+      return d.dvMinMaxRange
     } catch (ParseException e2) {
       try {
-        return tail.charRange()
+        return d.dvCharRange
       } catch (ParseException e3) {
         throw e3
       }
@@ -1256,632 +1284,961 @@ class Parser {
   //--------------------------------------------------------------------------
   
   def MinMaxRange MinMaxRange(String in) {
-    val result = minMaxRange(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = minMaxRange(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * MinMaxRange: !'-' min=. '-' !'-' max=. ; 
    */
-  package def Pair<? extends MinMaxRange, String> minMaxRange(String in) {
-    var result = new MinMaxRange
-    var tail = in
+  package def Result<? extends MinMaxRange> minMaxRange(Derivation derivation) {
+    var node = new MinMaxRange
+    var d = derivation
     
-    val backup0 = result.copy()
-    val backup1 = tail
+    val backup0 = node.copy()
+    val backup1 = d
     var loop0 = true
     try {
       // '-'
       // '-'
-      val result0 =  tail.terminal('-', this)
-      tail = result0.value
+      val result0 =  d.terminal('-', this)
+      d = result0.derivation
       loop0 = false
-      throw new ParseException('Expected...', location)
+      throw new ParseException('Expected...')
     } catch (ParseException e0) {
       if (!loop0) throw e0
     } finally {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // min=.
     // .
-    val result1 =  tail.any(this)
-    tail = result1.value
-    result.min = result1.key
+    val result1 =  d.any(this)
+    d = result1.derivation
+    node.min = result1.node
     
     // '-'
     // '-'
-    val result2 =  tail.terminal('-', this)
-    tail = result2.value
+    val result2 =  d.terminal('-', this)
+    d = result2.derivation
     
-    val backup2 = result.copy()
-    val backup3 = tail
+    val backup2 = node.copy()
+    val backup3 = d
     var loop1 = true
     try {
       // '-'
       // '-'
-      val result3 =  tail.terminal('-', this)
-      tail = result3.value
+      val result3 =  d.terminal('-', this)
+      d = result3.derivation
       loop1 = false
-      throw new ParseException('Expected...', location)
+      throw new ParseException('Expected...')
     } catch (ParseException e1) {
       if (!loop1) throw e1
     } finally {
-      result = backup2
-      tail = backup3
+      node = backup2
+      d = backup3
     }
     
     // max=.
     // .
-    val result4 =  tail.any(this)
-    tail = result4.value
-    result.max = result4.key
+    val result4 =  d.any(this)
+    d = result4.derivation
+    node.max = result4.node
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<MinMaxRange>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def CharRange CharRange(String in) {
-    val result = charRange(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = charRange(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * CharRange: char='\\]' | char='\\\\' | !'-' char=. ; 
    */
-  package def Pair<? extends CharRange, String> charRange(String in) {
-    var result = new CharRange
-    var tail = in
+  package def Result<? extends CharRange> charRange(Derivation derivation) {
+    var node = new CharRange
+    var d = derivation
     
     // char='\\]' | char='\\\\' | !'-' char=. 
-    val backup0 = result.copy()
-    val backup1 = tail
+    val backup0 = node.copy()
+    val backup1 = d
     try {
       // char='\\]'
       // '\\]'
-      val result0 =  tail.terminal('\\]', this)
-      tail = result0.value
-      result._char = result0.key
+      val result0 =  d.terminal('\\]', this)
+      d = result0.derivation
+      node._char = result0.node
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
-      val backup2 = result.copy()
-      val backup3 = tail
+      node = backup0
+      d = backup1
+      val backup2 = node.copy()
+      val backup3 = d
       try {
         // char='\\\\'
         // '\\\\'
-        val result1 =  tail.terminal('\\\\', this)
-        tail = result1.value
-        result._char = result1.key
+        val result1 =  d.terminal('\\\\', this)
+        d = result1.derivation
+        node._char = result1.node
       } catch (ParseException e1) {
-        result = backup2
-        tail = backup3
-        val backup4 = result.copy()
-        val backup5 = tail
+        node = backup2
+        d = backup3
+        val backup4 = node.copy()
+        val backup5 = d
         try {
-          val backup6 = result.copy()
-          val backup7 = tail
+          val backup6 = node.copy()
+          val backup7 = d
           var loop0 = true
           try {
             // '-'
             // '-'
-            val result2 =  tail.terminal('-', this)
-            tail = result2.value
+            val result2 =  d.terminal('-', this)
+            d = result2.derivation
             loop0 = false
-            throw new ParseException('Expected...', location)
+            throw new ParseException('Expected...')
           } catch (ParseException e2) {
             if (!loop0) throw e2
           } finally {
-            result = backup6
-            tail = backup7
+            node = backup6
+            d = backup7
           }
           
           // char=.
           // .
-          val result3 =  tail.any(this)
-          tail = result3.value
-          result._char = result3.key
+          val result3 =  d.any(this)
+          d = result3.derivation
+          node._char = result3.node
         } catch (ParseException e3) {
-          result = backup4
-          tail = backup5
+          node = backup4
+          d = backup5
           throw e3
         }
       }
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<CharRange>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression AnyCharExpression(String in) {
-    val result = anyCharExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = anyCharExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * AnyCharExpression returns Expression : char='.' ; 
    */
-  package def Pair<? extends Expression, String> anyCharExpression(String in) {
-    var result = new AnyCharExpression
-    var tail = in
+  package def Result<? extends Expression> anyCharExpression(Derivation derivation) {
+    var node = new AnyCharExpression
+    var d = derivation
     
     // char='.'
     // '.'
-    val result0 =  tail.terminal('.', this)
-    tail = result0.value
-    result._char = result0.key
+    val result0 =  d.terminal('.', this)
+    d = result0.derivation
+    node._char = result0.node
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression RuleReferenceExpression(String in) {
-    val result = ruleReferenceExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = ruleReferenceExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * RuleReferenceExpression returns Expression : name=ID ; 
    */
-  package def Pair<? extends Expression, String> ruleReferenceExpression(String in) {
-    var result = new RuleReferenceExpression
-    var tail = in
+  package def Result<? extends Expression> ruleReferenceExpression(Derivation derivation) {
+    var node = new RuleReferenceExpression
+    var d = derivation
     
     // name=ID
-    val result0 = tail.iD()
-    tail = result0.value
-    result.name = result0.key
+    val result0 = d.dvID
+    d = result0.derivation
+    node.name = result0.node
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def AtomicExpression EndOfInputExpression(String in) {
-    val result = endOfInputExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = endOfInputExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * EndOfInputExpression returns AtomicExpression : 'EOI' ; 
    */
-  package def Pair<? extends AtomicExpression, String> endOfInputExpression(String in) {
-    var result = new EndOfInputExpression
-    var tail = in
+  package def Result<? extends AtomicExpression> endOfInputExpression(Derivation derivation) {
+    var node = new EndOfInputExpression
+    var d = derivation
     
     // 'EOI'
     // 'EOI'
-    val result0 =  tail.terminal('EOI', this)
-    tail = result0.value
+    val result0 =  d.terminal('EOI', this)
+    d = result0.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<AtomicExpression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Expression TerminalExpression(String in) {
-    val result = terminalExpression(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = terminalExpression(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * TerminalExpression returns Expression : '\'' value=InTerminalChar? '\'' ; 
    */
-  package def Pair<? extends Expression, String> terminalExpression(String in) {
-    var result = new TerminalExpression
-    var tail = in
+  package def Result<? extends Expression> terminalExpression(Derivation derivation) {
+    var node = new TerminalExpression
+    var d = derivation
     
     // '\''
     // '\''
-    val result0 =  tail.terminal('\'', this)
-    tail = result0.value
+    val result0 =  d.terminal('\'', this)
+    d = result0.derivation
     
     // value=InTerminalChar?
-    val backup0 = result.copy()
-    val backup1 = tail
+    val backup0 = node.copy()
+    val backup1 = d
     try {
       // value=InTerminalChar
-      val result1 = tail.inTerminalChar()
-      tail = result1.value
-      result.value = result1.key
+      val result1 = d.dvInTerminalChar
+      d = result1.derivation
+      node.value = result1.node
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
     // '\''
     // '\''
-    val result2 =  tail.terminal('\'', this)
-    tail = result2.value
+    val result2 =  d.terminal('\'', this)
+    d = result2.derivation
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Expression>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def InTerminalChar InTerminalChar(String in) {
-    val result = inTerminalChar(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = inTerminalChar(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * InTerminalChar: ('\\' '\'' | '\\' '\\' | !'\'' .)+ ; 
    */
-  package def Pair<? extends InTerminalChar, String> inTerminalChar(String in) {
-    var result = new InTerminalChar
-    var tail = in
+  package def Result<? extends InTerminalChar> inTerminalChar(Derivation derivation) {
+    var node = new InTerminalChar
+    var d = derivation
     
     // ('\\' '\'' | '\\' '\\' | !'\'' .)+
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     var loop0 = false
     try {
       while (true) {
         // ('\\' '\'' | '\\' '\\' | !'\'' .)
         // '\\' '\'' | '\\' '\\' | !'\'' .
-        val backup2 = result.copy()
-        val backup3 = tail
+        val backup2 = node.copy()
+        val backup3 = d
         try {
           // '\\'
           // '\\'
-          val result0 =  tail.terminal('\\', this)
-          tail = result0.value
+          val result0 =  d.terminal('\\', this)
+          d = result0.derivation
           
           // '\''
           // '\''
-          val result1 =  tail.terminal('\'', this)
-          tail = result1.value
+          val result1 =  d.terminal('\'', this)
+          d = result1.derivation
         } catch (ParseException e0) {
-          result = backup2
-          tail = backup3
-          val backup4 = result.copy()
-          val backup5 = tail
+          node = backup2
+          d = backup3
+          val backup4 = node.copy()
+          val backup5 = d
           try {
             // '\\'
             // '\\'
-            val result2 =  tail.terminal('\\', this)
-            tail = result2.value
+            val result2 =  d.terminal('\\', this)
+            d = result2.derivation
             
             // '\\'
             // '\\'
-            val result3 =  tail.terminal('\\', this)
-            tail = result3.value
+            val result3 =  d.terminal('\\', this)
+            d = result3.derivation
           } catch (ParseException e1) {
-            result = backup4
-            tail = backup5
-            val backup6 = result.copy()
-            val backup7 = tail
+            node = backup4
+            d = backup5
+            val backup6 = node.copy()
+            val backup7 = d
             try {
-              val backup8 = result.copy()
-              val backup9 = tail
+              val backup8 = node.copy()
+              val backup9 = d
               var loop1 = true
               try {
                 // '\''
                 // '\''
-                val result4 =  tail.terminal('\'', this)
-                tail = result4.value
+                val result4 =  d.terminal('\'', this)
+                d = result4.derivation
                 loop1 = false
-                throw new ParseException('Expected...', location)
+                throw new ParseException('Expected...')
               } catch (ParseException e2) {
                 if (!loop1) throw e2
               } finally {
-                result = backup8
-                tail = backup9
+                node = backup8
+                d = backup9
               }
               
               // .
               // .
-              val result5 =  tail.any(this)
-              tail = result5.value
+              val result5 =  d.any(this)
+              d = result5.derivation
             } catch (ParseException e3) {
-              result = backup6
-              tail = backup7
+              node = backup6
+              d = backup7
               throw e3
             }
           }
         }
         
         loop0 = true
-        backup0 = result
-        backup1 = tail
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e4) {
       if (!loop0) {
-        result = backup0
-        tail = backup1
+        node = backup0
+        d = backup1
         throw e4
       }
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<InTerminalChar>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def Comment Comment(String in) {
-    val result = comment(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = comment(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * Comment : '//' (!('\r'? '\n') .)* ; 
    */
-  package def Pair<? extends Comment, String> comment(String in) {
-    var result = new Comment
-    var tail = in
+  package def Result<? extends Comment> comment(Derivation derivation) {
+    var node = new Comment
+    var d = derivation
     
     // '//'
     // '//'
-    val result0 =  tail.terminal('//', this)
-    tail = result0.value
+    val result0 =  d.terminal('//', this)
+    d = result0.derivation
     
     // (!('\r'? '\n') .)*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // (!('\r'? '\n') .)
-        val backup2 = result.copy()
-        val backup3 = tail
+        val backup2 = node.copy()
+        val backup3 = d
         var loop0 = true
         try {
           // ('\r'? '\n')
           // '\r'?
-          val backup4 = result.copy()
-          val backup5 = tail
+          val backup4 = node.copy()
+          val backup5 = d
           try {
             // '\r'
             // '\r'
-            val result1 =  tail.terminal('\r', this)
-            tail = result1.value
+            val result1 =  d.terminal('\r', this)
+            d = result1.derivation
           } catch (ParseException e0) {
-            result = backup4
-            tail = backup5
+            node = backup4
+            d = backup5
           }
           
           // '\n'
           // '\n'
-          val result2 =  tail.terminal('\n', this)
-          tail = result2.value
+          val result2 =  d.terminal('\n', this)
+          d = result2.derivation
           loop0 = false
-          throw new ParseException('Expected...', location)
+          throw new ParseException('Expected...')
         } catch (ParseException e1) {
           if (!loop0) throw e1
         } finally {
-          result = backup2
-          tail = backup3
+          node = backup2
+          d = backup3
         }
         
         // .
         // .
-        val result3 =  tail.any(this)
-        tail = result3.value
-        backup0 = result
-        backup1 = tail
+        val result3 =  d.any(this)
+        d = result3.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e2) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<Comment>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def FQTN FQTN(String in) {
-    val result = fQTN(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = fQTN(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * FQTN: ID ('.' ID)* ; 
    */
-  package def Pair<? extends FQTN, String> fQTN(String in) {
-    var result = new FQTN
-    var tail = in
+  package def Result<? extends FQTN> fQTN(Derivation derivation) {
+    var node = new FQTN
+    var d = derivation
     
     // ID
-    val result0 = tail.iD()
-    tail = result0.value
+    val result0 = d.dvID
+    d = result0.derivation
     
     // ('.' ID)*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // ('.' ID)
         // '.'
         // '.'
-        val result1 =  tail.terminal('.', this)
-        tail = result1.value
+        val result1 =  d.terminal('.', this)
+        d = result1.derivation
         
         // ID
-        val result2 = tail.iD()
-        tail = result2.value
-        backup0 = result
-        backup1 = tail
+        val result2 = d.dvID
+        d = result2.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<FQTN>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def ID ID(String in) {
-    val result = iD(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = iD(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * ID: [a-zA-Z_] [a-zA-Z0-9_]* ; 
    */
-  package def Pair<? extends ID, String> iD(String in) {
-    var result = new ID
-    var tail = in
+  package def Result<? extends ID> iD(Derivation derivation) {
+    var node = new ID
+    var d = derivation
     
     // [a-zA-Z_]
     // [a-zA-Z_]
-    val result0 = tail.terminal(
+    val result0 = d.terminal(
       ('a'..'z') + 
       ('A'..'Z') + 
       '_'
       , this)
-    tail = result0.value
+    d = result0.derivation
     
     // [a-zA-Z0-9_]*
-    var backup0 = result
-    var backup1 = tail
+    var backup0 = node.copy()
+    var backup1 = d
     try {
       while (true) {
         // [a-zA-Z0-9_]
         // [a-zA-Z0-9_]
-        val result1 = tail.terminal(
+        val result1 = d.terminal(
           ('a'..'z') + 
           ('A'..'Z') + 
           ('0'..'9') + 
           '_'
           , this)
-        tail = result1.value
-        backup0 = result
-        backup1 = tail
+        d = result1.derivation
+        backup0 = node.copy()
+        backup1 = d
       }
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
+      node = backup0
+      d = backup1
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<ID>(node, d)
   }
   
   //--------------------------------------------------------------------------
   
   def WS WS(String in) {
-    val result = wS(in)
-    return 
-      if (result.value.length == 0) 
-        result.key 
-      else 
-        throw new ParseException("Unexpected end of input", location)
+    this.chars = in.toCharArray()
+    val result = wS(parse(0))
+    try {
+      result.derivation.dvChar
+    } catch (ParseException e) {
+      return result.node
+    }
+    throw new ParseException("Unexpected end of input")
   }
   
   /**
    * WS : ' ' | '\n' | '\t' | '\r' ; 
    */
-  package def Pair<? extends WS, String> wS(String in) {
-    var result = new WS
-    var tail = in
+  package def Result<? extends WS> wS(Derivation derivation) {
+    var node = new WS
+    var d = derivation
     
     // ' ' | '\n' | '\t' | '\r' 
-    val backup0 = result.copy()
-    val backup1 = tail
+    val backup0 = node.copy()
+    val backup1 = d
     try {
       // ' '
       // ' '
-      val result0 =  tail.terminal(' ', this)
-      tail = result0.value
+      val result0 =  d.terminal(' ', this)
+      d = result0.derivation
     } catch (ParseException e0) {
-      result = backup0
-      tail = backup1
-      val backup2 = result.copy()
-      val backup3 = tail
+      node = backup0
+      d = backup1
+      val backup2 = node.copy()
+      val backup3 = d
       try {
         // '\n'
         // '\n'
-        val result1 =  tail.terminal('\n', this)
-        tail = result1.value
+        val result1 =  d.terminal('\n', this)
+        d = result1.derivation
       } catch (ParseException e1) {
-        result = backup2
-        tail = backup3
-        val backup4 = result.copy()
-        val backup5 = tail
+        node = backup2
+        d = backup3
+        val backup4 = node.copy()
+        val backup5 = d
         try {
           // '\t'
           // '\t'
-          val result2 =  tail.terminal('\t', this)
-          tail = result2.value
+          val result2 =  d.terminal('\t', this)
+          d = result2.derivation
         } catch (ParseException e2) {
-          result = backup4
-          tail = backup5
-          val backup6 = result.copy()
-          val backup7 = tail
+          node = backup4
+          d = backup5
+          val backup6 = node.copy()
+          val backup7 = d
           try {
             // '\r'
             // '\r'
-            val result3 =  tail.terminal('\r', this)
-            tail = result3.value
+            val result3 =  d.terminal('\r', this)
+            d = result3.derivation
           } catch (ParseException e3) {
-            result = backup6
-            tail = backup7
+            node = backup6
+            d = backup7
             throw e3
           }
         }
       }
     }
     
-    result.parsed = in.substring(0, in.length - tail.length)
-    return result -> tail
+    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+    return new Result<WS>(node, d)
   }
   
   
+}
+
+package class Derivation {
+  
+  int idx
+  
+  val (Derivation)=>Result<? extends Jpeg> dvfJpeg
+  val (Derivation)=>Result<? extends Rule> dvfRule
+  val (Derivation)=>Result<? extends RuleReturns> dvfRuleReturns
+  val (Derivation)=>Result<? extends Body> dvfBody
+  val (Derivation)=>Result<? extends Expression> dvfChoiceExpression
+  val (Derivation)=>Result<? extends Expression> dvfSequenceExpression
+  val (Derivation)=>Result<? extends Expression> dvfActionExpression
+  val (Derivation)=>Result<? extends Expression> dvfAndPredicateExpression
+  val (Derivation)=>Result<? extends Expression> dvfNotPredicateExpression
+  val (Derivation)=>Result<? extends Expression> dvfOneOrMoreExpression
+  val (Derivation)=>Result<? extends Expression> dvfZeroOrMoreExpression
+  val (Derivation)=>Result<? extends Expression> dvfOptionalExpression
+  val (Derivation)=>Result<? extends Expression> dvfAtomicExpression
+  val (Derivation)=>Result<? extends AtomicExpression> dvfAssignableExpression
+  val (Derivation)=>Result<? extends AssignmentOperator> dvfAssignmentOperator
+  val (Derivation)=>Result<? extends Expression> dvfSubExpression
+  val (Derivation)=>Result<? extends Expression> dvfRangeExpression
+  val (Derivation)=>Result<? extends MinMaxRange> dvfMinMaxRange
+  val (Derivation)=>Result<? extends CharRange> dvfCharRange
+  val (Derivation)=>Result<? extends Expression> dvfAnyCharExpression
+  val (Derivation)=>Result<? extends Expression> dvfRuleReferenceExpression
+  val (Derivation)=>Result<? extends AtomicExpression> dvfEndOfInputExpression
+  val (Derivation)=>Result<? extends Expression> dvfTerminalExpression
+  val (Derivation)=>Result<? extends InTerminalChar> dvfInTerminalChar
+  val (Derivation)=>Result<? extends Comment> dvfComment
+  val (Derivation)=>Result<? extends FQTN> dvfFQTN
+  val (Derivation)=>Result<? extends ID> dvfID
+  val (Derivation)=>Result<? extends WS> dvfWS
+  val (Derivation)=>Result<Character> dvfChar
+  
+  Result<? extends Jpeg> dvJpeg
+  Result<? extends Rule> dvRule
+  Result<? extends RuleReturns> dvRuleReturns
+  Result<? extends Body> dvBody
+  Result<? extends Expression> dvChoiceExpression
+  Result<? extends Expression> dvSequenceExpression
+  Result<? extends Expression> dvActionExpression
+  Result<? extends Expression> dvAndPredicateExpression
+  Result<? extends Expression> dvNotPredicateExpression
+  Result<? extends Expression> dvOneOrMoreExpression
+  Result<? extends Expression> dvZeroOrMoreExpression
+  Result<? extends Expression> dvOptionalExpression
+  Result<? extends Expression> dvAtomicExpression
+  Result<? extends AtomicExpression> dvAssignableExpression
+  Result<? extends AssignmentOperator> dvAssignmentOperator
+  Result<? extends Expression> dvSubExpression
+  Result<? extends Expression> dvRangeExpression
+  Result<? extends MinMaxRange> dvMinMaxRange
+  Result<? extends CharRange> dvCharRange
+  Result<? extends Expression> dvAnyCharExpression
+  Result<? extends Expression> dvRuleReferenceExpression
+  Result<? extends AtomicExpression> dvEndOfInputExpression
+  Result<? extends Expression> dvTerminalExpression
+  Result<? extends InTerminalChar> dvInTerminalChar
+  Result<? extends Comment> dvComment
+  Result<? extends FQTN> dvFQTN
+  Result<? extends ID> dvID
+  Result<? extends WS> dvWS
+  Result<Character> dvChar
+  
+  new(int idx, (Derivation)=>Result<? extends Jpeg> dvfJpeg, (Derivation)=>Result<? extends Rule> dvfRule, (Derivation)=>Result<? extends RuleReturns> dvfRuleReturns, (Derivation)=>Result<? extends Body> dvfBody, (Derivation)=>Result<? extends Expression> dvfChoiceExpression, (Derivation)=>Result<? extends Expression> dvfSequenceExpression, (Derivation)=>Result<? extends Expression> dvfActionExpression, (Derivation)=>Result<? extends Expression> dvfAndPredicateExpression, (Derivation)=>Result<? extends Expression> dvfNotPredicateExpression, (Derivation)=>Result<? extends Expression> dvfOneOrMoreExpression, (Derivation)=>Result<? extends Expression> dvfZeroOrMoreExpression, (Derivation)=>Result<? extends Expression> dvfOptionalExpression, (Derivation)=>Result<? extends Expression> dvfAtomicExpression, (Derivation)=>Result<? extends AtomicExpression> dvfAssignableExpression, (Derivation)=>Result<? extends AssignmentOperator> dvfAssignmentOperator, (Derivation)=>Result<? extends Expression> dvfSubExpression, (Derivation)=>Result<? extends Expression> dvfRangeExpression, (Derivation)=>Result<? extends MinMaxRange> dvfMinMaxRange, (Derivation)=>Result<? extends CharRange> dvfCharRange, (Derivation)=>Result<? extends Expression> dvfAnyCharExpression, (Derivation)=>Result<? extends Expression> dvfRuleReferenceExpression, (Derivation)=>Result<? extends AtomicExpression> dvfEndOfInputExpression, (Derivation)=>Result<? extends Expression> dvfTerminalExpression, (Derivation)=>Result<? extends InTerminalChar> dvfInTerminalChar, (Derivation)=>Result<? extends Comment> dvfComment, (Derivation)=>Result<? extends FQTN> dvfFQTN, (Derivation)=>Result<? extends ID> dvfID, (Derivation)=>Result<? extends WS> dvfWS, (Derivation)=>Result<Character> dvfChar) {
+    this.idx = idx
+    this.dvfJpeg = dvfJpeg
+    this.dvfRule = dvfRule
+    this.dvfRuleReturns = dvfRuleReturns
+    this.dvfBody = dvfBody
+    this.dvfChoiceExpression = dvfChoiceExpression
+    this.dvfSequenceExpression = dvfSequenceExpression
+    this.dvfActionExpression = dvfActionExpression
+    this.dvfAndPredicateExpression = dvfAndPredicateExpression
+    this.dvfNotPredicateExpression = dvfNotPredicateExpression
+    this.dvfOneOrMoreExpression = dvfOneOrMoreExpression
+    this.dvfZeroOrMoreExpression = dvfZeroOrMoreExpression
+    this.dvfOptionalExpression = dvfOptionalExpression
+    this.dvfAtomicExpression = dvfAtomicExpression
+    this.dvfAssignableExpression = dvfAssignableExpression
+    this.dvfAssignmentOperator = dvfAssignmentOperator
+    this.dvfSubExpression = dvfSubExpression
+    this.dvfRangeExpression = dvfRangeExpression
+    this.dvfMinMaxRange = dvfMinMaxRange
+    this.dvfCharRange = dvfCharRange
+    this.dvfAnyCharExpression = dvfAnyCharExpression
+    this.dvfRuleReferenceExpression = dvfRuleReferenceExpression
+    this.dvfEndOfInputExpression = dvfEndOfInputExpression
+    this.dvfTerminalExpression = dvfTerminalExpression
+    this.dvfInTerminalChar = dvfInTerminalChar
+    this.dvfComment = dvfComment
+    this.dvfFQTN = dvfFQTN
+    this.dvfID = dvfID
+    this.dvfWS = dvfWS
+    this.dvfChar = dvfChar
+  }
+  
+  def getIndex() {
+    idx
+  }
+  
+  def getDvJpeg() {
+    if (dvJpeg == null) {
+      dvJpeg = dvfJpeg.apply(this)
+    }
+    return dvJpeg
+  }
+  
+  def getDvRule() {
+    if (dvRule == null) {
+      dvRule = dvfRule.apply(this)
+    }
+    return dvRule
+  }
+  
+  def getDvRuleReturns() {
+    if (dvRuleReturns == null) {
+      dvRuleReturns = dvfRuleReturns.apply(this)
+    }
+    return dvRuleReturns
+  }
+  
+  def getDvBody() {
+    if (dvBody == null) {
+      dvBody = dvfBody.apply(this)
+    }
+    return dvBody
+  }
+  
+  def getDvChoiceExpression() {
+    if (dvChoiceExpression == null) {
+      dvChoiceExpression = dvfChoiceExpression.apply(this)
+    }
+    return dvChoiceExpression
+  }
+  
+  def getDvSequenceExpression() {
+    if (dvSequenceExpression == null) {
+      dvSequenceExpression = dvfSequenceExpression.apply(this)
+    }
+    return dvSequenceExpression
+  }
+  
+  def getDvActionExpression() {
+    if (dvActionExpression == null) {
+      dvActionExpression = dvfActionExpression.apply(this)
+    }
+    return dvActionExpression
+  }
+  
+  def getDvAndPredicateExpression() {
+    if (dvAndPredicateExpression == null) {
+      dvAndPredicateExpression = dvfAndPredicateExpression.apply(this)
+    }
+    return dvAndPredicateExpression
+  }
+  
+  def getDvNotPredicateExpression() {
+    if (dvNotPredicateExpression == null) {
+      dvNotPredicateExpression = dvfNotPredicateExpression.apply(this)
+    }
+    return dvNotPredicateExpression
+  }
+  
+  def getDvOneOrMoreExpression() {
+    if (dvOneOrMoreExpression == null) {
+      dvOneOrMoreExpression = dvfOneOrMoreExpression.apply(this)
+    }
+    return dvOneOrMoreExpression
+  }
+  
+  def getDvZeroOrMoreExpression() {
+    if (dvZeroOrMoreExpression == null) {
+      dvZeroOrMoreExpression = dvfZeroOrMoreExpression.apply(this)
+    }
+    return dvZeroOrMoreExpression
+  }
+  
+  def getDvOptionalExpression() {
+    if (dvOptionalExpression == null) {
+      dvOptionalExpression = dvfOptionalExpression.apply(this)
+    }
+    return dvOptionalExpression
+  }
+  
+  def getDvAtomicExpression() {
+    if (dvAtomicExpression == null) {
+      dvAtomicExpression = dvfAtomicExpression.apply(this)
+    }
+    return dvAtomicExpression
+  }
+  
+  def getDvAssignableExpression() {
+    if (dvAssignableExpression == null) {
+      dvAssignableExpression = dvfAssignableExpression.apply(this)
+    }
+    return dvAssignableExpression
+  }
+  
+  def getDvAssignmentOperator() {
+    if (dvAssignmentOperator == null) {
+      dvAssignmentOperator = dvfAssignmentOperator.apply(this)
+    }
+    return dvAssignmentOperator
+  }
+  
+  def getDvSubExpression() {
+    if (dvSubExpression == null) {
+      dvSubExpression = dvfSubExpression.apply(this)
+    }
+    return dvSubExpression
+  }
+  
+  def getDvRangeExpression() {
+    if (dvRangeExpression == null) {
+      dvRangeExpression = dvfRangeExpression.apply(this)
+    }
+    return dvRangeExpression
+  }
+  
+  def getDvMinMaxRange() {
+    if (dvMinMaxRange == null) {
+      dvMinMaxRange = dvfMinMaxRange.apply(this)
+    }
+    return dvMinMaxRange
+  }
+  
+  def getDvCharRange() {
+    if (dvCharRange == null) {
+      dvCharRange = dvfCharRange.apply(this)
+    }
+    return dvCharRange
+  }
+  
+  def getDvAnyCharExpression() {
+    if (dvAnyCharExpression == null) {
+      dvAnyCharExpression = dvfAnyCharExpression.apply(this)
+    }
+    return dvAnyCharExpression
+  }
+  
+  def getDvRuleReferenceExpression() {
+    if (dvRuleReferenceExpression == null) {
+      dvRuleReferenceExpression = dvfRuleReferenceExpression.apply(this)
+    }
+    return dvRuleReferenceExpression
+  }
+  
+  def getDvEndOfInputExpression() {
+    if (dvEndOfInputExpression == null) {
+      dvEndOfInputExpression = dvfEndOfInputExpression.apply(this)
+    }
+    return dvEndOfInputExpression
+  }
+  
+  def getDvTerminalExpression() {
+    if (dvTerminalExpression == null) {
+      dvTerminalExpression = dvfTerminalExpression.apply(this)
+    }
+    return dvTerminalExpression
+  }
+  
+  def getDvInTerminalChar() {
+    if (dvInTerminalChar == null) {
+      dvInTerminalChar = dvfInTerminalChar.apply(this)
+    }
+    return dvInTerminalChar
+  }
+  
+  def getDvComment() {
+    if (dvComment == null) {
+      dvComment = dvfComment.apply(this)
+    }
+    return dvComment
+  }
+  
+  def getDvFQTN() {
+    if (dvFQTN == null) {
+      dvFQTN = dvfFQTN.apply(this)
+    }
+    return dvFQTN
+  }
+  
+  def getDvID() {
+    if (dvID == null) {
+      dvID = dvfID.apply(this)
+    }
+    return dvID
+  }
+  
+  def getDvWS() {
+    if (dvWS == null) {
+      dvWS = dvfWS.apply(this)
+    }
+    return dvWS
+  }
+  
+  
+  def getDvChar() {
+    if (dvChar == null) {
+      dvChar = dvfChar.apply(this)
+    }
+    return dvChar
+  }
+
 }
 
 class ParseException extends RuntimeException {
@@ -1889,12 +2246,8 @@ class ParseException extends RuntimeException {
   @Property
   List<ParseException> causes
   
-  @Property
-  Pair<Integer, Integer> location
-  
-  new(String message, Pair<Integer, Integer> location) {
+  new(String message) {
     super(message)
-    this.location = location
   }
   
   def add(ParseException e) {
@@ -1903,7 +2256,7 @@ class ParseException extends RuntimeException {
   }
   
   override toString() {
-    'ParseException [' + location.key + ',' + location.value + '] ' + super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
+    'ParseException ' + super.localizedMessage + if (causes != null) ':\n' + causes.join('\n') else ''
   }
   
 }
@@ -1942,8 +2295,8 @@ package class CharacterRange {
     this.chars = chars
   }
 
-  def contains(String s) {
-    s.length > 0 && chars.contains(s.substring(0, 1))
+  def contains(Character c) {
+    chars.indexOf(c) != -1
   }
   
   override toString() {
@@ -1954,59 +2307,67 @@ package class CharacterRange {
 
 package class CharacterConsumer {
 
-  static def Pair<Eoi, String> eoi(String input, Parser parser) {
-    val r0 = new Eoi -> input
-
-    if (input.length > 0) {
-      throw new ParseException('Expected EOI', parser.location)
+  static def Result<Eoi> eoi(Derivation derivation, Parser parser) {
+    var exception = false
+    try {
+      derivation.dvChar
+    } catch (ParseException e) {
+      exception = true
     }
-
-    return r0
+    return 
+      if (exception) new Result<Eoi>(new Eoi, derivation) 
+      else throw new ParseException('Expected EOI')
   }
 
-  static def <T> terminal(String in, String str, Parser parser) {
-    if (in.startsWith(str)) {
-      parser.addMatch(str)
-      new Terminal(str) -> in.substring(str.length)
-    } else {
-      throw new ParseException("Expected '" + str + "'", parser.location)
+  static def <T> terminal(Derivation derivation, String str, Parser parser) {
+    var n = 0
+    var d = derivation
+    while (n < str.length) {
+      val r = d.dvChar
+      if (r.node != str.charAt(n)) {
+        throw new ParseException("Expected '" + str + "'")
+      }
+      n = n + 1
+      d = r.derivation
     }
+    new Result<Terminal>(new Terminal(str), d)
   }
   
-  static def <T> terminal(String in, CharacterRange range, Parser parser) {
-    if (range.contains(in)) {
-      val match = in.charAt(0).toString()
-      parser.addMatch(match)
-      new Terminal(match) -> in.substring(1)
-    } else {
-      throw new ParseException('Expected [' + range + ']', parser.location)
-    }
+  static def <T> terminal(Derivation derivation, CharacterRange range, Parser parser) {
+    val r = derivation.dvChar
+    return 
+      if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
+      else throw new ParseException('Expected [' + range + ']')
   }
 
-  static def <T> any(String in, Parser parser) {
-    if (in.length > 0) {
-      val match = in.substring(0, 1)
-      parser.addMatch(match)
-      new Terminal(match) -> in.substring(1)
-    } else {
-      throw new ParseException('Unexpected EOI', parser.location)
-    }
+  static def <T> any(Derivation derivation, Parser parser) {
+    val r = derivation.dvChar
+    new Result<Terminal>(new Terminal(r.node), r.derivation)
   }
 
 }
 
-  package class Result {
+  @Data
+  package class Result<T> {
+    
+    T node
+    
+    Derivation derivation
+    
+  }
+
+  package class Node {
     
     @Property
     String parsed
     
-    def Result copy() {
-      val r = new Result
+    def Node copy() {
+      val r = new Node
       r._parsed = _parsed
       return r
     }
     
-    def <T extends Result> T add(Result in) {
+    def <T extends Node> T add(Node in) {
       val out = class.newInstance as T
       out.parsed = (this._parsed ?: '') + in._parsed
       return out
@@ -2018,9 +2379,13 @@ package class CharacterConsumer {
   
   }
 
-  class Terminal extends Result {
+  class Terminal extends Node {
   
     new() {
+    }
+  
+    new(Character parsed) {
+      this.parsed = parsed.toString()
     }
   
     new(String parsed) {
@@ -2136,11 +2501,11 @@ package class CharacterConsumer {
     Terminal dash
     
     @Property
-    java.util.List<Result> ranges
+    java.util.List<Node> ranges
     
-    def dispatch void add(Result __result) {
+    def dispatch void add(Node __node) {
       _ranges = _ranges ?: newArrayList
-      _ranges += __result
+      _ranges += __node
     }
     
     override RangeExpression copy() {
@@ -2174,7 +2539,7 @@ package class CharacterConsumer {
     
   }
   
-  class Expression extends Result {
+  class Expression extends Node {
     
     override Expression copy() {
       val r = new Expression
@@ -2222,7 +2587,7 @@ package class CharacterConsumer {
     
   }
   
-  class Body extends Result {
+  class Body extends Node {
     
     @Property
     java.util.List<Expression> expressions
@@ -2240,7 +2605,7 @@ package class CharacterConsumer {
     
   }
   
-  class AssignmentOperator extends Result {
+  class AssignmentOperator extends Node {
     
     @Property
     Terminal single
@@ -2275,7 +2640,7 @@ package class CharacterConsumer {
     
   }
   
-  class CharRange extends Result {
+  class CharRange extends Node {
     
     @Property
     Terminal _char
@@ -2288,7 +2653,7 @@ package class CharacterConsumer {
     
   }
   
-  class Comment extends Result {
+  class Comment extends Node {
     
     override Comment copy() {
       val r = new Comment
@@ -2310,7 +2675,7 @@ package class CharacterConsumer {
     
   }
   
-  class Rule extends Result {
+  class Rule extends Node {
     
     @Property
     ID name
@@ -2331,7 +2696,7 @@ package class CharacterConsumer {
     
   }
   
-  class RuleReturns extends Result {
+  class RuleReturns extends Node {
     
     @Property
     FQTN name
@@ -2344,7 +2709,7 @@ package class CharacterConsumer {
     
   }
   
-  class MinMaxRange extends Result {
+  class MinMaxRange extends Node {
     
     @Property
     Terminal min
@@ -2387,7 +2752,7 @@ package class CharacterConsumer {
     
   }
   
-  class Jpeg extends Result {
+  class Jpeg extends Node {
     
     @Property
     java.util.List<Rule> rules
@@ -2418,7 +2783,7 @@ package class CharacterConsumer {
     
   }
   
-  class InTerminalChar extends Result {
+  class InTerminalChar extends Node {
     
     override InTerminalChar copy() {
       val r = new InTerminalChar

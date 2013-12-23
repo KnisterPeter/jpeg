@@ -14,6 +14,7 @@ import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 class Generator {
   
   static def generateParser(Jpeg jpeg, Map<String, JType> types, String packageName) '''
+    «val rules = jpeg.rules.filter[!types.get(name.parsed).internal]»
     package «packageName»
     
     import java.util.List
@@ -23,28 +24,68 @@ class Generator {
 
     class Parser {
       
-      int line = 1
-      int column = 1
+      char[] chars
       
-      package def addMatch(String match) {
-        var s = match
-        var idx = s.indexOf('\n')
-        while (idx != -1) {
-          column = 1
-          line = line + 1
-          s = s.substring(idx + 1)
-        }
-        column = column + s.length
+      package def Derivation parse(int idx) {
+        new Derivation(idx, «FOR rule : rules SEPARATOR ','»[«rule.name.parsed.toFirstLower»()]«ENDFOR»,
+          [
+            if (chars.length == idx) {
+              throw new ParseException('Unexpected end of input')
+            }
+            new Result<Character>(chars.get(idx), parse(idx + 1))
+          ])
       }
       
-      package def getLocation() {
-        line -> column
-      }
-      
-      «FOR rule : jpeg.rules.filter[!types.get(name.parsed).internal]»
+      «FOR rule : rules»
         «new RuleGenerator(rule, jpeg, types).generate()»
       «ENDFOR»
       
+    }
+    
+    package class Derivation {
+      
+      int idx
+      
+      «FOR rule : rules»
+        val (Derivation)=>Result<? extends «rule.getResultType(types).name»> dvf«rule.name.parsed.toFirstUpper»
+      «ENDFOR»
+      val (Derivation)=>Result<Character> dvfChar
+      
+      «FOR rule : rules»
+        Result<? extends «rule.getResultType(types).name»> dv«rule.name.parsed.toFirstUpper»
+      «ENDFOR»
+      Result<Character> dvChar
+      
+      new(int idx, «FOR rule : rules SEPARATOR ', '»(Derivation)=>Result<? extends «rule.getResultType(types).name»> dvf«rule.name.parsed.toFirstUpper»«ENDFOR», (Derivation)=>Result<Character> dvfChar) {
+        this.idx = idx
+        «FOR rule : rules»
+          this.dvf«rule.name.parsed.toFirstUpper» = dvf«rule.name.parsed.toFirstUpper»
+        «ENDFOR»
+        this.dvfChar = dvfChar
+      }
+      
+      def getIndex() {
+        idx
+      }
+      
+      «FOR rule : rules»
+        «val uname = rule.name.parsed.toFirstUpper»
+        def getDv«uname»() {
+          if (dv«uname» == null) {
+            dv«uname» = dvf«uname».apply(this)
+          }
+          return dv«uname»
+        }
+        
+      «ENDFOR»
+      
+      def getDvChar() {
+        if (dvChar == null) {
+          dvChar = dvfChar.apply(this)
+        }
+        return dvChar
+      }
+
     }
     
     class ParseException extends RuntimeException {
@@ -52,12 +93,8 @@ class Generator {
       @Property
       List<ParseException> causes
       
-      @Property
-      Pair<Integer, Integer> location
-      
-      new(String message, Pair<Integer, Integer> location) {
+      new(String message) {
         super(message)
-        this.location = location
       }
       
       def add(ParseException e) {
@@ -66,7 +103,7 @@ class Generator {
       }
       
       override toString() {
-        'ParseException [' + location.key + ',' + location.value + '] ' + super.toString() + if (causes != null) ':\n' + causes.join('\n') else ''
+        'ParseException ' + super.localizedMessage + if (causes != null) ':\n' + causes.join('\n') else ''
       }
       
     }
@@ -105,8 +142,8 @@ class Generator {
         this.chars = chars
       }
     
-      def contains(String s) {
-        s.length > 0 && chars.contains(s.substring(0, 1))
+      def contains(Character c) {
+        chars.indexOf(c) != -1
       }
       
       override toString() {
@@ -117,43 +154,42 @@ class Generator {
 
     package class CharacterConsumer {
     
-      static def Pair<Eoi, String> eoi(String input, Parser parser) {
-        val r0 = new Eoi -> input
-    
-        if (input.length > 0) {
-          throw new ParseException('Expected EOI', parser.location)
+      static def Result<Eoi> eoi(Derivation derivation, Parser parser) {
+        var exception = false
+        try {
+          derivation.dvChar
+        } catch (ParseException e) {
+          exception = true
         }
-    
-        return r0
+        return 
+          if (exception) new Result<Eoi>(new Eoi, derivation) 
+          else throw new ParseException('Expected EOI')
       }
     
-      static def <T> terminal(String in, String str, Parser parser) {
-        if (in.startsWith(str)) {
-          parser.addMatch(str)
-          new Terminal(str) -> in.substring(str.length)
-        } else {
-          throw new ParseException("Expected '" + str + "'", parser.location)
+      static def <T> terminal(Derivation derivation, String str, Parser parser) {
+        var n = 0
+        var d = derivation
+        while (n < str.length) {
+          val r = d.dvChar
+          if (r.node != str.charAt(n)) {
+            throw new ParseException("Expected '" + str + "'")
+          }
+          n = n + 1
+          d = r.derivation
         }
+        new Result<Terminal>(new Terminal(str), d)
       }
       
-      static def <T> terminal(String in, CharacterRange range, Parser parser) {
-        if (range.contains(in)) {
-          val match = in.charAt(0).toString()
-          parser.addMatch(match)
-          new Terminal(match) -> in.substring(1)
-        } else {
-          throw new ParseException('Expected [' + range + ']', parser.location)
-        }
+      static def <T> terminal(Derivation derivation, CharacterRange range, Parser parser) {
+        val r = derivation.dvChar
+        return 
+          if (range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation)
+          else throw new ParseException('Expected [' + range + ']')
       }
     
-      static def <T> any(String in, Parser parser) {
-        if (in.length > 0) {
-          val match = in.substring(0, 1)
-          parser.addMatch(match)
-          new Terminal(match) -> in.substring(1)
-        } else {
-          throw new ParseException('Unexpected EOI', parser.location)
-        }
+      static def <T> any(Derivation derivation, Parser parser) {
+        val r = derivation.dvChar
+        new Result<Terminal>(new Terminal(r.node), r.derivation)
       }
     
     }
@@ -161,18 +197,27 @@ class Generator {
   '''
   
   static def generateTypes(Collection<JType> types) '''
-    package class Result {
+    @Data
+    package class Result<T> {
+      
+      T node
+      
+      Derivation derivation
+      
+    }
+  
+    package class Node {
       
       @Property
       String parsed
       
-      def Result copy() {
-        val r = new Result
+      def Node copy() {
+        val r = new Node
         r._parsed = _parsed
         return r
       }
       
-      def <T extends Result> T add(Result in) {
+      def <T extends Node> T add(Node in) {
         val out = class.newInstance as T
         out.parsed = (this._parsed ?: '') + in._parsed
         return out
@@ -184,9 +229,13 @@ class Generator {
     
     }
   
-    class Terminal extends Result {
+    class Terminal extends Node {
     
       new() {
+      }
+    
+      new(Character parsed) {
+        this.parsed = parsed.toString()
       }
     
       new(String parsed) {
@@ -255,6 +304,10 @@ class RuleGenerator {
   
   Rule rule
   
+  JType type
+  
+  JType resultType
+  
   Jpeg jpeg
   
   Map<String, JType> types
@@ -275,6 +328,8 @@ class RuleGenerator {
   
   new(Rule rule, Jpeg jpeg, Map<String, JType> types) {
     this.rule = rule
+    this.type = rule.getType(types)
+    this.resultType = rule.getResultType(types)
     this.jpeg = jpeg
     this.types = types
   }
@@ -283,32 +338,34 @@ class RuleGenerator {
     //--------------------------------------------------------------------------
     
     def «resultType.name» «name.toFirstUpper»(String in) {
-      val result = «name.toFirstLower»(in)
-      return 
-        if (result.value.length == 0) 
-          result.key 
-        else 
-          throw new ParseException("Unexpected end of input", location)
+      this.chars = in.toCharArray()
+      val result = «name.toFirstLower»(parse(0))
+      try {
+        result.derivation.dvChar
+      } catch (ParseException e) {
+        return result.node
+      }
+      throw new ParseException("Unexpected end of input")
     }
     
     /**
      * «rule»
      */
-    package def Pair<? extends «resultType.name», String> «name.toFirstLower()»(String in) {
+    package def Result<? extends «resultType.name»> «name.toFirstLower()»(Derivation derivation) {
       «IF rule.simpleRule»
         «if(true) { inSimpleChoice = true; ''}»
-        val tail = in
+        val d = derivation
         «rule.body.create()»
         «if(true) { inSimpleChoice = false; ''}»
       «ELSE»
-        var result = new «name»
-        var tail = in
+        var node = new «name»
+        var d = derivation
         
         «rule.body.create()»
         
         «optimize()»
-        result.parsed = in.substring(0, in.length - tail.length)
-        return result -> tail
+        node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+        return new Result<«resultType.name»>(node, d)
       «ENDIF»
     }
     
@@ -316,10 +373,10 @@ class RuleGenerator {
   '''
   
   private def optimize() '''
-    «IF types.get(name).isResultOptimizable(resultType, types)»
-      «val attr = types.get(name).attributes.head.name»
-      if (result.«attr».size() == 1) {
-        return result.«attr».get(0) -> tail
+    «IF type.isResultOptimizable(resultType, types)»
+      «val attr = type.attributes.head.name»
+      if (node.«attr».size() == 1) {
+        return new Result<«resultType.name»>(node.«attr».get(0), d)
       }
     «ENDIF»
   '''
@@ -358,13 +415,13 @@ class RuleGenerator {
   def CharSequence generateChoices(Iterable<Expression> exprs) '''
     «val currentBackup = nextBackup»
     «val tailBackup = nextBackup»
-    val «currentBackup» = result.copy()
-    val «tailBackup» = tail
+    val «currentBackup» = node.copy()
+    val «tailBackup» = d
     try {
       «exprs.head.create()»
     } catch (ParseException «nextException») {
-      result = «currentBackup»
-      tail = «tailBackup»
+      node = «currentBackup»
+      d = «tailBackup»
       «IF !exprs.tail.empty»
         «exprs.tail.generateChoices()»
       «ELSE»
@@ -382,13 +439,13 @@ class RuleGenerator {
   def dispatch CharSequence create(AndPredicateExpression expr) '''
     «val currentBackup = nextBackup»
     «val tailBackup = nextBackup»
-    val «currentBackup» = result.copy()
-    val «tailBackup» = tail
+    val «currentBackup» = node.copy()
+    val «tailBackup» = d
     try {
     «expr.expr.create()»
     } finally {
-      result = «currentBackup»
-      tail = «tailBackup»
+      node = «currentBackup»
+      d = «tailBackup»
     }
   '''
   
@@ -396,18 +453,18 @@ class RuleGenerator {
     «val currentLoop = nextLoop»
     «val currentBackup = nextBackup»
     «val tailBackup = nextBackup»
-    val «currentBackup» = result.copy()
-    val «tailBackup» = tail
+    val «currentBackup» = node.copy()
+    val «tailBackup» = d
     var «currentLoop» = true
     try {
       «expr.expr.create()»
       «currentLoop» = false
-      throw new ParseException('Expected...', location)
+      throw new ParseException('Expected...')
     } catch (ParseException «nextException») {
       if (!«currentLoop») throw «exception»
     } finally {
-      result = «currentBackup»
-      tail = «tailBackup»
+      node = «currentBackup»
+      d = «tailBackup»
     }
   '''
   
@@ -416,21 +473,21 @@ class RuleGenerator {
     «val currentBackup = nextBackup»
     «val tailBackup = nextBackup»
     // «expr»
-    var «currentBackup» = result
-    var «tailBackup» = tail
+    var «currentBackup» = node.copy()
+    var «tailBackup» = d
     var «currentLoop» = false
     try {
       while (true) {
         «expr.expr.create()»
         
         «currentLoop» = true
-        «currentBackup» = result
-        «tailBackup» = tail
+        «currentBackup» = node.copy()
+        «tailBackup» = d
       }
     } catch (ParseException «nextException») {
       if (!«currentLoop») {
-        result = «currentBackup»
-        tail = «tailBackup»
+        node = «currentBackup»
+        d = «tailBackup»
         throw «exception»
       }
     }
@@ -440,17 +497,17 @@ class RuleGenerator {
     «val currentBackup = nextBackup»
     «val tailBackup = nextBackup»
     // «expr»
-    var «currentBackup» = result
-    var «tailBackup» = tail
+    var «currentBackup» = node.copy()
+    var «tailBackup» = d
     try {
       while (true) {
         «expr.expr.create()»
-        «currentBackup» = result
-        «tailBackup» = tail
+        «currentBackup» = node.copy()
+        «tailBackup» = d
       }
     } catch (ParseException «nextException») {
-      result = «currentBackup»
-      tail = «tailBackup»
+      node = «currentBackup»
+      d = «tailBackup»
     }
   '''
   
@@ -458,13 +515,13 @@ class RuleGenerator {
     «val currentBackup = nextBackup»
     «val tailBackup = nextBackup»
     // «expr»
-    val «currentBackup» = result.copy()
-    val «tailBackup» = tail
+    val «currentBackup» = node.copy()
+    val «tailBackup» = d
     try {
       «expr.expr.create()»
     } catch (ParseException «nextException») {
-      result = «currentBackup»
-      tail = «tailBackup»
+      node = «currentBackup»
+      d = «tailBackup»
     }
   '''
   
@@ -476,15 +533,15 @@ class RuleGenerator {
       «IF expr.expr instanceof SubExpression»
         «val currentSubFunction = name.toFirstLower() + '_' + nextSubFunction»
         «if(subFunctions += (expr.expr as SubExpression).createSubFunction(currentSubFunction)) '' else ''»
-        val «nextResult» = tail.«currentSubFunction»()
-        tail = «result».value
+        val «nextResult» = d.«currentSubFunction»()
+        d = «result».derivation
       «ELSE»
         «expr.expr.create()»
       «ENDIF»
       «IF expr.op.multi != null»
-        result.add(«result».key)
+        node.add(«result».node)
       «ELSE»
-        result.«expr.propertyName» = «result».key
+        node.«expr.propertyName» = «result».node
       «ENDIF»
     «ELSE»
       «expr.expr.create()»
@@ -500,20 +557,20 @@ class RuleGenerator {
   
   private def String createSubFunction(SubExpression expr, String subFunction) '''
     «val resultType = expr.evaluateType(jpeg, types)»
-    private def Pair<? extends «resultType.name», String> «subFunction»(String in) {
+    private def Result<? extends «resultType.name»> «subFunction»(Derivation derivation) {
       «IF expr.expr.simpleChoiceExpression»
         «if(true) { inSimpleChoice = true; ''}»
-        val tail = in
+        val d = derivation
         «expr.expr.create()»
         «if(true) { inSimpleChoice = false; ''}»
       «ELSE»
-        var «resultType.name» result = new «resultType.name»
-        var tail = in
+        var «resultType.name» node = new «resultType.name»
+        val d = derivation
         
         «expr.expr.create()»
         
-        result.parsed = in.substring(0, in.length - tail.length)
-        return result -> tail
+        node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
+        return new Result<«resultType.name»>(node, d)
       «ENDIF»
     }
   '''
@@ -524,22 +581,22 @@ class RuleGenerator {
   
   def dispatch CharSequence create(RuleReferenceExpression expr) '''
     «IF inSimpleChoice»
-      tail.«expr.name.parsed.toFirstLower»()
+      d.dv«expr.name.parsed.toFirstUpper»
     «ELSE»
-      val «nextResult» = tail.«expr.name.parsed.toFirstLower»()
-      tail = «result».value
+      val «nextResult» = d.dv«expr.name.parsed.toFirstUpper»
+      d = «result».derivation
     «ENDIF»
   '''
   
   def dispatch CharSequence create(RangeExpression expr) '''
     // «expr»
-    val «nextResult» = tail.terminal(
+    val «nextResult» = d.terminal(
       «FOR range : expr.ranges SEPARATOR ' + '»
         «range.create()»
       «ENDFOR»
       «IF expr.dash != null»«IF !expr.ranges.empty» + «ENDIF»'-'«ENDIF»
       , this)
-    tail = «result».value
+    d = «result».derivation
   '''
   
   def dispatch CharSequence create(MinMaxRange range) '''
@@ -552,28 +609,24 @@ class RuleGenerator {
   
   def dispatch CharSequence create(AnyCharExpression expr) '''
     // «expr»
-    val «nextResult» =  tail.any(this)
-    tail = «result».value
+    val «nextResult» =  d.any(this)
+    d = «result».derivation
   '''
   
   def dispatch CharSequence create(TerminalExpression expr) '''
     // «expr»
-    val «nextResult» =  tail.terminal('«expr.value.parsed»', this)
-    tail = «result».value
+    val «nextResult» =  d.terminal('«expr.value.parsed»', this)
+    d = «result».derivation
   '''
   
   def dispatch CharSequence create(EndOfInputExpression expr) '''
     // «expr»
-    val «nextResult» = tail.eoi(this)
-    tail = «result».value
+    val «nextResult» = d.eoi(this)
+    d = «result».derivation
   '''
   
   private def getName() {
     rule.name.parsed
-  }
-  
-  private def getResultType() {
-    types.get(rule?.returns?.name?.parsed ?: name)
   }
   
   private def getException() {

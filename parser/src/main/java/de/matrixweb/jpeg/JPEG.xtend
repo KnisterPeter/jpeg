@@ -1,5 +1,6 @@
 package de.matrixweb.jpeg
 
+import de.matrixweb.jpeg.internal.Parser
 import java.io.File
 
 import static com.google.common.base.Charsets.*
@@ -7,7 +8,6 @@ import static com.google.common.base.Charsets.*
 import static extension com.google.common.io.Files.*
 import static extension de.matrixweb.jpeg.internal.AstValidator.*
 import static extension de.matrixweb.jpeg.internal.Generator.*
-import static extension de.matrixweb.jpeg.internal.Parser.*
 import static extension de.matrixweb.jpeg.internal.TypeGenerator.*
 
 class JPEG {
@@ -22,6 +22,7 @@ class JPEG {
   }
 
   static private def parseAndGenerate(String grammar, String packageName) {
+    extension val parser = new Parser
     var jpeg = grammar.Jpeg()
     jpeg.validate()
     val types = jpeg.createTypes()

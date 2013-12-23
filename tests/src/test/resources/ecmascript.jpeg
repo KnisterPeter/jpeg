@@ -113,19 +113,19 @@ RegularExpressionChars :
 ;
 
 RegularExpressionFirstChar :
-    ![*\/[] RegularExpressionNonTerminator
+    ![*\\/[] RegularExpressionNonTerminator
   | RegularExpressionBackslashSequence
   | RegularExpressionClass
 ;
 
 RegularExpressionChar :
-    ![\/[] RegularExpressionNonTerminator
+    ![\\/[] RegularExpressionNonTerminator
   | RegularExpressionBackslashSequence
   | RegularExpressionClass
 ;
 
 RegularExpressionBackslashSequence :
-  '\' RegularExpressionNonTerminator
+  '\\' RegularExpressionNonTerminator
 ;
 
 RegularExpressionNonTerminator :
