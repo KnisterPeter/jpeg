@@ -42,6 +42,8 @@ public class JPEGTest {
     System.out.println("Parser Time for Test " + this.name.getMethodName()
         + ": " + (end - start) + "ms");
     assertThat(r, is(notNullValue()));
+    assertThat(r.getRules().size(), is(1));
+    assertThat(r.getRules().get(0).getName().getParsed(), is("Rule"));
   }
 
   @Test
@@ -52,6 +54,7 @@ public class JPEGTest {
     System.out.println("Parser Time for Test " + this.name.getMethodName()
         + ": " + (end - start) + "ms");
     assertThat(r, is(notNullValue()));
+    assertThat(r.getRules().size(), is(2));
   }
 
   @Test
@@ -62,12 +65,6 @@ public class JPEGTest {
     System.out.println("Parser Time for Test " + this.name.getMethodName()
         + ": " + (end - start) + "ms");
     assertThat(r, is(notNullValue()));
-    // final Expression e =
-    // r.getRules().get(0).getBody().getExpressions().get(0);
-    // final CharRange range = (CharRange) ((RangeExpression)
-    // ((AssignableExpression) e)
-    // .getExpr()).getRanges().get(0);
-    // assertThat(range.get_char().getParsed(), is("]"));
   }
 
   @Test

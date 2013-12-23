@@ -619,12 +619,6 @@ class RuleGenerator {
     d = «result».derivation
   '''
   
-  def dispatch CharSequence create(EndOfInputExpression expr) '''
-    // «expr»
-    val «nextResult» = d.eoi(this)
-    d = «result».derivation
-  '''
-  
   private def getName() {
     rule.name.parsed
   }

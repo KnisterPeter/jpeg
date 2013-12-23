@@ -17,7 +17,7 @@ Rule :
 ;
 
 RuleReturns :
-  'returns' WS* name=FQTN
+  'returns' WS* name=ID
 ;
 
 // -----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ Expression :
     ActionExpression
   | AndPredicateExpression
   | AnyCharExpression
-  | AtomicExpression
+  | AssignableExpression
   | ChoiceExpression
   | NotPredicateExpression
   | OneOrMoreExpression
@@ -65,7 +65,7 @@ SequenceExpression returns Expression :
       | OneOrMoreExpression
       | ZeroOrMoreExpression
       | OptionalExpression
-      | AtomicExpression
+      | AssignableExpression
     )
     WS*
   )+
@@ -76,7 +76,7 @@ SequenceExpression returns Expression :
 ActionExpression returns Expression :
   '{' WS* 
   ( property=ID WS* op=AssignmentOperator WS* 'current' WS*
-  | name=FQTN
+  | name=ID
   ) 
   WS* '}'
 ;
@@ -84,43 +84,36 @@ ActionExpression returns Expression :
 // -----------------------------------------------------------------------------
 
 AndPredicateExpression returns Expression :
-  '&' WS* expr=AtomicExpression
+  '&' WS* expr=AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
 NotPredicateExpression returns Expression :
-  '!' WS* expr=AtomicExpression
+  '!' WS* expr=AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
 OneOrMoreExpression returns Expression :
-  expr=AtomicExpression WS* '+'
+  expr=AssignableExpression WS* '+'
 ;
 
 // -----------------------------------------------------------------------------
 
 ZeroOrMoreExpression returns Expression :
-  expr=AtomicExpression WS* '*'
+  expr=AssignableExpression WS* '*'
 ;
 
 // -----------------------------------------------------------------------------
 
 OptionalExpression returns Expression :
-  expr=AtomicExpression WS* '?'
+  expr=AssignableExpression WS* '?'
 ;
 
 // -----------------------------------------------------------------------------
 
-AtomicExpression returns Expression :
-    EndOfInputExpression
-  | AssignableExpression
-;
-
-// -----------------------------------------------------------------------------
-
-AssignableExpression returns AtomicExpression :
+AssignableExpression returns Expression :
   (property=ID WS* op=AssignmentOperator WS*)?
   expr=
   ( SubExpression
@@ -174,12 +167,6 @@ RuleReferenceExpression returns Expression :
 
 // -----------------------------------------------------------------------------
 
-EndOfInputExpression returns AtomicExpression :
-  'EOI'
-;
-
-// -----------------------------------------------------------------------------
-
 TerminalExpression returns Expression :
   '\'' value=InTerminalChar? '\''
 ;
@@ -196,11 +183,8 @@ Comment :
 
 // -----------------------------------------------------------------------------
 
-// 
-// Namespaced type identifier
-// 
-FQTN:
-  ID ('.' ID)*
+EOI:
+  !(.)
 ;
 
 // 

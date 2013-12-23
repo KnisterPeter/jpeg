@@ -10,7 +10,7 @@ class Parser {
   char[] chars
   
   package def Derivation parse(int idx) {
-    new Derivation(idx, [jpeg()],[rule()],[ruleReturns()],[body()],[choiceExpression()],[sequenceExpression()],[actionExpression()],[andPredicateExpression()],[notPredicateExpression()],[oneOrMoreExpression()],[zeroOrMoreExpression()],[optionalExpression()],[atomicExpression()],[assignableExpression()],[assignmentOperator()],[subExpression()],[rangeExpression()],[minMaxRange()],[charRange()],[anyCharExpression()],[ruleReferenceExpression()],[endOfInputExpression()],[terminalExpression()],[inTerminalChar()],[comment()],[fQTN()],[iD()],[wS()],
+    new Derivation(idx, [jpeg()],[rule()],[ruleReturns()],[body()],[choiceExpression()],[sequenceExpression()],[actionExpression()],[andPredicateExpression()],[notPredicateExpression()],[oneOrMoreExpression()],[zeroOrMoreExpression()],[optionalExpression()],[assignableExpression()],[assignmentOperator()],[subExpression()],[rangeExpression()],[minMaxRange()],[charRange()],[anyCharExpression()],[ruleReferenceExpression()],[terminalExpression()],[inTerminalChar()],[comment()],[eOI()],[iD()],[wS()],
       [
         if (chars.length == idx) {
           throw new ParseException('Unexpected end of input')
@@ -99,7 +99,7 @@ class Parser {
     }
     
     // EOI
-    val result3 = d.eoi(this)
+    val result3 = d.dvEOI
     d = result3.derivation
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
@@ -257,7 +257,7 @@ class Parser {
   }
   
   /**
-   * RuleReturns : 'returns' WS* name=FQTN ; 
+   * RuleReturns : 'returns' WS* name=ID ; 
    */
   package def Result<? extends RuleReturns> ruleReturns(Derivation derivation) {
     var node = new RuleReturns
@@ -284,8 +284,8 @@ class Parser {
       d = backup1
     }
     
-    // name=FQTN
-    val result2 = d.dvFQTN
+    // name=ID
+    val result2 = d.dvID
     d = result2.derivation
     node.name = result2.node
     
@@ -442,20 +442,20 @@ class Parser {
   }
   
   /**
-   * SequenceExpression returns Expression : ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression ) WS* )+ ; 
+   * SequenceExpression returns Expression : ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )+ ; 
    */
   package def Result<? extends Expression> sequenceExpression(Derivation derivation) {
     var node = new SequenceExpression
     var d = derivation
     
-    // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression ) WS* )+
+    // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )+
     var backup0 = node.copy()
     var backup1 = d
     var loop0 = false
     try {
       while (true) {
-        // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression ) WS* )
-        // expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression )
+        // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )
+        // expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression )
         val result0 = d.sequenceExpression_sub0()
         d = result0.derivation
         node.add(result0.node)
@@ -497,7 +497,7 @@ class Parser {
   
   private def Result<? extends Expression> sequenceExpression_sub0(Derivation derivation) {
     val d = derivation
-    // ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AtomicExpression 
+    // ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression 
     try {
       return d.dvActionExpression
     } catch (ParseException e0) {
@@ -517,7 +517,7 @@ class Parser {
                 return d.dvOptionalExpression
               } catch (ParseException e5) {
                 try {
-                  return d.dvAtomicExpression
+                  return d.dvAssignableExpression
                 } catch (ParseException e6) {
                   throw e6
                 }
@@ -542,7 +542,7 @@ class Parser {
   }
   
   /**
-   * ActionExpression returns Expression : '{' WS* ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=FQTN ) WS* '}' ; 
+   * ActionExpression returns Expression : '{' WS* ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=ID ) WS* '}' ; 
    */
   package def Result<? extends Expression> actionExpression(Derivation derivation) {
     var node = new ActionExpression
@@ -569,8 +569,8 @@ class Parser {
       d = backup1
     }
     
-    // ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=FQTN )
-    // property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=FQTN 
+    // ( property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=ID )
+    // property=ID WS* op=AssignmentOperator WS* 'current' WS* | name=ID 
     val backup2 = node.copy()
     val backup3 = d
     try {
@@ -642,8 +642,8 @@ class Parser {
       val backup10 = node.copy()
       val backup11 = d
       try {
-        // name=FQTN
-        val result8 = d.dvFQTN
+        // name=ID
+        val result8 = d.dvID
         d = result8.derivation
         node.name = result8.node
       } catch (ParseException e5) {
@@ -692,7 +692,7 @@ class Parser {
   }
   
   /**
-   * AndPredicateExpression returns Expression : '&' WS* expr=AtomicExpression ; 
+   * AndPredicateExpression returns Expression : '&' WS* expr=AssignableExpression ; 
    */
   package def Result<? extends Expression> andPredicateExpression(Derivation derivation) {
     var node = new AndPredicateExpression
@@ -719,8 +719,8 @@ class Parser {
       d = backup1
     }
     
-    // expr=AtomicExpression
-    val result2 = d.dvAtomicExpression
+    // expr=AssignableExpression
+    val result2 = d.dvAssignableExpression
     d = result2.derivation
     node.expr = result2.node
     
@@ -742,7 +742,7 @@ class Parser {
   }
   
   /**
-   * NotPredicateExpression returns Expression : '!' WS* expr=AtomicExpression ; 
+   * NotPredicateExpression returns Expression : '!' WS* expr=AssignableExpression ; 
    */
   package def Result<? extends Expression> notPredicateExpression(Derivation derivation) {
     var node = new NotPredicateExpression
@@ -769,8 +769,8 @@ class Parser {
       d = backup1
     }
     
-    // expr=AtomicExpression
-    val result2 = d.dvAtomicExpression
+    // expr=AssignableExpression
+    val result2 = d.dvAssignableExpression
     d = result2.derivation
     node.expr = result2.node
     
@@ -792,14 +792,14 @@ class Parser {
   }
   
   /**
-   * OneOrMoreExpression returns Expression : expr=AtomicExpression WS* '+' ; 
+   * OneOrMoreExpression returns Expression : expr=AssignableExpression WS* '+' ; 
    */
   package def Result<? extends Expression> oneOrMoreExpression(Derivation derivation) {
     var node = new OneOrMoreExpression
     var d = derivation
     
-    // expr=AtomicExpression
-    val result0 = d.dvAtomicExpression
+    // expr=AssignableExpression
+    val result0 = d.dvAssignableExpression
     d = result0.derivation
     node.expr = result0.node
     
@@ -842,14 +842,14 @@ class Parser {
   }
   
   /**
-   * ZeroOrMoreExpression returns Expression : expr=AtomicExpression WS* '*' ; 
+   * ZeroOrMoreExpression returns Expression : expr=AssignableExpression WS* '*' ; 
    */
   package def Result<? extends Expression> zeroOrMoreExpression(Derivation derivation) {
     var node = new ZeroOrMoreExpression
     var d = derivation
     
-    // expr=AtomicExpression
-    val result0 = d.dvAtomicExpression
+    // expr=AssignableExpression
+    val result0 = d.dvAssignableExpression
     d = result0.derivation
     node.expr = result0.node
     
@@ -892,14 +892,14 @@ class Parser {
   }
   
   /**
-   * OptionalExpression returns Expression : expr=AtomicExpression WS* '?' ; 
+   * OptionalExpression returns Expression : expr=AssignableExpression WS* '?' ; 
    */
   package def Result<? extends Expression> optionalExpression(Derivation derivation) {
     var node = new OptionalExpression
     var d = derivation
     
-    // expr=AtomicExpression
-    val result0 = d.dvAtomicExpression
+    // expr=AssignableExpression
+    val result0 = d.dvAssignableExpression
     d = result0.derivation
     node.expr = result0.node
     
@@ -930,37 +930,7 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  def Expression AtomicExpression(String in) {
-    this.chars = in.toCharArray()
-    val result = atomicExpression(parse(0))
-    try {
-      result.derivation.dvChar
-    } catch (ParseException e) {
-      return result.node
-    }
-    throw new ParseException("Unexpected end of input")
-  }
-  
-  /**
-   * AtomicExpression returns Expression : EndOfInputExpression | AssignableExpression ; 
-   */
-  package def Result<? extends Expression> atomicExpression(Derivation derivation) {
-    val d = derivation
-    // EndOfInputExpression | AssignableExpression 
-    try {
-      return d.dvEndOfInputExpression
-    } catch (ParseException e0) {
-      try {
-        return d.dvAssignableExpression
-      } catch (ParseException e1) {
-        throw e1
-      }
-    }
-  }
-  
-  //--------------------------------------------------------------------------
-  
-  def AtomicExpression AssignableExpression(String in) {
+  def Expression AssignableExpression(String in) {
     this.chars = in.toCharArray()
     val result = assignableExpression(parse(0))
     try {
@@ -972,9 +942,9 @@ class Parser {
   }
   
   /**
-   * AssignableExpression returns AtomicExpression : (property=ID WS* op=AssignmentOperator WS*)? expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) ; 
+   * AssignableExpression returns Expression : (property=ID WS* op=AssignmentOperator WS*)? expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) ; 
    */
-  package def Result<? extends AtomicExpression> assignableExpression(Derivation derivation) {
+  package def Result<? extends Expression> assignableExpression(Derivation derivation) {
     var node = new AssignableExpression
     var d = derivation
     
@@ -1035,7 +1005,7 @@ class Parser {
     node.expr = result4.node
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-    return new Result<AtomicExpression>(node, d)
+    return new Result<Expression>(node, d)
   }
   
   private def Result<? extends Expression> assignableExpression_sub0(Derivation derivation) {
@@ -1497,35 +1467,6 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  def AtomicExpression EndOfInputExpression(String in) {
-    this.chars = in.toCharArray()
-    val result = endOfInputExpression(parse(0))
-    try {
-      result.derivation.dvChar
-    } catch (ParseException e) {
-      return result.node
-    }
-    throw new ParseException("Unexpected end of input")
-  }
-  
-  /**
-   * EndOfInputExpression returns AtomicExpression : 'EOI' ; 
-   */
-  package def Result<? extends AtomicExpression> endOfInputExpression(Derivation derivation) {
-    var node = new EndOfInputExpression
-    var d = derivation
-    
-    // 'EOI'
-    // 'EOI'
-    val result0 =  d.terminal('EOI', this)
-    d = result0.derivation
-    
-    node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-    return new Result<AtomicExpression>(node, d)
-  }
-  
-  //--------------------------------------------------------------------------
-  
   def Expression TerminalExpression(String in) {
     this.chars = in.toCharArray()
     val result = terminalExpression(parse(0))
@@ -1757,9 +1698,9 @@ class Parser {
   
   //--------------------------------------------------------------------------
   
-  def FQTN FQTN(String in) {
+  def EOI EOI(String in) {
     this.chars = in.toCharArray()
-    val result = fQTN(parse(0))
+    val result = eOI(parse(0))
     try {
       result.derivation.dvChar
     } catch (ParseException e) {
@@ -1769,40 +1710,32 @@ class Parser {
   }
   
   /**
-   * FQTN: ID ('.' ID)* ; 
+   * EOI: !(.) ; 
    */
-  package def Result<? extends FQTN> fQTN(Derivation derivation) {
-    var node = new FQTN
+  package def Result<? extends EOI> eOI(Derivation derivation) {
+    var node = new EOI
     var d = derivation
     
-    // ID
-    val result0 = d.dvID
-    d = result0.derivation
-    
-    // ('.' ID)*
-    var backup0 = node.copy()
-    var backup1 = d
+    val backup0 = node.copy()
+    val backup1 = d
+    var loop0 = true
     try {
-      while (true) {
-        // ('.' ID)
-        // '.'
-        // '.'
-        val result1 =  d.terminal('.', this)
-        d = result1.derivation
-        
-        // ID
-        val result2 = d.dvID
-        d = result2.derivation
-        backup0 = node.copy()
-        backup1 = d
-      }
+      // (.)
+      // .
+      // .
+      val result0 =  d.any(this)
+      d = result0.derivation
+      loop0 = false
+      throw new ParseException('Expected...')
     } catch (ParseException e0) {
+      if (!loop0) throw e0
+    } finally {
       node = backup0
       d = backup1
     }
     
     node.parsed = new String(chars, derivation.getIndex(), d.getIndex() - derivation.getIndex());
-    return new Result<FQTN>(node, d)
+    return new Result<EOI>(node, d)
   }
   
   //--------------------------------------------------------------------------
@@ -1950,8 +1883,7 @@ package class Derivation {
   val (Derivation)=>Result<? extends Expression> dvfOneOrMoreExpression
   val (Derivation)=>Result<? extends Expression> dvfZeroOrMoreExpression
   val (Derivation)=>Result<? extends Expression> dvfOptionalExpression
-  val (Derivation)=>Result<? extends Expression> dvfAtomicExpression
-  val (Derivation)=>Result<? extends AtomicExpression> dvfAssignableExpression
+  val (Derivation)=>Result<? extends Expression> dvfAssignableExpression
   val (Derivation)=>Result<? extends AssignmentOperator> dvfAssignmentOperator
   val (Derivation)=>Result<? extends Expression> dvfSubExpression
   val (Derivation)=>Result<? extends Expression> dvfRangeExpression
@@ -1959,11 +1891,10 @@ package class Derivation {
   val (Derivation)=>Result<? extends CharRange> dvfCharRange
   val (Derivation)=>Result<? extends Expression> dvfAnyCharExpression
   val (Derivation)=>Result<? extends Expression> dvfRuleReferenceExpression
-  val (Derivation)=>Result<? extends AtomicExpression> dvfEndOfInputExpression
   val (Derivation)=>Result<? extends Expression> dvfTerminalExpression
   val (Derivation)=>Result<? extends InTerminalChar> dvfInTerminalChar
   val (Derivation)=>Result<? extends Comment> dvfComment
-  val (Derivation)=>Result<? extends FQTN> dvfFQTN
+  val (Derivation)=>Result<? extends EOI> dvfEOI
   val (Derivation)=>Result<? extends ID> dvfID
   val (Derivation)=>Result<? extends WS> dvfWS
   val (Derivation)=>Result<Character> dvfChar
@@ -1980,8 +1911,7 @@ package class Derivation {
   Result<? extends Expression> dvOneOrMoreExpression
   Result<? extends Expression> dvZeroOrMoreExpression
   Result<? extends Expression> dvOptionalExpression
-  Result<? extends Expression> dvAtomicExpression
-  Result<? extends AtomicExpression> dvAssignableExpression
+  Result<? extends Expression> dvAssignableExpression
   Result<? extends AssignmentOperator> dvAssignmentOperator
   Result<? extends Expression> dvSubExpression
   Result<? extends Expression> dvRangeExpression
@@ -1989,16 +1919,15 @@ package class Derivation {
   Result<? extends CharRange> dvCharRange
   Result<? extends Expression> dvAnyCharExpression
   Result<? extends Expression> dvRuleReferenceExpression
-  Result<? extends AtomicExpression> dvEndOfInputExpression
   Result<? extends Expression> dvTerminalExpression
   Result<? extends InTerminalChar> dvInTerminalChar
   Result<? extends Comment> dvComment
-  Result<? extends FQTN> dvFQTN
+  Result<? extends EOI> dvEOI
   Result<? extends ID> dvID
   Result<? extends WS> dvWS
   Result<Character> dvChar
   
-  new(int idx, (Derivation)=>Result<? extends Jpeg> dvfJpeg, (Derivation)=>Result<? extends Rule> dvfRule, (Derivation)=>Result<? extends RuleReturns> dvfRuleReturns, (Derivation)=>Result<? extends Body> dvfBody, (Derivation)=>Result<? extends Expression> dvfChoiceExpression, (Derivation)=>Result<? extends Expression> dvfSequenceExpression, (Derivation)=>Result<? extends Expression> dvfActionExpression, (Derivation)=>Result<? extends Expression> dvfAndPredicateExpression, (Derivation)=>Result<? extends Expression> dvfNotPredicateExpression, (Derivation)=>Result<? extends Expression> dvfOneOrMoreExpression, (Derivation)=>Result<? extends Expression> dvfZeroOrMoreExpression, (Derivation)=>Result<? extends Expression> dvfOptionalExpression, (Derivation)=>Result<? extends Expression> dvfAtomicExpression, (Derivation)=>Result<? extends AtomicExpression> dvfAssignableExpression, (Derivation)=>Result<? extends AssignmentOperator> dvfAssignmentOperator, (Derivation)=>Result<? extends Expression> dvfSubExpression, (Derivation)=>Result<? extends Expression> dvfRangeExpression, (Derivation)=>Result<? extends MinMaxRange> dvfMinMaxRange, (Derivation)=>Result<? extends CharRange> dvfCharRange, (Derivation)=>Result<? extends Expression> dvfAnyCharExpression, (Derivation)=>Result<? extends Expression> dvfRuleReferenceExpression, (Derivation)=>Result<? extends AtomicExpression> dvfEndOfInputExpression, (Derivation)=>Result<? extends Expression> dvfTerminalExpression, (Derivation)=>Result<? extends InTerminalChar> dvfInTerminalChar, (Derivation)=>Result<? extends Comment> dvfComment, (Derivation)=>Result<? extends FQTN> dvfFQTN, (Derivation)=>Result<? extends ID> dvfID, (Derivation)=>Result<? extends WS> dvfWS, (Derivation)=>Result<Character> dvfChar) {
+  new(int idx, (Derivation)=>Result<? extends Jpeg> dvfJpeg, (Derivation)=>Result<? extends Rule> dvfRule, (Derivation)=>Result<? extends RuleReturns> dvfRuleReturns, (Derivation)=>Result<? extends Body> dvfBody, (Derivation)=>Result<? extends Expression> dvfChoiceExpression, (Derivation)=>Result<? extends Expression> dvfSequenceExpression, (Derivation)=>Result<? extends Expression> dvfActionExpression, (Derivation)=>Result<? extends Expression> dvfAndPredicateExpression, (Derivation)=>Result<? extends Expression> dvfNotPredicateExpression, (Derivation)=>Result<? extends Expression> dvfOneOrMoreExpression, (Derivation)=>Result<? extends Expression> dvfZeroOrMoreExpression, (Derivation)=>Result<? extends Expression> dvfOptionalExpression, (Derivation)=>Result<? extends Expression> dvfAssignableExpression, (Derivation)=>Result<? extends AssignmentOperator> dvfAssignmentOperator, (Derivation)=>Result<? extends Expression> dvfSubExpression, (Derivation)=>Result<? extends Expression> dvfRangeExpression, (Derivation)=>Result<? extends MinMaxRange> dvfMinMaxRange, (Derivation)=>Result<? extends CharRange> dvfCharRange, (Derivation)=>Result<? extends Expression> dvfAnyCharExpression, (Derivation)=>Result<? extends Expression> dvfRuleReferenceExpression, (Derivation)=>Result<? extends Expression> dvfTerminalExpression, (Derivation)=>Result<? extends InTerminalChar> dvfInTerminalChar, (Derivation)=>Result<? extends Comment> dvfComment, (Derivation)=>Result<? extends EOI> dvfEOI, (Derivation)=>Result<? extends ID> dvfID, (Derivation)=>Result<? extends WS> dvfWS, (Derivation)=>Result<Character> dvfChar) {
     this.idx = idx
     this.dvfJpeg = dvfJpeg
     this.dvfRule = dvfRule
@@ -2012,7 +1941,6 @@ package class Derivation {
     this.dvfOneOrMoreExpression = dvfOneOrMoreExpression
     this.dvfZeroOrMoreExpression = dvfZeroOrMoreExpression
     this.dvfOptionalExpression = dvfOptionalExpression
-    this.dvfAtomicExpression = dvfAtomicExpression
     this.dvfAssignableExpression = dvfAssignableExpression
     this.dvfAssignmentOperator = dvfAssignmentOperator
     this.dvfSubExpression = dvfSubExpression
@@ -2021,11 +1949,10 @@ package class Derivation {
     this.dvfCharRange = dvfCharRange
     this.dvfAnyCharExpression = dvfAnyCharExpression
     this.dvfRuleReferenceExpression = dvfRuleReferenceExpression
-    this.dvfEndOfInputExpression = dvfEndOfInputExpression
     this.dvfTerminalExpression = dvfTerminalExpression
     this.dvfInTerminalChar = dvfInTerminalChar
     this.dvfComment = dvfComment
-    this.dvfFQTN = dvfFQTN
+    this.dvfEOI = dvfEOI
     this.dvfID = dvfID
     this.dvfWS = dvfWS
     this.dvfChar = dvfChar
@@ -2119,13 +2046,6 @@ package class Derivation {
     return dvOptionalExpression
   }
   
-  def getDvAtomicExpression() {
-    if (dvAtomicExpression == null) {
-      dvAtomicExpression = dvfAtomicExpression.apply(this)
-    }
-    return dvAtomicExpression
-  }
-  
   def getDvAssignableExpression() {
     if (dvAssignableExpression == null) {
       dvAssignableExpression = dvfAssignableExpression.apply(this)
@@ -2182,13 +2102,6 @@ package class Derivation {
     return dvRuleReferenceExpression
   }
   
-  def getDvEndOfInputExpression() {
-    if (dvEndOfInputExpression == null) {
-      dvEndOfInputExpression = dvfEndOfInputExpression.apply(this)
-    }
-    return dvEndOfInputExpression
-  }
-  
   def getDvTerminalExpression() {
     if (dvTerminalExpression == null) {
       dvTerminalExpression = dvfTerminalExpression.apply(this)
@@ -2210,11 +2123,11 @@ package class Derivation {
     return dvComment
   }
   
-  def getDvFQTN() {
-    if (dvFQTN == null) {
-      dvFQTN = dvfFQTN.apply(this)
+  def getDvEOI() {
+    if (dvEOI == null) {
+      dvEOI = dvfEOI.apply(this)
     }
-    return dvFQTN
+    return dvEOI
   }
   
   def getDvID() {
@@ -2404,15 +2317,6 @@ package class CharacterConsumer {
   class Eoi extends Terminal {
   }
   
-  class EndOfInputExpression extends AtomicExpression {
-    
-    override EndOfInputExpression copy() {
-      val r = new EndOfInputExpression
-      return r
-    }
-    
-  }
-  
   class OptionalExpression extends Expression {
     
     @Property
@@ -2435,7 +2339,7 @@ package class CharacterConsumer {
     AssignmentOperator op
     
     @Property
-    FQTN name
+    ID name
     
     override ActionExpression copy() {
       val r = new ActionExpression
@@ -2465,16 +2369,7 @@ package class CharacterConsumer {
     
   }
   
-  class AtomicExpression extends Expression {
-    
-    override AtomicExpression copy() {
-      val r = new AtomicExpression
-      return r
-    }
-    
-  }
-  
-  class AssignableExpression extends AtomicExpression {
+  class AssignableExpression extends Expression {
     
     @Property
     ID property
@@ -2530,10 +2425,19 @@ package class CharacterConsumer {
     
   }
   
-  class ID extends Terminal {
+  class ID extends Node {
     
     override ID copy() {
       val r = new ID
+      return r
+    }
+    
+  }
+  
+  class EOI extends Node {
+    
+    override EOI copy() {
+      val r = new EOI
       return r
     }
     
@@ -2622,16 +2526,7 @@ package class CharacterConsumer {
     
   }
   
-  class FQTN extends Terminal {
-    
-    override FQTN copy() {
-      val r = new FQTN
-      return r
-    }
-    
-  }
-  
-  class WS extends Terminal {
+  class WS extends Node {
     
     override WS copy() {
       val r = new WS
@@ -2699,7 +2594,7 @@ package class CharacterConsumer {
   class RuleReturns extends Node {
     
     @Property
-    FQTN name
+    ID name
     
     override RuleReturns copy() {
       val r = new RuleReturns

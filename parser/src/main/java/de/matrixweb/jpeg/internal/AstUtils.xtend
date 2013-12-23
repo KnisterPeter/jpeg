@@ -50,7 +50,7 @@ class TypeGenerator {
     jpeg.rules.forEach[
       val type = map.get(name.parsed)
       type.attributes = getAttributes(jpeg, map)
-      type.supertype = map.get(if (isTerminal()) 'Terminal' else (returns?.name?.parsed ?: 'Node'))
+      type.supertype = map.get(returns?.name?.parsed ?: 'Node')
     ]
     return map
   }
@@ -97,10 +97,6 @@ class TypeGenerator {
   
   private static def isKeyword(String name) {
     #['char'].contains(name)
-  }
-  
-  private static def isTerminal(Rule rule) {
-      rule.name.parsed.toUpperCase == rule.name.parsed
   }
   
 }
@@ -173,10 +169,6 @@ class AstNodeHelper {
   }
   
   private static def dispatch Iterable<?> findNodes(RangeExpression range, Class<?> clazz) {
-    #[]
-  }
-  
-  private static def dispatch Iterable<?> findNodes(EndOfInputExpression eoi, Class<?> clazz) {
     #[]
   }
   
