@@ -25,6 +25,7 @@ class JPEG {
     extension val parser = new Parser
     var jpeg = grammar.Jpeg()
     jpeg.validate(parser)
+    
     val types = jpeg.createTypes()
 
     val sb = new StringBuilder

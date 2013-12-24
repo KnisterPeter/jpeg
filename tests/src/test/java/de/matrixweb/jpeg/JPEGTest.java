@@ -6,9 +6,10 @@ import java.io.IOException;
 import jpeg.Jpeg;
 import jpeg.ParseException;
 import jpeg.Parser;
+import jpeg.Rule;
+import jpeg.SequenceExpression;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TestName;
@@ -26,13 +27,13 @@ import static org.hamcrest.CoreMatchers.*;
 @SuppressWarnings("javadoc")
 public class JPEGTest {
 
-  @Rule
+  @org.junit.Rule
   public TestName name = new TestName();
 
-  @Rule
+  @org.junit.Rule
   public ExpectedException exception = ExpectedException.none();
 
-  @Rule
+  @org.junit.Rule
   public StopwatchRule stopwatch = new StopwatchRule();
 
   private Parser parser;
@@ -85,6 +86,21 @@ public class JPEGTest {
   }
 
   @Test
+  public void testCommentInSequnce() {
+    final Jpeg jpeg = this.parser.Jpeg("Rule: 'a' //'b' \n  'c';");
+
+    assertThat(jpeg, is(notNullValue()));
+    final Rule rule = jpeg.getRules().get(0);
+    // Expect one sequence exp
+    assertThat(rule.getBody().getExpressions().size(), is(1));
+    assertThat(rule.getBody().getExpressions().get(0),
+        is(instanceOf(SequenceExpression.class)));
+    final SequenceExpression seq = (SequenceExpression) rule.getBody()
+        .getExpressions().get(0);
+    assertThat(seq.getExpressions().size(), is(2));
+  }
+
+  @Test
   public void testJpegGrammar() throws IOException {
     final Jpeg r = this.parser.Jpeg(Files.toString(new File(
         "../parser/src/test/resources/de/matrixweb/jpeg/jpeg.jpeg"),
@@ -99,6 +115,7 @@ public class JPEGTest {
         "src/test/resources/ecmascript.jpeg"), "ecmascript");
 
     assertThat(parser, is(notNullValue()));
+    System.out.println(parser);
   }
 
 }

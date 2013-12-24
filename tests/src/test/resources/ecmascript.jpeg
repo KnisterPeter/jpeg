@@ -90,11 +90,12 @@ SingleLineCommentChar :
 
 //-- 7.5 Tokens ----------------------------------------------------------------
 
+// TODO
 Token :
     IdentifierName
   | Punctuator
-  | NumericLiteral
-  | StringLiteral
+  //| NumericLiteral
+  //| StringLiteral
 ;
 
 DivPunctuator :
@@ -104,26 +105,30 @@ DivPunctuator :
 
 //-- 7.6 Identifier Names and Identifiers --------------------------------------
 
+// TODO
 Identifier :
-  !ReservedWord IdentifierName
+  //!ReservedWord
+  IdentifierName
 ;
 
 IdentifierName :
     IdentifierStart IdentifierPart*
 ;
 
+// TODO
 IdentifierStart :
-    UnicodeLetter
-  | '$'
+  //  UnicodeLetter
+  //| '$'
+    '$'
   | '_'
-  | '\\' UnicodeEscapeSequence
+  //| '\\' UnicodeEscapeSequence
 ;
 
 IdentifierPart :
     IdentifierStart
-  | UnicodeCombiningMark
-  | UnicodeDigit
-  | UnicodeConnectorPunctuation
+  //| UnicodeCombiningMark
+  //| UnicodeDigit
+  //| UnicodeConnectorPunctuation
 ;
 
 //UnicodeLetter :
@@ -212,6 +217,59 @@ RegularExpressionClassChar :
 
 RegularExpressionFlags :
   IdentifierPart*
+;
+
+// -- 11.11 Binary Logical Operators -------------------------------------------
+
+// TODO
+//
+//LogicalANDExpression :
+//    BitwiseORExpression
+//  | LogicalANDExpression '&&' BitwiseORExpression
+//;
+//
+//LogicalANDExpressionNoIn :
+//    BitwiseORExpressionNoIn
+//  | LogicalANDExpressionNoIn '&&' BitwiseORExpressionNoIn
+//;
+//
+//LogicalORExpression :
+//    LogicalANDExpression
+//  | LogicalORExpression '||' LogicalANDExpression
+//;
+//
+//LogicalORExpressionNoIn :
+//    LogicalANDExpressionNoIn
+//  | LogicalORExpressionNoIn '||' LogicalANDExpressionNoIn
+//;
+//
+
+// -- 11.12 Conditional Operator ( ? : ) ---------------------------------------
+
+ConditionalExpression :
+  LogicalORExpression ('?' AssignmentExpression ':' AssignmentExpression)?
+;
+
+ConditionalExpressionNoIn :
+  LogicalORExpressionNoIn ('?' AssignmentExpression ':' AssignmentExpressionNoIn)?
+;
+
+// -- 11.13 Assignment Operators -----------------------------------------------
+
+AssignmentExpression :
+    ConditionalExpression
+  | LeftHandSideExpression '=' AssignmentExpression
+  | LeftHandSideExpression AssignmentOperator AssignmentExpression
+;
+
+AssignmentExpressionNoIn :
+    ConditionalExpressionNoIn
+  | LeftHandSideExpression '=' AssignmentExpressionNoIn
+  | LeftHandSideExpression AssignmentOperator AssignmentExpressionNoIn
+;
+
+AssignmentOperator :
+  '*=' | '/=' | '%=' | '+=' | '-=' | '<<=' | '>>=' | '>>>=' | '&=' | '^=' | '|='
 ;
 
 //-- 12 Statements -------------------------------------------------------------

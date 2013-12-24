@@ -532,45 +532,65 @@ class Parser {
   }
   
   /**
-   * SequenceExpression returns Expression : ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )+ ; 
+   * SequenceExpression returns Expression : ( Comment* expressions+=( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )+ ; 
    */
   package def Result<? extends Expression> sequenceExpression(Derivation derivation) {
     var Result<?> result = null
     var node = new SequenceExpression
     var d = derivation
     
-    // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )+ 
+    // ( Comment* expressions+=( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )+ 
     var backup0 = node.copy()
     var backup1 = d
     var loop0 = false
     
     do {
-      // ( expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )
-      // expressions+= ( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) 
-      val result0 = d.sequenceExpression_sub0()
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
+      // ( Comment* expressions+=( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) WS* )
+      // Comment* 
+      var backup2 = node.copy()
+      var backup3 = d
+      
+      do {
+        // Comment
+        val result0 = d.dvComment
+        d = result0.derivation
+        result = result0.joinErrors(result, false)
+        if (result.node != null) {
+          backup2 = node.copy()
+          backup3 = d
+        }
+      } while (result.node != null)
+      node = backup2
+      d = backup3
+      result = CONTINUE.joinErrors(result, false)
+      
       if (result.node != null) {
-        node.add(result0.node)
+        // expressions+=( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) 
+        val result1 = d.sequenceExpression_sub0()
+        d = result1.derivation
+        result = result1.joinErrors(result, false)
+        if (result.node != null) {
+          node.add(result1.node)
+        }
       }
       
       if (result.node != null) {
         // WS* 
-        var backup2 = node.copy()
-        var backup3 = d
+        var backup4 = node.copy()
+        var backup5 = d
         
         do {
           // WS
-          val result1 = d.dvWS
-          d = result1.derivation
-          result = result1.joinErrors(result, false)
+          val result2 = d.dvWS
+          d = result2.derivation
+          result = result2.joinErrors(result, false)
           if (result.node != null) {
-            backup2 = node.copy()
-            backup3 = d
+            backup4 = node.copy()
+            backup5 = d
           }
         } while (result.node != null)
-        node = backup2
-        d = backup3
+        node = backup4
+        d = backup5
         result = CONTINUE.joinErrors(result, false)
       }
       
