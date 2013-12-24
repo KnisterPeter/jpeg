@@ -1,9 +1,9 @@
-package de.matrixweb.jpeg.internal
+package jpeg
 
 import java.util.Set
 
-import static extension de.matrixweb.jpeg.internal.CharacterRange.*
-import static extension de.matrixweb.jpeg.internal.Parser.*
+import static extension jpeg.CharacterRange.*
+import static extension jpeg.Parser.*
 
 class Parser {
   
@@ -2606,3 +2606,4 @@ package class ParseInfo {
   }
   
 }
+

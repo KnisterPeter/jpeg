@@ -13,17 +13,17 @@ Jpeg :
 // -----------------------------------------------------------------------------
 
 Rule :
-  name=ID WS* returns=RuleReturns? ':' WS* body=Body ';' WS*
+  name=ID _ returns=RuleReturns? ':' _ body=Body ';' _
 ;
 
 RuleReturns :
-  'returns' WS* name=ID WS*
+  'returns' _ name=ID _
 ;
 
 // -----------------------------------------------------------------------------
 
 Body :
-  (expressions+=ChoiceExpression WS*)+
+  (expressions+=ChoiceExpression _)+
 ;
 
 // -----------------------------------------------------------------------------
@@ -50,7 +50,7 @@ Expression :
 // -----------------------------------------------------------------------------
 
 ChoiceExpression returns Expression :
-  choices+=SequenceExpression ('|' WS* choices+=SequenceExpression)*
+  choices+=SequenceExpression ('|' _ choices+=SequenceExpression)*
 ;
 
 // -----------------------------------------------------------------------------
@@ -66,50 +66,50 @@ SequenceExpression returns Expression :
                  | OptionalExpression
                  | AssignableExpression
                  )
-    WS*
+    _
   )+
 ;
 
 // -----------------------------------------------------------------------------
 
 ActionExpression returns Expression :
-  '{' WS* (property=ID WS* op=AssignmentOperator 'current' WS* | name=ID WS*) '}'
+  '{' _ (property=ID _ op=AssignmentOperator ('current' | name=ID) _) '}'
 ;
 
 // -----------------------------------------------------------------------------
 
 AndPredicateExpression returns Expression :
-  '&' WS* expr=AssignableExpression
+  '&' _ expr=AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
 NotPredicateExpression returns Expression :
-  '!' WS* expr=AssignableExpression
+  '!' _ expr=AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
 OneOrMoreExpression returns Expression :
-  expr=AssignableExpression '+' WS*
+  expr=AssignableExpression '+' _
 ;
 
 // -----------------------------------------------------------------------------
 
 ZeroOrMoreExpression returns Expression :
-  expr=AssignableExpression '*' WS*
+  expr=AssignableExpression '*' _
 ;
 
 // -----------------------------------------------------------------------------
 
 OptionalExpression returns Expression :
-  expr=AssignableExpression '?' WS*
+  expr=AssignableExpression '?' _
 ;
 
 // -----------------------------------------------------------------------------
 
 AssignableExpression returns Expression :
-  (property=ID WS* op=AssignmentOperator)?
+  (property=ID _ op=AssignmentOperator)?
   expr=
   ( SubExpression
   | RangeExpression
@@ -117,26 +117,26 @@ AssignableExpression returns Expression :
   | AnyCharExpression
   | RuleReferenceExpression
   )
-  WS*
+  _
 ;
 
 // -----------------------------------------------------------------------------
 
 AssignmentOperator :
-  (single='=' | multi='+=')
-  WS*
+  (single?='=' | multi?='+=' | bool?='?=')
+  _
 ;
 
 // -----------------------------------------------------------------------------
 
 SubExpression returns Expression :
-  '(' WS* expr=ChoiceExpression ')' WS*
+  '(' _ expr=ChoiceExpression ')' _
 ;
 
 // -----------------------------------------------------------------------------
 
 RangeExpression returns Expression : 
-  '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' WS*
+  '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' _
 ;
 
 MinMaxRange:
@@ -144,8 +144,8 @@ MinMaxRange:
 ;
 
 CharRange:
-    char='\\]'
-  | char='\\\\'
+    '\\' char=']'
+  | '\\' char='\\'
   | !'-' char=.
 ;
 
@@ -158,13 +158,13 @@ AnyCharExpression returns Expression :
 // -----------------------------------------------------------------------------
 
 RuleReferenceExpression returns Expression :
-  name=ID WS*
+  name=ID _
 ;
 
 // -----------------------------------------------------------------------------
 
 TerminalExpression returns Expression :
-  '\'' value=InTerminalChar? '\'' WS*
+  '\'' value=InTerminalChar? '\'' _
 ;
 
 InTerminalChar:
@@ -174,7 +174,7 @@ InTerminalChar:
 // -----------------------------------------------------------------------------
 
 Comment :
-  '//' (!('\r'? '\n') .)* WS*
+  '//' (!('\r'? '\n') .)* _
 ;
 
 // -----------------------------------------------------------------------------
@@ -193,4 +193,7 @@ ID:
 
 WS : 
   ' ' | '\n' | '\t' | '\r'
+;
+_ : 
+  WS* 
 ;

@@ -2,6 +2,8 @@ package de.matrixweb.jpeg;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.Test;
 
@@ -16,21 +18,24 @@ public class ParserAndGeneratorTest {
 
   @Test
   public void testParseAndGenerate() throws IOException {
-    generate("de/matrixweb/jpeg/jpeg.jpeg", "jpeg", "jpeg/Jpeg.xtend");
+    generate("de/matrixweb/jpeg/jpeg.jpeg", "jpeg", "jpeg");
   }
 
   @Test
   public void testTypeEvaluation() throws IOException {
-    generate("de/matrixweb/jpeg/types.jpeg", "types", "types/Types.xtend");
+    generate("de/matrixweb/jpeg/types.jpeg", "types", "types");
   }
 
   private void generate(final String input, final String packageName,
       final String output) throws IOException {
-    final String code = JPEG.generate(new File("src/test/resources", input),
-        packageName);
+    final Map<String, CharSequence> files = JPEG.generate(new File(
+        "src/test/resources", input), packageName);
     final File target = new File("../tests/src/main/java", output);
     target.getParentFile().mkdirs();
-    Files.write(code, target, Charsets.UTF_8);
+    for (final Entry<String, CharSequence> file : files.entrySet()) {
+      Files.write(file.getValue(), new File(target, file.getKey()),
+          Charsets.UTF_8);
+    }
   }
 
 }

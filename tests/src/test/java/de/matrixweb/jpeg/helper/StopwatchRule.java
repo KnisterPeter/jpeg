@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg;
+package de.matrixweb.jpeg.helper;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;

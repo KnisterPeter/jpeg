@@ -3,6 +3,7 @@ package de.matrixweb.jpeg;
 import java.io.File;
 import java.io.IOException;
 
+import jpeg.Expression;
 import jpeg.Jpeg;
 import jpeg.ParseException;
 import jpeg.Parser;
@@ -17,6 +18,8 @@ import org.junit.rules.TestName;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
+import de.matrixweb.jpeg.helper.StopwatchRule;
+
 import static org.junit.Assert.*;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -25,7 +28,7 @@ import static org.hamcrest.CoreMatchers.*;
  * @author markusw
  */
 @SuppressWarnings("javadoc")
-public class JPEGTest {
+public class AstTest {
 
   @org.junit.Rule
   public TestName name = new TestName();
@@ -101,21 +104,23 @@ public class JPEGTest {
   }
 
   @Test
+  public void testSimpleRule() {
+    final Jpeg jpeg = this.parser.Jpeg("A: B | C;");
+
+    assertThat(jpeg, is(notNullValue()));
+    assertThat(jpeg.getRules().get(0).getBody().getExpressions().size(), is(1));
+    final Expression expr = jpeg.getRules().get(0).getBody().getExpressions()
+        .get(0);
+    System.out.println(expr);
+  }
+
+  @Test
   public void testJpegGrammar() throws IOException {
     final Jpeg r = this.parser.Jpeg(Files.toString(new File(
         "../parser/src/test/resources/de/matrixweb/jpeg/jpeg.jpeg"),
         Charsets.UTF_8));
 
     assertThat(r, is(notNullValue()));
-  }
-
-  @Test
-  public void testEcmaScriptGrammar() throws IOException {
-    final String parser = JPEG.generate(new File(
-        "src/test/resources/ecmascript.jpeg"), "ecmascript");
-
-    assertThat(parser, is(notNullValue()));
-    System.out.println(parser);
   }
 
 }

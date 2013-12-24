@@ -9,6 +9,7 @@ import static extension com.google.common.io.Files.*
 import static extension de.matrixweb.jpeg.internal.AstValidator.*
 import static extension de.matrixweb.jpeg.internal.Generator.*
 import static extension de.matrixweb.jpeg.internal.TypeGenerator.*
+import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 
 class JPEG {
 
@@ -23,15 +24,15 @@ class JPEG {
 
   static private def parseAndGenerate(String grammar, String packageName) {
     extension val parser = new Parser
-    var jpeg = grammar.Jpeg()
+    var jpeg = grammar.unescaped.Jpeg()
     jpeg.validate(parser)
     
     val types = jpeg.createTypes()
 
-    val sb = new StringBuilder
-    sb.append(jpeg.generateParser(types, packageName))
-    sb.append(types.values.generateTypes())
-    return sb.toString
+    return #{
+      'Parser.xtend' -> jpeg.generateParser(types, packageName),
+      'Types.xtend' -> types.values.generateTypes(packageName)
+    }
   }
 
 }
