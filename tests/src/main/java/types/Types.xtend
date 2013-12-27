@@ -9,15 +9,16 @@ package class Node {
   String parsed
   
   def Node copy() {
-    val r = new Node
-    r._parsed = _parsed
-    return r
+    new Node().copyAttributes()
   }
   
-  def <T extends Node> T add(Node in) {
-    val out = class.newInstance as T
-    out.parsed = (this._parsed ?: '') + in._parsed
-    return out
+  protected def copyAttributes(Node node) {
+    node._index = _index
+    node._parsed = _parsed
+    return node
+  }
+  
+  def dispatch void add(Node node) {
   }
   
   override toString() {
@@ -40,29 +41,41 @@ class Terminal extends Node {
   }
 
   override Terminal copy() {
-    val r = new Terminal
-    r.parsed = parsed
-    return r
+    new Terminal().copyAttributes()
   }
   
-
+  protected def copyAttributes(Terminal terminal) {
+    super.copyAttributes(terminal)
+    return terminal
+  }
+  
 }
 
  class ExprA extends Expr {
   
   override ExprA copy() {
-    val r = new ExprA
-    return r
+    new ExprA().copyAttributes()
   }
+  
+  protected def copyAttributes(ExprA type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
  class ExprB extends Expr {
   
   override ExprB copy() {
-    val r = new ExprB
-    return r
+    new ExprB().copyAttributes()
   }
+  
+  protected def copyAttributes(ExprB type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
@@ -79,16 +92,29 @@ class Terminal extends Node {
   }
   
   override Rule copy() {
-    val r = new Rule
-    r.attrExpr = this.attrExpr
-    return r
+    new Rule().copyAttributes()
   }
+  
+  protected def copyAttributes(Rule type) {
+    super.copyAttributes(type)
+    type.attrExpr = this.attrExpr
+    return type
+  }
+  
   
 }
 
-abstract class Expr extends Node {
+ class Expr extends Node {
   
-  override Expr copy()
+  override Expr copy() {
+    new Expr().copyAttributes()
+  }
+  
+  protected def copyAttributes(Expr type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 

@@ -2,6 +2,7 @@ package de.matrixweb.jpeg;
 
 import java.io.File;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
@@ -41,6 +42,7 @@ public class GeneratedGrammarTest extends AbstractCompilationTest {
     compileAndRun("Rule: [\\\\];", "Rule", "\\");
   }
 
+  @Ignore
   @Test
   public void testEcmaScriptGrammar() throws Throwable {
     compileAndRun(Files.toString(
@@ -49,6 +51,7 @@ public class GeneratedGrammarTest extends AbstractCompilationTest {
             Charsets.UTF_8), true);
   }
 
+  @Ignore
   @Test
   public void testEcmaScriptGrammarRunOnly() throws Throwable {
     final testEcmaScriptGrammar.Parser parser = new testEcmaScriptGrammar.Parser();

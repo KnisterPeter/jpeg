@@ -4,7 +4,6 @@ import java.util.Collection
 import java.util.List
 import java.util.Map
 
-import static extension de.matrixweb.jpeg.internal.AstOptimizer.*
 import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
 import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 
@@ -220,20 +219,6 @@ class Generator {
       def getInfo() { info }
       def setInfo(ParseInfo info) { this.info = info }
       
-      def Result<?> joinErrors(Result<?> r2, boolean inPredicate) {
-        if (r2 != null) {
-          if (inPredicate) {
-            info = r2.info
-          } else {
-            info = 
-              if (info.position > r2.info.position || r2.info.messages == null) info
-              else if (info.position < r2.info.position || info.messages == null) r2.info
-              else new ParseInfo(info.position, info.messages + r2.info.messages)
-          }
-        }
-        return this
-      }
-      
       override toString() {
         'Result[' + (if (node != null) 'MATCH' else 'NO MATCH') + ']'
       }
@@ -242,13 +227,8 @@ class Generator {
     
     package class SpecialResult extends Result<Object> {
       new(Object o) { super(o, null, null) }
-      override joinErrors(Result<?> r2, boolean inPredicate) { 
-        info = r2.info
-        return this
-      }
     }
     
-    @Data
     package class ParseInfo {
       
       int position
@@ -264,8 +244,24 @@ class Generator {
       }
       
       new(int position, Iterable<String> messages) {
-        this._position = position
-        this._messages = messages?.toSet
+        this.position = position
+        this.messages = messages?.toSet
+      }
+      
+      def getPosition() { position }
+      def getMessages() { messages }
+      
+      def join(Result<?> r, boolean inPredicate) {
+        if (!inPredicate && r != null && r.info != null) {
+          if (position > r.info.position || r.info.messages == null) {
+            // Do nothing
+          } else if (position < r.info.position || messages == null) {
+            position = r.info.position
+            messages = r.info.messages
+          } else {
+            messages += r.info.messages
+          }
+        }
       }
       
     }
@@ -284,15 +280,16 @@ class Generator {
       String parsed
       
       def Node copy() {
-        val r = new Node
-        r._parsed = _parsed
-        return r
+        new Node().copyAttributes()
       }
       
-      def <T extends Node> T add(Node in) {
-        val out = class.newInstance as T
-        out.parsed = (this._parsed ?: '') + in._parsed
-        return out
+      protected def copyAttributes(Node node) {
+        node._index = _index
+        node._parsed = _parsed
+        return node
+      }
+      
+      def dispatch void add(Node node) {
       }
       
       override toString() {
@@ -315,12 +312,14 @@ class Generator {
       }
     
       override Terminal copy() {
-        val r = new Terminal
-        r.parsed = parsed
-        return r
+        new Terminal().copyAttributes()
       }
       
-    
+      protected def copyAttributes(Terminal terminal) {
+        super.copyAttributes(terminal)
+        return terminal
+      }
+      
     }
     
     «FOR type : types»
@@ -352,7 +351,11 @@ class Generator {
     
     «val typeParameter = attribute.typeParameter»
     «IF typeParameter != null»
-      def dispatch void add(«typeParameter.name» __«typeParameter.name.toFirstLower») {
+      «IF typeParameter.name == 'Node'»
+        override dispatch void add(«typeParameter.name» __«typeParameter.name.toFirstLower») {
+      «ELSE»
+        def dispatch void add(«typeParameter.name» __«typeParameter.name.toFirstLower») {
+      «ENDIF»
         this.attr«name» = this.attr«name» ?: newArrayList
         this.attr«name» += __«typeParameter.name.toFirstLower»
       }
@@ -365,12 +368,17 @@ class Generator {
       override «type.name» copy()
     «ELSE»
       override «type.name» copy() {
-        val r = new «type.name»
-        «FOR attribute : attributes»
-          r.attr«attribute.name.toFirstUpper» = this.attr«attribute.name.toFirstUpper»
-        «ENDFOR»
-        return r
+        new «type.name»().copyAttributes()
       }
+      
+      protected def copyAttributes(«type.name» type) {
+        super.copyAttributes(type)
+        «FOR attribute : attributes»
+          type.attr«attribute.name.toFirstUpper» = this.attr«attribute.name.toFirstUpper»
+        «ENDFOR»
+        return type
+      }
+      
     «ENDIF»
   '''
 
@@ -383,6 +391,8 @@ class RuleGenerator {
   JType type
   
   JType resultType
+  
+  JType nodeType
   
   Jpeg jpeg
   
@@ -399,6 +409,8 @@ class RuleGenerator {
   int subCounter = -1
   
   boolean inPredicate = false
+  
+  boolean isAssignment = false
   
   new(Rule rule, Jpeg jpeg, Map<String, JType> types) {
     this.rule = rule
@@ -426,19 +438,23 @@ class RuleGenerator {
        * «rule.escapeJavadoc.escaped»
        */
       package static def Result<? extends «resultType.name»> match«name.toFirstUpper»(Parser parser, Derivation derivation) {
-          var Result<?> result = null
-          var node = new «name»
-          var d = derivation
-          
-          «rule.body.create()»
-          
-          if (result.node != null) {
-            «optimize()»
-            node.index = derivation.index
-            node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-            return new Result<«resultType.name»>(node, d, result.info)
+        var Result<?> result = null
+        var «resultType.name» node = null
+        var d = derivation
+        val ParseInfo info = new ParseInfo(derivation.index)
+        
+        «rule.body.create()»
+        
+        result.info = info
+        if (result.node != null) {
+          if (node == null) {
+            node = new «type.name»()
           }
-          return new Result<«resultType.name»>(null, derivation, result.info)
+          node.index = derivation.index
+          node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+          return new Result<«resultType.name»>(node, d, result.info)
+        }
+        return new Result<«resultType.name»>(null, derivation, result.info)
       }
       
       «subFunctions.join('\n')»
@@ -449,19 +465,6 @@ class RuleGenerator {
   private def escapeJavadoc(Rule rule) {
     rule.toString().replace('*/', '*&#47;')
   }
-  
-  private def optimize() '''
-    «IF type.isResultOptimizable(resultType, types)»
-      «val attr = type.attributes.head.name»
-      if (node.«attr».size() == 1) {
-        return new Result<«resultType.name»>(node.«attr».get(0), d, result.info)
-      }
-    «ENDIF»
-  '''
-  
-  def dispatch CharSequence create(Object o) '''
-    throw new IllegalArgumentException('Unable to create ' + o.name)
-  '''
   
   def dispatch CharSequence create(Body body) '''
     «FOR expr : body.expressions»
@@ -513,6 +516,13 @@ class RuleGenerator {
     «expr.expr.create()»
     node = «currentBackup»
     d = «tailBackup»
+    if (result.node != null) {
+      result = CONTINUE
+      info.join(result, «inPredicate»)
+    } else {
+      result = BREAK
+      info.join(result, «inPredicate»)
+    }
     «if (inPredicate = false) '' else ''»
   '''
   
@@ -526,9 +536,11 @@ class RuleGenerator {
     node = «currentBackup»
     d = «tailBackup»
     if (result.node != null) {
-      result = BREAK.joinErrors(result, «inPredicate»)
+      result = BREAK
+      info.join(result, «inPredicate»)
     } else {
-      result = CONTINUE.joinErrors(result, «inPredicate»)
+      result = CONTINUE
+      info.join(result, «inPredicate»)
     }
     «if (inPredicate = false) '' else ''»
   '''
@@ -555,7 +567,8 @@ class RuleGenerator {
       node = «currentBackup»
       d = «tailBackup»
     } else {
-      result = CONTINUE.joinErrors(result, «inPredicate»)
+      result = CONTINUE
+      info.join(result, «inPredicate»)
     }
   '''
   
@@ -575,7 +588,8 @@ class RuleGenerator {
     } while (result.node != null)
     node = «currentBackup»
     d = «tailBackup»
-    result = CONTINUE.joinErrors(result, «inPredicate»)
+    result = CONTINUE
+    info.join(result, «inPredicate»)
   '''
   
   def dispatch CharSequence create(OptionalExpression expr) '''
@@ -589,31 +603,39 @@ class RuleGenerator {
     if (result.node == null) {
       node = «currentBackup»
       d = «tailBackup»
-      result = CONTINUE.joinErrors(result, «inPredicate»)
+      result = CONTINUE
+      info.join(result, «inPredicate»)
     }
   '''
   
   def dispatch CharSequence create(AssignableExpression expr) '''
     // «expr.parsed.escaped»
     «IF expr.property != null»
+      «if (isAssignment = true) '' else ''»
       «IF expr.expr instanceof SubExpression»
         «val currentSubFunction = nextSubFunction + 'Match' + name.toFirstUpper»
         «if(subFunctions += (expr.expr as SubExpression).createAssignedSubExpressionFunction(currentSubFunction)) '' else ''»
         val «nextResult» = d.«currentSubFunction»(parser)
         d = «result».derivation
-        result = «result».joinErrors(result, «inPredicate»)
+        result = «result»
+        info.join(«result», «inPredicate»)
       «ELSE»
         «expr.expr.create()»
       «ENDIF»
       if (result.node != null) {
+        if (node == null) {
+          «if (true) { nodeType = type; '' }»
+          node = new «type.name»
+        }
         «IF expr.op.bool»
-          node.set«expr.property.parsed.toFirstUpper»(«result».node != null)
+          «nodeCast».set«expr.property.parsed.toFirstUpper»(«result».node != null)
         «ELSEIF expr.op.multi»
-          node.add(«result».node)
+          «nodeCast».add(«result».node)
         «ELSE»
-          node.set«expr.property.parsed.toFirstUpper»(«result».node)
+          «nodeCast».set«expr.property.parsed.toFirstUpper»(«result».node)
         «ENDIF»
       }
+      «if (isAssignment = false) '' else ''»
     «ELSE»
       «expr.expr.create()»
     «ENDIF»
@@ -622,13 +644,15 @@ class RuleGenerator {
   private def String createAssignedSubExpressionFunction(SubExpression expr, String subFunction) '''
     «val resultType = expr.evaluateType(jpeg, types)»
     private static def Result<? extends «resultType.name»> «subFunction»(Derivation derivation, Parser parser) {
-        var Result<?> result = null
+        var Result<? extends «resultType.name»> result = null
         var «resultType.name» node = «IF resultType.internal»null«ELSE»new «resultType.name»«ENDIF»
         var d = derivation
+        val ParseInfo info = new ParseInfo(derivation.index)
         
         «expr.expr.create()»
         
-        return result as Result<? extends «resultType.name»>
+        result.info = info
+        return result
     }
   '''
   
@@ -637,9 +661,17 @@ class RuleGenerator {
   '''
   
   def dispatch CharSequence create(RuleReferenceExpression expr) '''
+    «val ruleRefResultType = expr.evaluateType(jpeg, types)»
     val «nextResult» = d.dv«expr.name.parsed.toFirstUpper»
     d = «result».derivation
-    result = «result».joinErrors(result, «inPredicate»)
+    «IF !isAssignment && ruleRefResultType.isAssignableTo(resultType, types)»
+      if (node == null) {
+        «if (true) { nodeType = ruleRefResultType; '' }»
+        node = «result».node
+      }
+    «ENDIF»
+    result = «result»
+    info.join(«result», «inPredicate»)
   '''
   
   def dispatch CharSequence create(RangeExpression expr) '''
@@ -649,7 +681,8 @@ class RuleGenerator {
       «IF expr.dash != null»«IF !expr.ranges.empty» + «ENDIF»'-'«ENDIF»
       )
     d = «result».derivation
-    result = «result».joinErrors(result, «inPredicate»)
+    result = «result»
+    info.join(«result», «inPredicate»)
   '''
   
   private def createRanges(List<Node> nodes) {
@@ -696,17 +729,39 @@ class RuleGenerator {
     // «expr»
     val «nextResult» =  d.__any()
     d = «result».derivation
-    result = «result».joinErrors(result, «inPredicate»)
+    result = «result»
+    info.join(«result», «inPredicate»)
   '''
   
   def dispatch CharSequence create(TerminalExpression expr) '''
     val «nextResult» =  d.__terminal('«expr.value.parsed»')
     d = «result».derivation
-    result = «result».joinErrors(result, «inPredicate»)
+    result = «result»
+    info.join(«result», «inPredicate»)
+  '''
+  
+  def dispatch CharSequence create(ActionExpression action) '''
+    val current = node
+    «if (true) { nodeType = types.get(action.type.parsed); '' }»
+    node = new «action.type»()
+    «IF action.property != null»
+      «IF action.op.multi»
+        «nodeCast».add(current)
+      «ELSE»
+        «nodeCast».set«action.property.parsed.toFirstUpper»(current)
+      «ENDIF»
+    «ENDIF»
+    result = CONTINUE
   '''
   
   private def getName() {
     rule.name.parsed
+  }
+  
+  private def getNodeCast() {
+    return 
+      if (nodeType == resultType) 'node'
+      else '''(node as «nodeType.name»)'''
   }
   
   private def getResult() {

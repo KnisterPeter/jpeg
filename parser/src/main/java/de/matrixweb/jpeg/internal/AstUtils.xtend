@@ -7,33 +7,6 @@ import static extension de.matrixweb.jpeg.internal.AstNodeHelper.*
 import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
 import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 
-/**
- * @author markusw
- */
-class AstOptimizer {
-
-  /**
-   * A parser result is optimizable if the following conditions are met:
-   * <ul>
-   * <li>There is only one attribute in the concrete type</li>
-   * <li>The attribute type is a list type</li>
-   * <li>There attribute list element type is assignable to the result type</li>
-   * </ul>
-   */
-  static def isResultOptimizable(JType type, JType resultType, Map<String, JType> types) {
-    if (type.attributes.size == 1) {
-      val attr = type.attributes.head
-      return attr.typeParameter != null && attr.typeParameter.isAssignableTo(resultType, types)
-    }
-    return false
-  }
-
-  static def getOptimizableAttribute(JType type) {
-    type.attributes.head
-  }
-
-}
-
 class TypeGenerator {
 
   static def createTypes(Jpeg jpeg) {
@@ -172,6 +145,10 @@ class AstNodeHelper {
   }
 
   private static def dispatch Iterable<?> findNodes(TerminalExpression terminal, Class<?> clazz) {
+    #[]
+  }
+
+  private static def dispatch Iterable<?> findNodes(ActionExpression action, Class<?> clazz) {
     #[]
   }
 

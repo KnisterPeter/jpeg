@@ -73,6 +73,14 @@ class Parser {
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
   }
   
+  def Expr Expr(String in) {
+    this.chars = in.toCharArray()
+    val result = ExprRule.matchExpr(this, parse(0))
+    return
+      if (result.derivation.dvChar.node == null) result.node
+      else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
+  }
+  
   def Expr ExprA(String in) {
     this.chars = in.toCharArray()
     val result = ExprARule.matchExprA(this, parse(0))
@@ -98,57 +106,123 @@ package class RuleRule {
    * Rule: expr+=(ExprA | ExprB) ; 
    */
   package static def Result<? extends Rule> matchRule(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new Rule
-      var d = derivation
-      
-      // expr+=(ExprA | ExprB)\u000a
-      val result2 = d.sub0MatchRule(parser)
-      d = result2.derivation
-      result = result2.joinErrors(result, false)
-      if (result.node != null) {
-        node.add(result2.node)
+    var Result<?> result = null
+    var Rule node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // expr+=(ExprA | ExprB)\u000a
+    val result2 = d.sub0MatchRule(parser)
+    d = result2.derivation
+    result = result2
+    info.join(result2, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new Rule
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Rule>(node, d, result.info)
+      node.add(result2.node)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new Rule()
       }
-      return new Result<Rule>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Rule>(node, d, result.info)
+    }
+    return new Result<Rule>(null, derivation, result.info)
   }
   
   private static def Result<? extends Expr> sub0MatchRule(Derivation derivation, Parser parser) {
-      var Result<?> result = null
-      var Expr node = null
+      var Result<? extends Expr> result = null
+      var Expr node = new Expr
       var d = derivation
+      val ParseInfo info = new ParseInfo(derivation.index)
       
       // ExprA | ExprB
       val backup0 = node?.copy()
       val backup1 = d
       
-      // ExprA 
       val result0 = d.dvExprA
       d = result0.derivation
-      result = result0.joinErrors(result, false)
+      result = result0
+      info.join(result0, false)
       if (result.node == null) {
         node = backup0
         d = backup1
         val backup2 = node?.copy()
         val backup3 = d
         
-        // ExprB
         val result1 = d.dvExprB
         d = result1.derivation
-        result = result1.joinErrors(result, false)
+        result = result1
+        info.join(result1, false)
         if (result.node == null) {
           node = backup2
           d = backup3
         }
       }
       
-      return result as Result<? extends Expr>
+      result.info = info
+      return result
   }
+  
+}
+package class ExprRule {
+
+  /**
+   * Expr: ExprA | ExprB ; 
+   */
+  package static def Result<? extends Expr> matchExpr(Parser parser, Derivation derivation) {
+    var Result<?> result = null
+    var Expr node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // ExprA | ExprB\u000a
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    val result0 = d.dvExprA
+    d = result0.derivation
+    if (node == null) {
+      node = result0.node
+    }
+    result = result0
+    info.join(result0, false)
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
+      
+      val result1 = d.dvExprB
+      d = result1.derivation
+      if (node == null) {
+        node = result1.node
+      }
+      result = result1
+      info.join(result1, false)
+      if (result.node == null) {
+        node = backup2
+        d = backup3
+      }
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new Expr()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expr>(node, d, result.info)
+    }
+    return new Result<Expr>(null, derivation, result.info)
+  }
+  
   
 }
 package class ExprARule {
@@ -157,21 +231,26 @@ package class ExprARule {
    * ExprA returns Expr: 'a' ; 
    */
   package static def Result<? extends Expr> matchExprA(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new ExprA
-      var d = derivation
-      
-      // 'a'\u000a
-      val result0 =  d.__terminal('a')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expr>(node, d, result.info)
+    var Result<?> result = null
+    var Expr node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('a')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new ExprA()
       }
-      return new Result<Expr>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expr>(node, d, result.info)
+    }
+    return new Result<Expr>(null, derivation, result.info)
   }
   
   
@@ -182,21 +261,26 @@ package class ExprBRule {
    * ExprB returns Expr: 'b' ; 
    */
   package static def Result<? extends Expr> matchExprB(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new ExprB
-      var d = derivation
-      
-      // 'b'\u000a
-      val result0 =  d.__terminal('b')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expr>(node, d, result.info)
+    var Result<?> result = null
+    var Expr node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('b')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new ExprB()
       }
-      return new Result<Expr>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expr>(node, d, result.info)
+    }
+    return new Result<Expr>(null, derivation, result.info)
   }
   
   
@@ -211,6 +295,7 @@ package class Derivation {
   val (Derivation)=>Result<Character> dvfChar
   
   Result<? extends Rule> dvRule
+  Result<? extends Expr> dvExpr
   Result<? extends Expr> dvExprA
   Result<? extends Expr> dvExprB
   Result<Character> dvChar
@@ -232,6 +317,15 @@ package class Derivation {
       dvRule = RuleRule.matchRule(parser, this)
     }
     return dvRule
+  }
+  
+  def getDvExpr() {
+    if (dvExpr == null) {
+      // Fail LR upfront
+      dvExpr = new Result<Expr>(null, this, new ParseInfo(index, 'Detected left-recursion in Expr'))
+      dvExpr = ExprRule.matchExpr(parser, this)
+    }
+    return dvExpr
   }
   
   def getDvExprA() {
@@ -345,20 +439,6 @@ package class Result<T> {
   def getInfo() { info }
   def setInfo(ParseInfo info) { this.info = info }
   
-  def Result<?> joinErrors(Result<?> r2, boolean inPredicate) {
-    if (r2 != null) {
-      if (inPredicate) {
-        info = r2.info
-      } else {
-        info = 
-          if (info.position > r2.info.position || r2.info.messages == null) info
-          else if (info.position < r2.info.position || info.messages == null) r2.info
-          else new ParseInfo(info.position, info.messages + r2.info.messages)
-      }
-    }
-    return this
-  }
-  
   override toString() {
     'Result[' + (if (node != null) 'MATCH' else 'NO MATCH') + ']'
   }
@@ -367,13 +447,8 @@ package class Result<T> {
 
 package class SpecialResult extends Result<Object> {
   new(Object o) { super(o, null, null) }
-  override joinErrors(Result<?> r2, boolean inPredicate) { 
-    info = r2.info
-    return this
-  }
 }
 
-@Data
 package class ParseInfo {
   
   int position
@@ -389,8 +464,24 @@ package class ParseInfo {
   }
   
   new(int position, Iterable<String> messages) {
-    this._position = position
-    this._messages = messages?.toSet
+    this.position = position
+    this.messages = messages?.toSet
+  }
+  
+  def getPosition() { position }
+  def getMessages() { messages }
+  
+  def join(Result<?> r, boolean inPredicate) {
+    if (!inPredicate && r != null && r.info != null) {
+      if (position > r.info.position || r.info.messages == null) {
+        // Do nothing
+      } else if (position < r.info.position || messages == null) {
+        position = r.info.position
+        messages = r.info.messages
+      } else {
+        messages += r.info.messages
+      }
+    }
   }
   
 }

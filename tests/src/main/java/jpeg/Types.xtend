@@ -9,15 +9,16 @@ package class Node {
   String parsed
   
   def Node copy() {
-    val r = new Node
-    r._parsed = _parsed
-    return r
+    new Node().copyAttributes()
   }
   
-  def <T extends Node> T add(Node in) {
-    val out = class.newInstance as T
-    out.parsed = (this._parsed ?: '') + in._parsed
-    return out
+  protected def copyAttributes(Node node) {
+    node._index = _index
+    node._parsed = _parsed
+    return node
+  }
+  
+  def dispatch void add(Node node) {
   }
   
   override toString() {
@@ -40,12 +41,28 @@ class Terminal extends Node {
   }
 
   override Terminal copy() {
-    val r = new Terminal
-    r.parsed = parsed
-    return r
+    new Terminal().copyAttributes()
   }
   
+  protected def copyAttributes(Terminal terminal) {
+    super.copyAttributes(terminal)
+    return terminal
+  }
+  
+}
 
+ class AssignableExpressionExpressions extends Expression {
+  
+  override AssignableExpressionExpressions copy() {
+    new AssignableExpressionExpressions().copyAttributes()
+  }
+  
+  protected def copyAttributes(AssignableExpressionExpressions type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
+  
 }
 
  class OptionalExpression extends Expression {
@@ -56,37 +73,47 @@ class Terminal extends Node {
   def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
   
   override OptionalExpression copy() {
-    val r = new OptionalExpression
-    r.attrExpr = this.attrExpr
-    return r
+    new OptionalExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(OptionalExpression type) {
+    super.copyAttributes(type)
+    type.attrExpr = this.attrExpr
+    return type
+  }
+  
   
 }
 
  class ActionExpression extends Expression {
+  
+  ID attrType
+  
+  def getType() { attrType }
+  def setType(ID attrType) { this.attrType = attrType }
   
   ID attrProperty
   
   def getProperty() { attrProperty }
   def setProperty(ID attrProperty) { this.attrProperty = attrProperty }
   
-  AssignmentOperator attrOp
+  ActionOperator attrOp
   
   def getOp() { attrOp }
-  def setOp(AssignmentOperator attrOp) { this.attrOp = attrOp }
-  
-  ID attrName
-  
-  def getName() { attrName }
-  def setName(ID attrName) { this.attrName = attrName }
+  def setOp(ActionOperator attrOp) { this.attrOp = attrOp }
   
   override ActionExpression copy() {
-    val r = new ActionExpression
-    r.attrProperty = this.attrProperty
-    r.attrOp = this.attrOp
-    r.attrName = this.attrName
-    return r
+    new ActionExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(ActionExpression type) {
+    super.copyAttributes(type)
+    type.attrType = this.attrType
+    type.attrProperty = this.attrProperty
+    type.attrOp = this.attrOp
+    return type
+  }
+  
   
 }
 
@@ -103,10 +130,15 @@ class Terminal extends Node {
   }
   
   override SequenceExpression copy() {
-    val r = new SequenceExpression
-    r.attrExpressions = this.attrExpressions
-    return r
+    new SequenceExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(SequenceExpression type) {
+    super.copyAttributes(type)
+    type.attrExpressions = this.attrExpressions
+    return type
+  }
+  
   
 }
 
@@ -128,12 +160,17 @@ class Terminal extends Node {
   def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
   
   override AssignableExpression copy() {
-    val r = new AssignableExpression
-    r.attrProperty = this.attrProperty
-    r.attrOp = this.attrOp
-    r.attrExpr = this.attrExpr
-    return r
+    new AssignableExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(AssignableExpression type) {
+    super.copyAttributes(type)
+    type.attrProperty = this.attrProperty
+    type.attrOp = this.attrOp
+    type.attrExpr = this.attrExpr
+    return type
+  }
+  
   
 }
 
@@ -149,17 +186,22 @@ class Terminal extends Node {
   def getRanges() { attrRanges }
   def setRanges(java.util.List<Node> attrRanges) { this.attrRanges = attrRanges }
   
-  def dispatch void add(Node __node) {
+  override dispatch void add(Node __node) {
     this.attrRanges = this.attrRanges ?: newArrayList
     this.attrRanges += __node
   }
   
   override RangeExpression copy() {
-    val r = new RangeExpression
-    r.attrDash = this.attrDash
-    r.attrRanges = this.attrRanges
-    return r
+    new RangeExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(RangeExpression type) {
+    super.copyAttributes(type)
+    type.attrDash = this.attrDash
+    type.attrRanges = this.attrRanges
+    return type
+  }
+  
   
 }
 
@@ -171,43 +213,71 @@ class Terminal extends Node {
   def setChar(Terminal attrChar) { this.attrChar = attrChar }
   
   override AnyCharExpression copy() {
-    val r = new AnyCharExpression
-    r.attrChar = this.attrChar
-    return r
+    new AnyCharExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(AnyCharExpression type) {
+    super.copyAttributes(type)
+    type.attrChar = this.attrChar
+    return type
+  }
+  
   
 }
 
  class ID extends Node {
   
   override ID copy() {
-    val r = new ID
-    return r
+    new ID().copyAttributes()
   }
+  
+  protected def copyAttributes(ID type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
  class _ extends Node {
   
   override _ copy() {
-    val r = new _
-    return r
+    new _().copyAttributes()
   }
+  
+  protected def copyAttributes(_ type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
  class EOI extends Node {
   
   override EOI copy() {
-    val r = new EOI
-    return r
+    new EOI().copyAttributes()
   }
+  
+  protected def copyAttributes(EOI type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
-abstract class Expression extends Node {
+ class Expression extends Node {
   
-  override Expression copy()
+  override Expression copy() {
+    new Expression().copyAttributes()
+  }
+  
+  protected def copyAttributes(Expression type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
@@ -219,10 +289,15 @@ abstract class Expression extends Node {
   def setValue(InTerminalChar attrValue) { this.attrValue = attrValue }
   
   override TerminalExpression copy() {
-    val r = new TerminalExpression
-    r.attrValue = this.attrValue
-    return r
+    new TerminalExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(TerminalExpression type) {
+    super.copyAttributes(type)
+    type.attrValue = this.attrValue
+    return type
+  }
+  
   
 }
 
@@ -234,25 +309,15 @@ abstract class Expression extends Node {
   def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
   
   override AndPredicateExpression copy() {
-    val r = new AndPredicateExpression
-    r.attrExpr = this.attrExpr
-    return r
+    new AndPredicateExpression().copyAttributes()
   }
   
-}
-
- class ZeroOrMoreExpression extends Expression {
-  
-  Expression attrExpr
-  
-  def getExpr() { attrExpr }
-  def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
-  
-  override ZeroOrMoreExpression copy() {
-    val r = new ZeroOrMoreExpression
-    r.attrExpr = this.attrExpr
-    return r
+  protected def copyAttributes(AndPredicateExpression type) {
+    super.copyAttributes(type)
+    type.attrExpr = this.attrExpr
+    return type
   }
+  
   
 }
 
@@ -269,10 +334,35 @@ abstract class Expression extends Node {
   }
   
   override Body copy() {
-    val r = new Body
-    r.attrExpressions = this.attrExpressions
-    return r
+    new Body().copyAttributes()
   }
+  
+  protected def copyAttributes(Body type) {
+    super.copyAttributes(type)
+    type.attrExpressions = this.attrExpressions
+    return type
+  }
+  
+  
+}
+
+ class ZeroOrMoreExpression extends Expression {
+  
+  Expression attrExpr
+  
+  def getExpr() { attrExpr }
+  def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
+  
+  override ZeroOrMoreExpression copy() {
+    new ZeroOrMoreExpression().copyAttributes()
+  }
+  
+  protected def copyAttributes(ZeroOrMoreExpression type) {
+    super.copyAttributes(type)
+    type.attrExpr = this.attrExpr
+    return type
+  }
+  
   
 }
 
@@ -294,21 +384,45 @@ abstract class Expression extends Node {
   def setBool(boolean attrBool) { this.attrBool = attrBool }
   
   override AssignmentOperator copy() {
-    val r = new AssignmentOperator
-    r.attrSingle = this.attrSingle
-    r.attrMulti = this.attrMulti
-    r.attrBool = this.attrBool
-    return r
+    new AssignmentOperator().copyAttributes()
   }
+  
+  protected def copyAttributes(AssignmentOperator type) {
+    super.copyAttributes(type)
+    type.attrSingle = this.attrSingle
+    type.attrMulti = this.attrMulti
+    type.attrBool = this.attrBool
+    return type
+  }
+  
+  
+}
+
+ class SequenceExpressionExpressions extends Expression {
+  
+  override SequenceExpressionExpressions copy() {
+    new SequenceExpressionExpressions().copyAttributes()
+  }
+  
+  protected def copyAttributes(SequenceExpressionExpressions type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
  class WS extends Node {
   
   override WS copy() {
-    val r = new WS
-    return r
+    new WS().copyAttributes()
   }
+  
+  protected def copyAttributes(WS type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
@@ -320,19 +434,29 @@ abstract class Expression extends Node {
   def setChar(Terminal attrChar) { this.attrChar = attrChar }
   
   override CharRange copy() {
-    val r = new CharRange
-    r.attrChar = this.attrChar
-    return r
+    new CharRange().copyAttributes()
   }
+  
+  protected def copyAttributes(CharRange type) {
+    super.copyAttributes(type)
+    type.attrChar = this.attrChar
+    return type
+  }
+  
   
 }
 
  class Comment extends Node {
   
   override Comment copy() {
-    val r = new Comment
-    return r
+    new Comment().copyAttributes()
   }
+  
+  protected def copyAttributes(Comment type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
@@ -344,10 +468,15 @@ abstract class Expression extends Node {
   def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
   
   override SubExpression copy() {
-    val r = new SubExpression
-    r.attrExpr = this.attrExpr
-    return r
+    new SubExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(SubExpression type) {
+    super.copyAttributes(type)
+    type.attrExpr = this.attrExpr
+    return type
+  }
+  
   
 }
 
@@ -369,12 +498,17 @@ abstract class Expression extends Node {
   def setBody(Body attrBody) { this.attrBody = attrBody }
   
   override Rule copy() {
-    val r = new Rule
-    r.attrName = this.attrName
-    r.attrReturns = this.attrReturns
-    r.attrBody = this.attrBody
-    return r
+    new Rule().copyAttributes()
   }
+  
+  protected def copyAttributes(Rule type) {
+    super.copyAttributes(type)
+    type.attrName = this.attrName
+    type.attrReturns = this.attrReturns
+    type.attrBody = this.attrBody
+    return type
+  }
+  
   
 }
 
@@ -386,10 +520,15 @@ abstract class Expression extends Node {
   def setName(ID attrName) { this.attrName = attrName }
   
   override RuleReturns copy() {
-    val r = new RuleReturns
-    r.attrName = this.attrName
-    return r
+    new RuleReturns().copyAttributes()
   }
+  
+  protected def copyAttributes(RuleReturns type) {
+    super.copyAttributes(type)
+    type.attrName = this.attrName
+    return type
+  }
+  
   
 }
 
@@ -406,11 +545,16 @@ abstract class Expression extends Node {
   def setMax(Terminal attrMax) { this.attrMax = attrMax }
   
   override MinMaxRange copy() {
-    val r = new MinMaxRange
-    r.attrMin = this.attrMin
-    r.attrMax = this.attrMax
-    return r
+    new MinMaxRange().copyAttributes()
   }
+  
+  protected def copyAttributes(MinMaxRange type) {
+    super.copyAttributes(type)
+    type.attrMin = this.attrMin
+    type.attrMax = this.attrMax
+    return type
+  }
+  
   
 }
 
@@ -422,10 +566,15 @@ abstract class Expression extends Node {
   def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
   
   override NotPredicateExpression copy() {
-    val r = new NotPredicateExpression
-    r.attrExpr = this.attrExpr
-    return r
+    new NotPredicateExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(NotPredicateExpression type) {
+    super.copyAttributes(type)
+    type.attrExpr = this.attrExpr
+    return type
+  }
+  
   
 }
 
@@ -437,10 +586,41 @@ abstract class Expression extends Node {
   def setName(ID attrName) { this.attrName = attrName }
   
   override RuleReferenceExpression copy() {
-    val r = new RuleReferenceExpression
-    r.attrName = this.attrName
-    return r
+    new RuleReferenceExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(RuleReferenceExpression type) {
+    super.copyAttributes(type)
+    type.attrName = this.attrName
+    return type
+  }
+  
+  
+}
+
+ class ActionOperator extends Node {
+  
+  boolean attrMulti
+  
+  def getMulti() { attrMulti }
+  def setMulti(boolean attrMulti) { this.attrMulti = attrMulti }
+  
+  boolean attrSingle
+  
+  def getSingle() { attrSingle }
+  def setSingle(boolean attrSingle) { this.attrSingle = attrSingle }
+  
+  override ActionOperator copy() {
+    new ActionOperator().copyAttributes()
+  }
+  
+  protected def copyAttributes(ActionOperator type) {
+    super.copyAttributes(type)
+    type.attrMulti = this.attrMulti
+    type.attrSingle = this.attrSingle
+    return type
+  }
+  
   
 }
 
@@ -457,10 +637,15 @@ abstract class Expression extends Node {
   }
   
   override Jpeg copy() {
-    val r = new Jpeg
-    r.attrRules = this.attrRules
-    return r
+    new Jpeg().copyAttributes()
   }
+  
+  protected def copyAttributes(Jpeg type) {
+    super.copyAttributes(type)
+    type.attrRules = this.attrRules
+    return type
+  }
+  
   
 }
 
@@ -472,19 +657,29 @@ abstract class Expression extends Node {
   def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
   
   override OneOrMoreExpression copy() {
-    val r = new OneOrMoreExpression
-    r.attrExpr = this.attrExpr
-    return r
+    new OneOrMoreExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(OneOrMoreExpression type) {
+    super.copyAttributes(type)
+    type.attrExpr = this.attrExpr
+    return type
+  }
+  
   
 }
 
  class InTerminalChar extends Node {
   
   override InTerminalChar copy() {
-    val r = new InTerminalChar
-    return r
+    new InTerminalChar().copyAttributes()
   }
+  
+  protected def copyAttributes(InTerminalChar type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
@@ -501,10 +696,15 @@ abstract class Expression extends Node {
   }
   
   override ChoiceExpression copy() {
-    val r = new ChoiceExpression
-    r.attrChoices = this.attrChoices
-    return r
+    new ChoiceExpression().copyAttributes()
   }
+  
+  protected def copyAttributes(ChoiceExpression type) {
+    super.copyAttributes(type)
+    type.attrChoices = this.attrChoices
+    return type
+  }
+  
   
 }
 

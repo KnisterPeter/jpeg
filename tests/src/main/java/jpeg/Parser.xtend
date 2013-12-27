@@ -97,6 +97,14 @@ class Parser {
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
   }
   
+  def Expression Expression(String in) {
+    this.chars = in.toCharArray()
+    val result = ExpressionRule.matchExpression(this, parse(0))
+    return
+      if (result.derivation.dvChar.node == null) result.node
+      else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
+  }
+  
   def Expression ChoiceExpression(String in) {
     this.chars = in.toCharArray()
     val result = ChoiceExpressionRule.matchChoiceExpression(this, parse(0))
@@ -113,9 +121,25 @@ class Parser {
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
   }
   
+  def Expression SequenceExpressionExpressions(String in) {
+    this.chars = in.toCharArray()
+    val result = SequenceExpressionExpressionsRule.matchSequenceExpressionExpressions(this, parse(0))
+    return
+      if (result.derivation.dvChar.node == null) result.node
+      else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
+  }
+  
   def Expression ActionExpression(String in) {
     this.chars = in.toCharArray()
     val result = ActionExpressionRule.matchActionExpression(this, parse(0))
+    return
+      if (result.derivation.dvChar.node == null) result.node
+      else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
+  }
+  
+  def ActionOperator ActionOperator(String in) {
+    this.chars = in.toCharArray()
+    val result = ActionOperatorRule.matchActionOperator(this, parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -164,6 +188,14 @@ class Parser {
   def Expression AssignableExpression(String in) {
     this.chars = in.toCharArray()
     val result = AssignableExpressionRule.matchAssignableExpression(this, parse(0))
+    return
+      if (result.derivation.dvChar.node == null) result.node
+      else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
+  }
+  
+  def Expression AssignableExpressionExpressions(String in) {
+    this.chars = in.toCharArray()
+    val result = AssignableExpressionExpressionsRule.matchAssignableExpressionExpressions(this, parse(0))
     return
       if (result.derivation.dvChar.node == null) result.node
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -290,70 +322,79 @@ package class JpegRule {
    * Jpeg : (rules+=Rule | Comment)+ EOI ; 
    */
   package static def Result<? extends Jpeg> matchJpeg(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new Jpeg
-      var d = derivation
+    var Result<?> result = null
+    var Jpeg node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // (rules+=Rule | Comment)+ 
+    var backup0 = node?.copy()
+    var backup1 = d
+    var loop0 = false
+    
+    do {
+      // rules+=Rule | Comment
+      val backup2 = node?.copy()
+      val backup3 = d
       
-      // (rules+=Rule | Comment)+ 
-      var backup0 = node?.copy()
-      var backup1 = d
-      var loop0 = false
-      
-      do {
-        // (rules+=Rule | Comment)
-        // rules+=Rule | Comment
-        val backup2 = node?.copy()
-        val backup3 = d
-        
-        // rules+=Rule 
-        val result0 = d.dvRule
-        d = result0.derivation
-        result = result0.joinErrors(result, false)
-        if (result.node != null) {
-          node.add(result0.node)
+      // rules+=Rule 
+      val result0 = d.dvRule
+      d = result0.derivation
+      result = result0
+      info.join(result0, false)
+      if (result.node != null) {
+        if (node == null) {
+          node = new Jpeg
         }
+        node.add(result0.node)
+      }
+      if (result.node == null) {
+        node = backup2
+        d = backup3
+        val backup4 = node?.copy()
+        val backup5 = d
+        
+        val result1 = d.dvComment
+        d = result1.derivation
+        result = result1
+        info.join(result1, false)
         if (result.node == null) {
-          node = backup2
-          d = backup3
-          val backup4 = node?.copy()
-          val backup5 = d
-          
-          // Comment
-          val result1 = d.dvComment
-          d = result1.derivation
-          result = result1.joinErrors(result, false)
-          if (result.node == null) {
-            node = backup4
-            d = backup5
-          }
+          node = backup4
+          d = backup5
         }
-        
-        if (result.node != null) {
-          loop0 = true
-          backup0 = node?.copy()
-          backup1 = d
-        }
-      } while(result.node != null)
-      if (!loop0) {
-        node = backup0
-        d = backup1
-      } else {
-        result = CONTINUE.joinErrors(result, false)
       }
       
       if (result.node != null) {
-        // EOI\u000a
-        val result2 = d.dvEOI
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
+        loop0 = true
+        backup0 = node?.copy()
+        backup1 = d
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Jpeg>(node, d, result.info)
+    } while(result.node != null)
+    if (!loop0) {
+      node = backup0
+      d = backup1
+    } else {
+      result = CONTINUE
+      info.join(result, false)
+    }
+    
+    if (result.node != null) {
+      val result2 = d.dvEOI
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new Jpeg()
       }
-      return new Result<Jpeg>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Jpeg>(node, d, result.info)
+    }
+    return new Result<Jpeg>(null, derivation, result.info)
   }
   
   
@@ -364,88 +405,106 @@ package class RuleRule {
    * Rule : name=ID _ returns=RuleReturns? ':' _ body=Body ';' _ ; 
    */
   package static def Result<? extends Rule> matchRule(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new Rule
-      var d = derivation
-      
-      // name=ID 
-      val result0 = d.dvID
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      if (result.node != null) {
-        node.setName(result0.node)
+    var Result<?> result = null
+    var Rule node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // name=ID 
+    val result0 = d.dvID
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new Rule
       }
+      node.setName(result0.node)
+    }
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // returns=RuleReturns? 
+      val backup0 = node?.copy()
+      val backup1 = d
       
+      // returns=RuleReturns
+      val result2 = d.dvRuleReturns
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       if (result.node != null) {
-        // _ 
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // returns=RuleReturns? 
-        val backup0 = node?.copy()
-        val backup1 = d
-        
-        // returns=RuleReturns
-        val result2 = d.dvRuleReturns
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-        if (result.node != null) {
-          node.setReturns(result2.node)
+        if (node == null) {
+          node = new Rule
         }
-        if (result.node == null) {
-          node = backup0
-          d = backup1
-          result = CONTINUE.joinErrors(result, false)
+        node.setReturns(result2.node)
+      }
+      if (result.node == null) {
+        node = backup0
+        d = backup1
+        result = CONTINUE
+        info.join(result, false)
+      }
+    }
+    
+    if (result.node != null) {
+      val result3 =  d.__terminal(':')
+      d = result3.derivation
+      result = result3
+      info.join(result3, false)
+    }
+    
+    if (result.node != null) {
+      val result4 = d.dv_
+      d = result4.derivation
+      result = result4
+      info.join(result4, false)
+    }
+    
+    if (result.node != null) {
+      // body=Body 
+      val result5 = d.dvBody
+      d = result5.derivation
+      result = result5
+      info.join(result5, false)
+      if (result.node != null) {
+        if (node == null) {
+          node = new Rule
         }
+        node.setBody(result5.node)
       }
-      
-      if (result.node != null) {
-        // ':' 
-        val result3 =  d.__terminal(':')
-        d = result3.derivation
-        result = result3.joinErrors(result, false)
+    }
+    
+    if (result.node != null) {
+      val result6 =  d.__terminal(';')
+      d = result6.derivation
+      result = result6
+      info.join(result6, false)
+    }
+    
+    if (result.node != null) {
+      val result7 = d.dv_
+      d = result7.derivation
+      result = result7
+      info.join(result7, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new Rule()
       }
-      
-      if (result.node != null) {
-        // _ 
-        val result4 = d.dv_
-        d = result4.derivation
-        result = result4.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // body=Body 
-        val result5 = d.dvBody
-        d = result5.derivation
-        result = result5.joinErrors(result, false)
-        if (result.node != null) {
-          node.setBody(result5.node)
-        }
-      }
-      
-      if (result.node != null) {
-        // ';' 
-        val result6 =  d.__terminal(';')
-        d = result6.derivation
-        result = result6.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result7 = d.dv_
-        d = result7.derivation
-        result = result7.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Rule>(node, d, result.info)
-      }
-      return new Result<Rule>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Rule>(node, d, result.info)
+    }
+    return new Result<Rule>(null, derivation, result.info)
   }
   
   
@@ -456,45 +515,54 @@ package class RuleReturnsRule {
    * RuleReturns : 'returns' _ name=ID _ ; 
    */
   package static def Result<? extends RuleReturns> matchRuleReturns(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new RuleReturns
-      var d = derivation
-      
-      // 'returns' 
-      val result0 =  d.__terminal('returns')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
+    var Result<?> result = null
+    var RuleReturns node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('returns')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // name=ID 
+      val result2 = d.dvID
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       if (result.node != null) {
-        // _ 
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // name=ID 
-        val result2 = d.dvID
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-        if (result.node != null) {
-          node.setName(result2.node)
+        if (node == null) {
+          node = new RuleReturns
         }
+        node.setName(result2.node)
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result3 = d.dv_
-        d = result3.derivation
-        result = result3.joinErrors(result, false)
+    }
+    
+    if (result.node != null) {
+      val result3 = d.dv_
+      d = result3.derivation
+      result = result3
+      info.join(result3, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new RuleReturns()
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<RuleReturns>(node, d, result.info)
-      }
-      return new Result<RuleReturns>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<RuleReturns>(node, d, result.info)
+    }
+    return new Result<RuleReturns>(null, derivation, result.info)
   }
   
   
@@ -505,276 +573,264 @@ package class BodyRule {
    * Body : (expressions+=ChoiceExpression _)+ ; 
    */
   package static def Result<? extends Body> matchBody(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new Body
-      var d = derivation
-      
-      // (expressions+=ChoiceExpression _)+\u000a
-      var backup0 = node?.copy()
-      var backup1 = d
-      var loop0 = false
-      
-      do {
-        // (expressions+=ChoiceExpression _)
-        // expressions+=ChoiceExpression 
-        val result0 = d.dvChoiceExpression
-        d = result0.derivation
-        result = result0.joinErrors(result, false)
-        if (result.node != null) {
-          node.add(result0.node)
-        }
-        
-        if (result.node != null) {
-          // _
-          val result1 = d.dv_
-          d = result1.derivation
-          result = result1.joinErrors(result, false)
-        }
-        
-        if (result.node != null) {
-          loop0 = true
-          backup0 = node?.copy()
-          backup1 = d
-        }
-      } while(result.node != null)
-      if (!loop0) {
-        node = backup0
-        d = backup1
-      } else {
-        result = CONTINUE.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Body>(node, d, result.info)
-      }
-      return new Result<Body>(null, derivation, result.info)
-  }
-  
-  
-}
-package class ChoiceExpressionRule {
-
-  /**
-   * ChoiceExpression returns Expression : choices+=SequenceExpression ('|' _ choices+=SequenceExpression)* ; 
-   */
-  package static def Result<? extends Expression> matchChoiceExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new ChoiceExpression
-      var d = derivation
-      
-      // choices+=SequenceExpression 
-      val result0 = d.dvSequenceExpression
+    var Result<?> result = null
+    var Body node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // (expressions+=ChoiceExpression _)+\u000a
+    var backup0 = node?.copy()
+    var backup1 = d
+    var loop0 = false
+    
+    do {
+      // expressions+=ChoiceExpression 
+      val result0 = d.dvChoiceExpression
       d = result0.derivation
-      result = result0.joinErrors(result, false)
+      result = result0
+      info.join(result0, false)
       if (result.node != null) {
+        if (node == null) {
+          node = new Body
+        }
         node.add(result0.node)
       }
       
       if (result.node != null) {
-        // ('|' _ choices+=SequenceExpression)*\u000a
-        var backup0 = node?.copy()
-        var backup1 = d
-        
-        do {
-          // ('|' _ choices+=SequenceExpression)
-          // '|' 
-          val result1 =  d.__terminal('|')
-          d = result1.derivation
-          result = result1.joinErrors(result, false)
-          
-          if (result.node != null) {
-            // _ 
-            val result2 = d.dv_
-            d = result2.derivation
-            result = result2.joinErrors(result, false)
-          }
-          
-          if (result.node != null) {
-            // choices+=SequenceExpression
-            val result3 = d.dvSequenceExpression
-            d = result3.derivation
-            result = result3.joinErrors(result, false)
-            if (result.node != null) {
-              node.add(result3.node)
-            }
-          }
-          if (result.node != null) {
-            backup0 = node?.copy()
-            backup1 = d
-          }
-        } while (result.node != null)
-        node = backup0
-        d = backup1
-        result = CONTINUE.joinErrors(result, false)
+        val result1 = d.dv_
+        d = result1.derivation
+        result = result1
+        info.join(result1, false)
       }
       
       if (result.node != null) {
-        if (node.choices.size() == 1) {
-          return new Result<Expression>(node.choices.get(0), d, result.info)
-        }
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
+        loop0 = true
+        backup0 = node?.copy()
+        backup1 = d
       }
-      return new Result<Expression>(null, derivation, result.info)
+    } while(result.node != null)
+    if (!loop0) {
+      node = backup0
+      d = backup1
+    } else {
+      result = CONTINUE
+      info.join(result, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new Body()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Body>(node, d, result.info)
+    }
+    return new Result<Body>(null, derivation, result.info)
   }
   
   
 }
-package class SequenceExpressionRule {
+package class ExpressionRule {
 
   /**
-   * SequenceExpression returns Expression : ( Comment* expressions+=( ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ) _ )+ ; 
+   * Expression : ActionExpression | AndPredicateExpression | AnyCharExpression | AssignableExpression | ChoiceExpression | NotPredicateExpression | OneOrMoreExpression | OptionalExpression | RangeExpression | RuleReferenceExpression | SequenceExpression | SubExpression | TerminalExpression | ZeroOrMoreExpression ; 
    */
-  package static def Result<? extends Expression> matchSequenceExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new SequenceExpression
-      var d = derivation
+  package static def Result<? extends Expression> matchExpression(Parser parser, Derivation derivation) {
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // ActionExpression\u000a  | AndPredicateExpression\u000a  | AnyCharExpression\u000a  | AssignableExpression\u000a  | ChoiceExpression\u000a  | NotPredicateExpression\u000a  | OneOrMoreExpression\u000a  | OptionalExpression\u000a  | RangeExpression\u000a  | RuleReferenceExpression\u000a  | SequenceExpression\u000a  | SubExpression\u000a  | TerminalExpression\u000a  | ZeroOrMoreExpression\u000a
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    val result0 = d.dvActionExpression
+    d = result0.derivation
+    if (node == null) {
+      node = result0.node
+    }
+    result = result0
+    info.join(result0, false)
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
       
-      // (\u000a    Comment*\u000a    expressions+=( ActionExpression\u000a                 | AndPredicateExpression\u000a                 | NotPredicateExpression\u000a                 | OneOrMoreExpression\u000a                 | ZeroOrMoreExpression\u000a                 | OptionalExpression\u000a                 | AssignableExpression\u000a                 )\u000a    _\u000a  )+\u000a
-      var backup0 = node?.copy()
-      var backup1 = d
-      var loop0 = false
-      
-      do {
-        // (\u000a    Comment*\u000a    expressions+=( ActionExpression\u000a                 | AndPredicateExpression\u000a                 | NotPredicateExpression\u000a                 | OneOrMoreExpression\u000a                 | ZeroOrMoreExpression\u000a                 | OptionalExpression\u000a                 | AssignableExpression\u000a                 )\u000a    _\u000a  )
-        // Comment*\u000a    
-        var backup2 = node?.copy()
-        var backup3 = d
-        
-        do {
-          // Comment
-          val result0 = d.dvComment
-          d = result0.derivation
-          result = result0.joinErrors(result, false)
-          if (result.node != null) {
-            backup2 = node?.copy()
-            backup3 = d
-          }
-        } while (result.node != null)
+      val result1 = d.dvAndPredicateExpression
+      d = result1.derivation
+      if (node == null) {
+        node = result1.node
+      }
+      result = result1
+      info.join(result1, false)
+      if (result.node == null) {
         node = backup2
         d = backup3
-        result = CONTINUE.joinErrors(result, false)
+        val backup4 = node?.copy()
+        val backup5 = d
         
-        if (result.node != null) {
-          // expressions+=( ActionExpression\u000a                 | AndPredicateExpression\u000a                 | NotPredicateExpression\u000a                 | OneOrMoreExpression\u000a                 | ZeroOrMoreExpression\u000a                 | OptionalExpression\u000a                 | AssignableExpression\u000a                 )\u000a    
-          val result8 = d.sub0MatchSequenceExpression(parser)
-          d = result8.derivation
-          result = result8.joinErrors(result, false)
-          if (result.node != null) {
-            node.add(result8.node)
-          }
-        }
-        
-        if (result.node != null) {
-          // _\u000a  
-          val result9 = d.dv_
-          d = result9.derivation
-          result = result9.joinErrors(result, false)
-        }
-        
-        if (result.node != null) {
-          loop0 = true
-          backup0 = node?.copy()
-          backup1 = d
-        }
-      } while(result.node != null)
-      if (!loop0) {
-        node = backup0
-        d = backup1
-      } else {
-        result = CONTINUE.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        if (node.expressions.size() == 1) {
-          return new Result<Expression>(node.expressions.get(0), d, result.info)
-        }
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
-  }
-  
-  private static def Result<? extends Expression> sub0MatchSequenceExpression(Derivation derivation, Parser parser) {
-      var Result<?> result = null
-      var Expression node = null
-      var d = derivation
-      
-      // ActionExpression\u000a                 | AndPredicateExpression\u000a                 | NotPredicateExpression\u000a                 | OneOrMoreExpression\u000a                 | ZeroOrMoreExpression\u000a                 | OptionalExpression\u000a                 | AssignableExpression\u000a                 
-      val backup4 = node?.copy()
-      val backup5 = d
-      
-      // ActionExpression\u000a                 
-      val result1 = d.dvActionExpression
-      d = result1.derivation
-      result = result1.joinErrors(result, false)
-      if (result.node == null) {
-        node = backup4
-        d = backup5
-        val backup6 = node?.copy()
-        val backup7 = d
-        
-        // AndPredicateExpression\u000a                 
-        val result2 = d.dvAndPredicateExpression
+        val result2 = d.dvAnyCharExpression
         d = result2.derivation
-        result = result2.joinErrors(result, false)
+        if (node == null) {
+          node = result2.node
+        }
+        result = result2
+        info.join(result2, false)
         if (result.node == null) {
-          node = backup6
-          d = backup7
-          val backup8 = node?.copy()
-          val backup9 = d
+          node = backup4
+          d = backup5
+          val backup6 = node?.copy()
+          val backup7 = d
           
-          // NotPredicateExpression\u000a                 
-          val result3 = d.dvNotPredicateExpression
+          val result3 = d.dvAssignableExpression
           d = result3.derivation
-          result = result3.joinErrors(result, false)
+          if (node == null) {
+            node = result3.node
+          }
+          result = result3
+          info.join(result3, false)
           if (result.node == null) {
-            node = backup8
-            d = backup9
-            val backup10 = node?.copy()
-            val backup11 = d
+            node = backup6
+            d = backup7
+            val backup8 = node?.copy()
+            val backup9 = d
             
-            // OneOrMoreExpression\u000a                 
-            val result4 = d.dvOneOrMoreExpression
+            val result4 = d.dvChoiceExpression
             d = result4.derivation
-            result = result4.joinErrors(result, false)
+            if (node == null) {
+              node = result4.node
+            }
+            result = result4
+            info.join(result4, false)
             if (result.node == null) {
-              node = backup10
-              d = backup11
-              val backup12 = node?.copy()
-              val backup13 = d
+              node = backup8
+              d = backup9
+              val backup10 = node?.copy()
+              val backup11 = d
               
-              // ZeroOrMoreExpression\u000a                 
-              val result5 = d.dvZeroOrMoreExpression
+              val result5 = d.dvNotPredicateExpression
               d = result5.derivation
-              result = result5.joinErrors(result, false)
+              if (node == null) {
+                node = result5.node
+              }
+              result = result5
+              info.join(result5, false)
               if (result.node == null) {
-                node = backup12
-                d = backup13
-                val backup14 = node?.copy()
-                val backup15 = d
+                node = backup10
+                d = backup11
+                val backup12 = node?.copy()
+                val backup13 = d
                 
-                // OptionalExpression\u000a                 
-                val result6 = d.dvOptionalExpression
+                val result6 = d.dvOneOrMoreExpression
                 d = result6.derivation
-                result = result6.joinErrors(result, false)
+                if (node == null) {
+                  node = result6.node
+                }
+                result = result6
+                info.join(result6, false)
                 if (result.node == null) {
-                  node = backup14
-                  d = backup15
-                  val backup16 = node?.copy()
-                  val backup17 = d
+                  node = backup12
+                  d = backup13
+                  val backup14 = node?.copy()
+                  val backup15 = d
                   
-                  // AssignableExpression\u000a                 
-                  val result7 = d.dvAssignableExpression
+                  val result7 = d.dvOptionalExpression
                   d = result7.derivation
-                  result = result7.joinErrors(result, false)
+                  if (node == null) {
+                    node = result7.node
+                  }
+                  result = result7
+                  info.join(result7, false)
                   if (result.node == null) {
-                    node = backup16
-                    d = backup17
+                    node = backup14
+                    d = backup15
+                    val backup16 = node?.copy()
+                    val backup17 = d
+                    
+                    val result8 = d.dvRangeExpression
+                    d = result8.derivation
+                    if (node == null) {
+                      node = result8.node
+                    }
+                    result = result8
+                    info.join(result8, false)
+                    if (result.node == null) {
+                      node = backup16
+                      d = backup17
+                      val backup18 = node?.copy()
+                      val backup19 = d
+                      
+                      val result9 = d.dvRuleReferenceExpression
+                      d = result9.derivation
+                      if (node == null) {
+                        node = result9.node
+                      }
+                      result = result9
+                      info.join(result9, false)
+                      if (result.node == null) {
+                        node = backup18
+                        d = backup19
+                        val backup20 = node?.copy()
+                        val backup21 = d
+                        
+                        val result10 = d.dvSequenceExpression
+                        d = result10.derivation
+                        if (node == null) {
+                          node = result10.node
+                        }
+                        result = result10
+                        info.join(result10, false)
+                        if (result.node == null) {
+                          node = backup20
+                          d = backup21
+                          val backup22 = node?.copy()
+                          val backup23 = d
+                          
+                          val result11 = d.dvSubExpression
+                          d = result11.derivation
+                          if (node == null) {
+                            node = result11.node
+                          }
+                          result = result11
+                          info.join(result11, false)
+                          if (result.node == null) {
+                            node = backup22
+                            d = backup23
+                            val backup24 = node?.copy()
+                            val backup25 = d
+                            
+                            val result12 = d.dvTerminalExpression
+                            d = result12.derivation
+                            if (node == null) {
+                              node = result12.node
+                            }
+                            result = result12
+                            info.join(result12, false)
+                            if (result.node == null) {
+                              node = backup24
+                              d = backup25
+                              val backup26 = node?.copy()
+                              val backup27 = d
+                              
+                              val result13 = d.dvZeroOrMoreExpression
+                              d = result13.derivation
+                              if (node == null) {
+                                node = result13.node
+                              }
+                              result = result13
+                              info.join(result13, false)
+                              if (result.node == null) {
+                                node = backup26
+                                d = backup27
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -782,111 +838,599 @@ package class SequenceExpressionRule {
           }
         }
       }
-      
-      return result as Result<? extends Expression>
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new Expression()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
+  
+  
+}
+package class ChoiceExpressionRule {
+
+  /**
+   * ChoiceExpression returns Expression : SequenceExpression ( &'|' {ChoiceExpression.choices+=current} ('|' _ choices+=SequenceExpression)* )? ; 
+   */
+  package static def Result<? extends Expression> matchChoiceExpression(Parser parser, Derivation derivation) {
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 = d.dvSequenceExpression
+    d = result0.derivation
+    if (node == null) {
+      node = result0.node
+    }
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      // ( &'|' {ChoiceExpression.choices+=current} ('|' _ choices+=SequenceExpression)* )?\u000a
+      val backup0 = node?.copy()
+      val backup1 = d
+      
+      val backup2 = node?.copy()
+      val backup3 = d
+      val result1 =  d.__terminal('|')
+      d = result1.derivation
+      result = result1
+      info.join(result1, true)
+      node = backup2
+      d = backup3
+      if (result.node != null) {
+        result = CONTINUE
+        info.join(result, true)
+      } else {
+        result = BREAK
+        info.join(result, true)
+      }
+      
+      if (result.node != null) {
+        val current = node
+        node = new ChoiceExpression()
+        (node as ChoiceExpression).add(current)
+        result = CONTINUE
+      }
+      
+      if (result.node != null) {
+        // ('|' _ choices+=SequenceExpression)* 
+        var backup4 = node?.copy()
+        var backup5 = d
+        
+        do {
+          val result2 =  d.__terminal('|')
+          d = result2.derivation
+          result = result2
+          info.join(result2, false)
+          
+          if (result.node != null) {
+            val result3 = d.dv_
+            d = result3.derivation
+            result = result3
+            info.join(result3, false)
+          }
+          
+          if (result.node != null) {
+            // choices+=SequenceExpression
+            val result4 = d.dvSequenceExpression
+            d = result4.derivation
+            result = result4
+            info.join(result4, false)
+            if (result.node != null) {
+              if (node == null) {
+                node = new ChoiceExpression
+              }
+              (node as ChoiceExpression).add(result4.node)
+            }
+          }
+          if (result.node != null) {
+            backup4 = node?.copy()
+            backup5 = d
+          }
+        } while (result.node != null)
+        node = backup4
+        d = backup5
+        result = CONTINUE
+        info.join(result, false)
+      }
+      if (result.node == null) {
+        node = backup0
+        d = backup1
+        result = CONTINUE
+        info.join(result, false)
+      }
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new ChoiceExpression()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
+  }
+  
+  
+}
+package class SequenceExpressionRule {
+
+  /**
+   * SequenceExpression returns Expression : Comment* SequenceExpressionExpressions ( &SequenceExpressionExpressions {SequenceExpression.expressions+=current} Comment* expressions+=SequenceExpressionExpressions _ )* ; 
+   */
+  package static def Result<? extends Expression> matchSequenceExpression(Parser parser, Derivation derivation) {
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // Comment*\u000a  
+    var backup0 = node?.copy()
+    var backup1 = d
+    
+    do {
+      val result0 = d.dvComment
+      d = result0.derivation
+      result = result0
+      info.join(result0, false)
+      if (result.node != null) {
+        backup0 = node?.copy()
+        backup1 = d
+      }
+    } while (result.node != null)
+    node = backup0
+    d = backup1
+    result = CONTINUE
+    info.join(result, false)
+    
+    if (result.node != null) {
+      val result1 = d.dvSequenceExpressionExpressions
+      d = result1.derivation
+      if (node == null) {
+        node = result1.node
+      }
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // (\u000a    &SequenceExpressionExpressions\u000a    {SequenceExpression.expressions+=current}\u000a    Comment*\u000a    expressions+=SequenceExpressionExpressions\u000a    _\u000a  )*\u000a
+      var backup2 = node?.copy()
+      var backup3 = d
+      
+      do {
+        val backup4 = node?.copy()
+        val backup5 = d
+        val result2 = d.dvSequenceExpressionExpressions
+        d = result2.derivation
+        if (node == null) {
+          node = result2.node
+        }
+        result = result2
+        info.join(result2, true)
+        node = backup4
+        d = backup5
+        if (result.node != null) {
+          result = CONTINUE
+          info.join(result, true)
+        } else {
+          result = BREAK
+          info.join(result, true)
+        }
+        
+        if (result.node != null) {
+          val current = node
+          node = new SequenceExpression()
+          (node as SequenceExpression).add(current)
+          result = CONTINUE
+        }
+        
+        if (result.node != null) {
+          // Comment*\u000a    
+          var backup6 = node?.copy()
+          var backup7 = d
+          
+          do {
+            val result3 = d.dvComment
+            d = result3.derivation
+            result = result3
+            info.join(result3, false)
+            if (result.node != null) {
+              backup6 = node?.copy()
+              backup7 = d
+            }
+          } while (result.node != null)
+          node = backup6
+          d = backup7
+          result = CONTINUE
+          info.join(result, false)
+        }
+        
+        if (result.node != null) {
+          // expressions+=SequenceExpressionExpressions\u000a    
+          val result4 = d.dvSequenceExpressionExpressions
+          d = result4.derivation
+          result = result4
+          info.join(result4, false)
+          if (result.node != null) {
+            if (node == null) {
+              node = new SequenceExpression
+            }
+            (node as SequenceExpression).add(result4.node)
+          }
+        }
+        
+        if (result.node != null) {
+          val result5 = d.dv_
+          d = result5.derivation
+          result = result5
+          info.join(result5, false)
+        }
+        if (result.node != null) {
+          backup2 = node?.copy()
+          backup3 = d
+        }
+      } while (result.node != null)
+      node = backup2
+      d = backup3
+      result = CONTINUE
+      info.join(result, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new SequenceExpression()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
+  }
+  
+  
+}
+package class SequenceExpressionExpressionsRule {
+
+  /**
+   * SequenceExpressionExpressions returns Expression : ActionExpression | AndPredicateExpression | NotPredicateExpression | OneOrMoreExpression | ZeroOrMoreExpression | OptionalExpression | AssignableExpression ; 
+   */
+  package static def Result<? extends Expression> matchSequenceExpressionExpressions(Parser parser, Derivation derivation) {
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // ActionExpression\u000a  | AndPredicateExpression\u000a  | NotPredicateExpression\u000a  | OneOrMoreExpression\u000a  | ZeroOrMoreExpression\u000a  | OptionalExpression\u000a  | AssignableExpression\u000a
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    val result0 = d.dvActionExpression
+    d = result0.derivation
+    if (node == null) {
+      node = result0.node
+    }
+    result = result0
+    info.join(result0, false)
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
+      
+      val result1 = d.dvAndPredicateExpression
+      d = result1.derivation
+      if (node == null) {
+        node = result1.node
+      }
+      result = result1
+      info.join(result1, false)
+      if (result.node == null) {
+        node = backup2
+        d = backup3
+        val backup4 = node?.copy()
+        val backup5 = d
+        
+        val result2 = d.dvNotPredicateExpression
+        d = result2.derivation
+        if (node == null) {
+          node = result2.node
+        }
+        result = result2
+        info.join(result2, false)
+        if (result.node == null) {
+          node = backup4
+          d = backup5
+          val backup6 = node?.copy()
+          val backup7 = d
+          
+          val result3 = d.dvOneOrMoreExpression
+          d = result3.derivation
+          if (node == null) {
+            node = result3.node
+          }
+          result = result3
+          info.join(result3, false)
+          if (result.node == null) {
+            node = backup6
+            d = backup7
+            val backup8 = node?.copy()
+            val backup9 = d
+            
+            val result4 = d.dvZeroOrMoreExpression
+            d = result4.derivation
+            if (node == null) {
+              node = result4.node
+            }
+            result = result4
+            info.join(result4, false)
+            if (result.node == null) {
+              node = backup8
+              d = backup9
+              val backup10 = node?.copy()
+              val backup11 = d
+              
+              val result5 = d.dvOptionalExpression
+              d = result5.derivation
+              if (node == null) {
+                node = result5.node
+              }
+              result = result5
+              info.join(result5, false)
+              if (result.node == null) {
+                node = backup10
+                d = backup11
+                val backup12 = node?.copy()
+                val backup13 = d
+                
+                val result6 = d.dvAssignableExpression
+                d = result6.derivation
+                if (node == null) {
+                  node = result6.node
+                }
+                result = result6
+                info.join(result6, false)
+                if (result.node == null) {
+                  node = backup12
+                  d = backup13
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new SequenceExpressionExpressions()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
+  }
+  
   
 }
 package class ActionExpressionRule {
 
   /**
-   * ActionExpression returns Expression : '{' _ (property=ID _ op=AssignmentOperator ('current' | name=ID) _) '}' ; 
+   * ActionExpression returns Expression : '{' _ ( type=ID _ ('.' property=ID _ op=ActionOperator _ 'current' _)? ) '}' _ ; 
    */
   package static def Result<? extends Expression> matchActionExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new ActionExpression
-      var d = derivation
-      
-      // '{' 
-      val result0 =  d.__terminal('{')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('{')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // type=ID 
+      val result2 = d.dvID
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       if (result.node != null) {
-        // _ 
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+        if (node == null) {
+          node = new ActionExpression
+        }
+        (node as ActionExpression).setType(result2.node)
       }
       
       if (result.node != null) {
-        // (property=ID _ op=AssignmentOperator ('current' | name=ID) _) 
-        // property=ID 
-        val result2 = d.dvID
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-        if (result.node != null) {
-          node.setProperty(result2.node)
-        }
+        val result3 = d.dv_
+        d = result3.derivation
+        result = result3
+        info.join(result3, false)
+      }
+      
+      if (result.node != null) {
+        // ('.' property=ID _ op=ActionOperator _ 'current' _)? 
+        val backup0 = node?.copy()
+        val backup1 = d
+        
+        val result4 =  d.__terminal('.')
+        d = result4.derivation
+        result = result4
+        info.join(result4, false)
         
         if (result.node != null) {
-          // _ 
-          val result3 = d.dv_
-          d = result3.derivation
-          result = result3.joinErrors(result, false)
-        }
-        
-        if (result.node != null) {
-          // op=AssignmentOperator 
-          val result4 = d.dvAssignmentOperator
-          d = result4.derivation
-          result = result4.joinErrors(result, false)
-          if (result.node != null) {
-            node.setOp(result4.node)
-          }
-        }
-        
-        if (result.node != null) {
-          // ('current' | name=ID) 
-          // 'current' | name=ID
-          val backup0 = node?.copy()
-          val backup1 = d
-          
-          // 'current' 
-          val result5 =  d.__terminal('current')
+          // property=ID 
+          val result5 = d.dvID
           d = result5.derivation
-          result = result5.joinErrors(result, false)
-          if (result.node == null) {
-            node = backup0
-            d = backup1
-            val backup2 = node?.copy()
-            val backup3 = d
-            
-            // name=ID
-            val result6 = d.dvID
-            d = result6.derivation
-            result = result6.joinErrors(result, false)
-            if (result.node != null) {
-              node.setName(result6.node)
+          result = result5
+          info.join(result5, false)
+          if (result.node != null) {
+            if (node == null) {
+              node = new ActionExpression
             }
-            if (result.node == null) {
-              node = backup2
-              d = backup3
-            }
+            (node as ActionExpression).setProperty(result5.node)
           }
         }
         
         if (result.node != null) {
-          // _
-          val result7 = d.dv_
+          val result6 = d.dv_
+          d = result6.derivation
+          result = result6
+          info.join(result6, false)
+        }
+        
+        if (result.node != null) {
+          // op=ActionOperator 
+          val result7 = d.dvActionOperator
           d = result7.derivation
-          result = result7.joinErrors(result, false)
+          result = result7
+          info.join(result7, false)
+          if (result.node != null) {
+            if (node == null) {
+              node = new ActionExpression
+            }
+            (node as ActionExpression).setOp(result7.node)
+          }
+        }
+        
+        if (result.node != null) {
+          val result8 = d.dv_
+          d = result8.derivation
+          result = result8
+          info.join(result8, false)
+        }
+        
+        if (result.node != null) {
+          val result9 =  d.__terminal('current')
+          d = result9.derivation
+          result = result9
+          info.join(result9, false)
+        }
+        
+        if (result.node != null) {
+          val result10 = d.dv_
+          d = result10.derivation
+          result = result10
+          info.join(result10, false)
+        }
+        if (result.node == null) {
+          node = backup0
+          d = backup1
+          result = CONTINUE
+          info.join(result, false)
         }
       }
-      
-      if (result.node != null) {
-        // '}'\u000a
-        val result8 =  d.__terminal('}')
-        d = result8.derivation
-        result = result8.joinErrors(result, false)
+    }
+    
+    if (result.node != null) {
+      val result11 =  d.__terminal('}')
+      d = result11.derivation
+      result = result11
+      info.join(result11, false)
+    }
+    
+    if (result.node != null) {
+      val result12 = d.dv_
+      d = result12.derivation
+      result = result12
+      info.join(result12, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new ActionExpression()
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
+  }
+  
+  
+}
+package class ActionOperatorRule {
+
+  /**
+   * ActionOperator: multi?='+=' | single?='=' ; 
+   */
+  package static def Result<? extends ActionOperator> matchActionOperator(Parser parser, Derivation derivation) {
+    var Result<?> result = null
+    var ActionOperator node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // multi?='+=' | single?='='\u000a
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    // multi?='+=' 
+    val result0 =  d.__terminal('+=')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new ActionOperator
       }
-      return new Result<Expression>(null, derivation, result.info)
+      node.setMulti(result0.node != null)
+    }
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
+      
+      // single?='='\u000a
+      val result1 =  d.__terminal('=')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+      if (result.node != null) {
+        if (node == null) {
+          node = new ActionOperator
+        }
+        node.setSingle(result1.node != null)
+      }
+      if (result.node == null) {
+        node = backup2
+        d = backup3
+      }
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new ActionOperator()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<ActionOperator>(node, d, result.info)
+    }
+    return new Result<ActionOperator>(null, derivation, result.info)
   }
   
   
@@ -897,38 +1441,47 @@ package class AndPredicateExpressionRule {
    * AndPredicateExpression returns Expression : '&' _ expr=AssignableExpression ; 
    */
   package static def Result<? extends Expression> matchAndPredicateExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new AndPredicateExpression
-      var d = derivation
-      
-      // '&' 
-      val result0 =  d.__terminal('&')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('&')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // expr=AssignableExpression\u000a
+      val result2 = d.dvAssignableExpression
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       if (result.node != null) {
-        // _ 
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // expr=AssignableExpression\u000a
-        val result2 = d.dvAssignableExpression
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-        if (result.node != null) {
-          node.setExpr(result2.node)
+        if (node == null) {
+          node = new AndPredicateExpression
         }
+        (node as AndPredicateExpression).setExpr(result2.node)
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new AndPredicateExpression()
       }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -939,38 +1492,47 @@ package class NotPredicateExpressionRule {
    * NotPredicateExpression returns Expression : '!' _ expr=AssignableExpression ; 
    */
   package static def Result<? extends Expression> matchNotPredicateExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new NotPredicateExpression
-      var d = derivation
-      
-      // '!' 
-      val result0 =  d.__terminal('!')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('!')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // expr=AssignableExpression\u000a
+      val result2 = d.dvAssignableExpression
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       if (result.node != null) {
-        // _ 
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // expr=AssignableExpression\u000a
-        val result2 = d.dvAssignableExpression
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-        if (result.node != null) {
-          node.setExpr(result2.node)
+        if (node == null) {
+          node = new NotPredicateExpression
         }
+        (node as NotPredicateExpression).setExpr(result2.node)
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new NotPredicateExpression()
       }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -981,38 +1543,47 @@ package class OneOrMoreExpressionRule {
    * OneOrMoreExpression returns Expression : expr=AssignableExpression '+' _ ; 
    */
   package static def Result<? extends Expression> matchOneOrMoreExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new OneOrMoreExpression
-      var d = derivation
-      
-      // expr=AssignableExpression 
-      val result0 = d.dvAssignableExpression
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      if (result.node != null) {
-        node.setExpr(result0.node)
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // expr=AssignableExpression 
+    val result0 = d.dvAssignableExpression
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new OneOrMoreExpression
       }
-      
-      if (result.node != null) {
-        // '+' 
-        val result1 =  d.__terminal('+')
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+      (node as OneOrMoreExpression).setExpr(result0.node)
+    }
+    
+    if (result.node != null) {
+      val result1 =  d.__terminal('+')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      val result2 = d.dv_
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new OneOrMoreExpression()
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result2 = d.dv_
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -1023,38 +1594,47 @@ package class ZeroOrMoreExpressionRule {
    * ZeroOrMoreExpression returns Expression : expr=AssignableExpression '*' _ ; 
    */
   package static def Result<? extends Expression> matchZeroOrMoreExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new ZeroOrMoreExpression
-      var d = derivation
-      
-      // expr=AssignableExpression 
-      val result0 = d.dvAssignableExpression
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      if (result.node != null) {
-        node.setExpr(result0.node)
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // expr=AssignableExpression 
+    val result0 = d.dvAssignableExpression
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new ZeroOrMoreExpression
       }
-      
-      if (result.node != null) {
-        // '*' 
-        val result1 =  d.__terminal('*')
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+      (node as ZeroOrMoreExpression).setExpr(result0.node)
+    }
+    
+    if (result.node != null) {
+      val result1 =  d.__terminal('*')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      val result2 = d.dv_
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new ZeroOrMoreExpression()
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result2 = d.dv_
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -1065,38 +1645,47 @@ package class OptionalExpressionRule {
    * OptionalExpression returns Expression : expr=AssignableExpression '?' _ ; 
    */
   package static def Result<? extends Expression> matchOptionalExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new OptionalExpression
-      var d = derivation
-      
-      // expr=AssignableExpression 
-      val result0 = d.dvAssignableExpression
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      if (result.node != null) {
-        node.setExpr(result0.node)
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // expr=AssignableExpression 
+    val result0 = d.dvAssignableExpression
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new OptionalExpression
       }
-      
-      if (result.node != null) {
-        // '?' 
-        val result1 =  d.__terminal('?')
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+      (node as OptionalExpression).setExpr(result0.node)
+    }
+    
+    if (result.node != null) {
+      val result1 =  d.__terminal('?')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      val result2 = d.dv_
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new OptionalExpression()
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result2 = d.dv_
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -1104,137 +1693,206 @@ package class OptionalExpressionRule {
 package class AssignableExpressionRule {
 
   /**
-   * AssignableExpression returns Expression : (property=ID _ op=AssignmentOperator)? expr= ( SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ) _ ; 
+   * AssignableExpression returns Expression : ( property=ID _ op=AssignmentOperator _ expr=AssignableExpressionExpressions | AssignableExpressionExpressions ) _ ; 
    */
   package static def Result<? extends Expression> matchAssignableExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new AssignableExpression
-      var d = derivation
-      
-      // (property=ID _ op=AssignmentOperator)?\u000a  
-      val backup0 = node?.copy()
-      val backup1 = d
-      
-      // (property=ID _ op=AssignmentOperator)
-      // property=ID 
-      val result0 = d.dvID
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      if (result.node != null) {
-        node.setProperty(result0.node)
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // property=ID _ op=AssignmentOperator _ expr=AssignableExpressionExpressions\u000a  | AssignableExpressionExpressions\u000a  
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    // property=ID 
+    val result0 = d.dvID
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new AssignableExpression
       }
-      
+      (node as AssignableExpression).setProperty(result0.node)
+    }
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // op=AssignmentOperator 
+      val result2 = d.dvAssignmentOperator
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       if (result.node != null) {
-        // _ 
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // op=AssignmentOperator
-        val result2 = d.dvAssignmentOperator
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-        if (result.node != null) {
-          node.setOp(result2.node)
+        if (node == null) {
+          node = new AssignableExpression
         }
+        (node as AssignableExpression).setOp(result2.node)
       }
-      if (result.node == null) {
-        node = backup0
-        d = backup1
-        result = CONTINUE.joinErrors(result, false)
-      }
-      
+    }
+    
+    if (result.node != null) {
+      val result3 = d.dv_
+      d = result3.derivation
+      result = result3
+      info.join(result3, false)
+    }
+    
+    if (result.node != null) {
+      // expr=AssignableExpressionExpressions\u000a  
+      val result4 = d.dvAssignableExpressionExpressions
+      d = result4.derivation
+      result = result4
+      info.join(result4, false)
       if (result.node != null) {
-        // expr=\u000a  ( SubExpression\u000a  | RangeExpression\u000a  | TerminalExpression\u000a  | AnyCharExpression\u000a  | RuleReferenceExpression\u000a  )\u000a  
-        val result8 = d.sub0MatchAssignableExpression(parser)
-        d = result8.derivation
-        result = result8.joinErrors(result, false)
-        if (result.node != null) {
-          node.setExpr(result8.node)
+        if (node == null) {
+          node = new AssignableExpression
         }
+        (node as AssignableExpression).setExpr(result4.node)
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result9 = d.dv_
-        d = result9.derivation
-        result = result9.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
-  }
-  
-  private static def Result<? extends Expression> sub0MatchAssignableExpression(Derivation derivation, Parser parser) {
-      var Result<?> result = null
-      var Expression node = null
-      var d = derivation
-      
-      // SubExpression\u000a  | RangeExpression\u000a  | TerminalExpression\u000a  | AnyCharExpression\u000a  | RuleReferenceExpression\u000a  
+    }
+    if (result.node == null) {
+      node = backup0
+      d = backup1
       val backup2 = node?.copy()
       val backup3 = d
       
-      // SubExpression\u000a  
-      val result3 = d.dvSubExpression
-      d = result3.derivation
-      result = result3.joinErrors(result, false)
+      val result5 = d.dvAssignableExpressionExpressions
+      d = result5.derivation
+      if (node == null) {
+        node = result5.node
+      }
+      result = result5
+      info.join(result5, false)
+      if (result.node == null) {
+        node = backup2
+        d = backup3
+      }
+    }
+    
+    if (result.node != null) {
+      val result6 = d.dv_
+      d = result6.derivation
+      result = result6
+      info.join(result6, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new AssignableExpression()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
+  }
+  
+  
+}
+package class AssignableExpressionExpressionsRule {
+
+  /**
+   * AssignableExpressionExpressions returns Expression : SubExpression | RangeExpression | TerminalExpression | AnyCharExpression | RuleReferenceExpression ; 
+   */
+  package static def Result<? extends Expression> matchAssignableExpressionExpressions(Parser parser, Derivation derivation) {
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // SubExpression\u000a  | RangeExpression\u000a  | TerminalExpression\u000a  | AnyCharExpression\u000a  | RuleReferenceExpression\u000a
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    val result0 = d.dvSubExpression
+    d = result0.derivation
+    if (node == null) {
+      node = result0.node
+    }
+    result = result0
+    info.join(result0, false)
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
+      
+      val result1 = d.dvRangeExpression
+      d = result1.derivation
+      if (node == null) {
+        node = result1.node
+      }
+      result = result1
+      info.join(result1, false)
       if (result.node == null) {
         node = backup2
         d = backup3
         val backup4 = node?.copy()
         val backup5 = d
         
-        // RangeExpression\u000a  
-        val result4 = d.dvRangeExpression
-        d = result4.derivation
-        result = result4.joinErrors(result, false)
+        val result2 = d.dvTerminalExpression
+        d = result2.derivation
+        if (node == null) {
+          node = result2.node
+        }
+        result = result2
+        info.join(result2, false)
         if (result.node == null) {
           node = backup4
           d = backup5
           val backup6 = node?.copy()
           val backup7 = d
           
-          // TerminalExpression\u000a  
-          val result5 = d.dvTerminalExpression
-          d = result5.derivation
-          result = result5.joinErrors(result, false)
+          val result3 = d.dvAnyCharExpression
+          d = result3.derivation
+          if (node == null) {
+            node = result3.node
+          }
+          result = result3
+          info.join(result3, false)
           if (result.node == null) {
             node = backup6
             d = backup7
             val backup8 = node?.copy()
             val backup9 = d
             
-            // AnyCharExpression\u000a  
-            val result6 = d.dvAnyCharExpression
-            d = result6.derivation
-            result = result6.joinErrors(result, false)
+            val result4 = d.dvRuleReferenceExpression
+            d = result4.derivation
+            if (node == null) {
+              node = result4.node
+            }
+            result = result4
+            info.join(result4, false)
             if (result.node == null) {
               node = backup8
               d = backup9
-              val backup10 = node?.copy()
-              val backup11 = d
-              
-              // RuleReferenceExpression\u000a  
-              val result7 = d.dvRuleReferenceExpression
-              d = result7.derivation
-              result = result7.joinErrors(result, false)
-              if (result.node == null) {
-                node = backup10
-                d = backup11
-              }
             }
           }
         }
       }
-      
-      return result as Result<? extends Expression>
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new AssignableExpressionExpressions()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
+  
   
 }
 package class AssignmentOperatorRule {
@@ -1243,68 +1901,84 @@ package class AssignmentOperatorRule {
    * AssignmentOperator : (single?='=' | multi?='+=' | bool?='?=') _ ; 
    */
   package static def Result<? extends AssignmentOperator> matchAssignmentOperator(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new AssignmentOperator
-      var d = derivation
+    var Result<?> result = null
+    var AssignmentOperator node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // single?='=' | multi?='+=' | bool?='?='
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    // single?='=' 
+    val result0 =  d.__terminal('=')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new AssignmentOperator
+      }
+      node.setSingle(result0.node != null)
+    }
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
       
-      // (single?='=' | multi?='+=' | bool?='?=')\u000a  
-      // single?='=' | multi?='+=' | bool?='?='
-      val backup0 = node?.copy()
-      val backup1 = d
-      
-      // single?='=' 
-      val result0 =  d.__terminal('=')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
+      // multi?='+=' 
+      val result1 =  d.__terminal('+=')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
       if (result.node != null) {
-        node.setSingle(result0.node != null)
+        if (node == null) {
+          node = new AssignmentOperator
+        }
+        node.setMulti(result1.node != null)
       }
       if (result.node == null) {
-        node = backup0
-        d = backup1
-        val backup2 = node?.copy()
-        val backup3 = d
+        node = backup2
+        d = backup3
+        val backup4 = node?.copy()
+        val backup5 = d
         
-        // multi?='+=' 
-        val result1 =  d.__terminal('+=')
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+        // bool?='?='
+        val result2 =  d.__terminal('?=')
+        d = result2.derivation
+        result = result2
+        info.join(result2, false)
         if (result.node != null) {
-          node.setMulti(result1.node != null)
+          if (node == null) {
+            node = new AssignmentOperator
+          }
+          node.setBool(result2.node != null)
         }
         if (result.node == null) {
-          node = backup2
-          d = backup3
-          val backup4 = node?.copy()
-          val backup5 = d
-          
-          // bool?='?='
-          val result2 =  d.__terminal('?=')
-          d = result2.derivation
-          result = result2.joinErrors(result, false)
-          if (result.node != null) {
-            node.setBool(result2.node != null)
-          }
-          if (result.node == null) {
-            node = backup4
-            d = backup5
-          }
+          node = backup4
+          d = backup5
         }
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result3 = d.dv_
-        d = result3.derivation
-        result = result3.joinErrors(result, false)
+    }
+    
+    if (result.node != null) {
+      val result3 = d.dv_
+      d = result3.derivation
+      result = result3
+      info.join(result3, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new AssignmentOperator()
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<AssignmentOperator>(node, d, result.info)
-      }
-      return new Result<AssignmentOperator>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<AssignmentOperator>(node, d, result.info)
+    }
+    return new Result<AssignmentOperator>(null, derivation, result.info)
   }
   
   
@@ -1315,52 +1989,61 @@ package class SubExpressionRule {
    * SubExpression returns Expression : '(' _ expr=ChoiceExpression ')' _ ; 
    */
   package static def Result<? extends Expression> matchSubExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new SubExpression
-      var d = derivation
-      
-      // '(' 
-      val result0 =  d.__terminal('(')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('(')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    if (result.node != null) {
+      // expr=ChoiceExpression 
+      val result2 = d.dvChoiceExpression
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       if (result.node != null) {
-        // _ 
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // expr=ChoiceExpression 
-        val result2 = d.dvChoiceExpression
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
-        if (result.node != null) {
-          node.setExpr(result2.node)
+        if (node == null) {
+          node = new SubExpression
         }
+        (node as SubExpression).setExpr(result2.node)
       }
-      
-      if (result.node != null) {
-        // ')' 
-        val result3 =  d.__terminal(')')
-        d = result3.derivation
-        result = result3.joinErrors(result, false)
+    }
+    
+    if (result.node != null) {
+      val result3 =  d.__terminal(')')
+      d = result3.derivation
+      result = result3
+      info.join(result3, false)
+    }
+    
+    if (result.node != null) {
+      val result4 = d.dv_
+      d = result4.derivation
+      result = result4
+      info.join(result4, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new SubExpression()
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result4 = d.dv_
-        d = result4.derivation
-        result = result4.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -1371,126 +2054,144 @@ package class RangeExpressionRule {
    * RangeExpression returns Expression : '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' _ ; 
    */
   package static def Result<? extends Expression> matchRangeExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new RangeExpression
-      var d = derivation
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('[')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      // dash='-'? 
+      val backup0 = node?.copy()
+      val backup1 = d
       
-      // '[' 
-      val result0 =  d.__terminal('[')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
+      // dash='-'
+      val result1 =  d.__terminal('-')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
       if (result.node != null) {
-        // dash='-'? 
-        val backup0 = node?.copy()
-        val backup1 = d
-        
-        // dash='-'
-        val result1 =  d.__terminal('-')
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+        if (node == null) {
+          node = new RangeExpression
+        }
+        (node as RangeExpression).setDash(result1.node)
+      }
+      if (result.node == null) {
+        node = backup0
+        d = backup1
+        result = CONTINUE
+        info.join(result, false)
+      }
+    }
+    
+    if (result.node != null) {
+      // (!']' ranges+=(MinMaxRange | CharRange))* 
+      var backup2 = node?.copy()
+      var backup3 = d
+      
+      do {
+        val backup4 = node?.copy()
+        val backup5 = d
+        val result2 =  d.__terminal(']')
+        d = result2.derivation
+        result = result2
+        info.join(result2, true)
+        node = backup4
+        d = backup5
         if (result.node != null) {
-          node.setDash(result1.node)
+          result = BREAK
+          info.join(result, true)
+        } else {
+          result = CONTINUE
+          info.join(result, true)
         }
-        if (result.node == null) {
-          node = backup0
-          d = backup1
-          result = CONTINUE.joinErrors(result, false)
-        }
-      }
-      
-      if (result.node != null) {
-        // (!']' ranges+=(MinMaxRange | CharRange))* 
-        var backup2 = node?.copy()
-        var backup3 = d
         
-        do {
-          // (!']' ranges+=(MinMaxRange | CharRange))
-          val backup4 = node?.copy()
-          val backup5 = d
-          // ']' 
-          val result2 =  d.__terminal(']')
-          d = result2.derivation
-          result = result2.joinErrors(result, true)
-          node = backup4
-          d = backup5
+        if (result.node != null) {
+          // ranges+=(MinMaxRange | CharRange)
+          val result5 = d.sub0MatchRangeExpression(parser)
+          d = result5.derivation
+          result = result5
+          info.join(result5, false)
           if (result.node != null) {
-            result = BREAK.joinErrors(result, true)
-          } else {
-            result = CONTINUE.joinErrors(result, true)
-          }
-          
-          if (result.node != null) {
-            // ranges+=(MinMaxRange | CharRange)
-            val result5 = d.sub0MatchRangeExpression(parser)
-            d = result5.derivation
-            result = result5.joinErrors(result, false)
-            if (result.node != null) {
-              node.add(result5.node)
+            if (node == null) {
+              node = new RangeExpression
             }
+            (node as RangeExpression).add(result5.node)
           }
-          if (result.node != null) {
-            backup2 = node?.copy()
-            backup3 = d
-          }
-        } while (result.node != null)
-        node = backup2
-        d = backup3
-        result = CONTINUE.joinErrors(result, false)
+        }
+        if (result.node != null) {
+          backup2 = node?.copy()
+          backup3 = d
+        }
+      } while (result.node != null)
+      node = backup2
+      d = backup3
+      result = CONTINUE
+      info.join(result, false)
+    }
+    
+    if (result.node != null) {
+      val result6 =  d.__terminal(']')
+      d = result6.derivation
+      result = result6
+      info.join(result6, false)
+    }
+    
+    if (result.node != null) {
+      val result7 = d.dv_
+      d = result7.derivation
+      result = result7
+      info.join(result7, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new RangeExpression()
       }
-      
-      if (result.node != null) {
-        // ']' 
-        val result6 =  d.__terminal(']')
-        d = result6.derivation
-        result = result6.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result7 = d.dv_
-        d = result7.derivation
-        result = result7.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   private static def Result<? extends Node> sub0MatchRangeExpression(Derivation derivation, Parser parser) {
-      var Result<?> result = null
+      var Result<? extends Node> result = null
       var Node node = null
       var d = derivation
+      val ParseInfo info = new ParseInfo(derivation.index)
       
       // MinMaxRange | CharRange
       val backup6 = node?.copy()
       val backup7 = d
       
-      // MinMaxRange 
       val result3 = d.dvMinMaxRange
       d = result3.derivation
-      result = result3.joinErrors(result, false)
+      result = result3
+      info.join(result3, false)
       if (result.node == null) {
         node = backup6
         d = backup7
         val backup8 = node?.copy()
         val backup9 = d
         
-        // CharRange
         val result4 = d.dvCharRange
         d = result4.derivation
-        result = result4.joinErrors(result, false)
+        result = result4
+        info.join(result4, false)
         if (result.node == null) {
           node = backup8
           d = backup9
         }
       }
       
-      return result as Result<? extends Node>
+      result.info = info
+      return result
   }
   
 }
@@ -1500,75 +2201,92 @@ package class MinMaxRangeRule {
    * MinMaxRange: !'-' min=. '-' !'-' max=. ; 
    */
   package static def Result<? extends MinMaxRange> matchMinMaxRange(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new MinMaxRange
-      var d = derivation
-      
-      val backup0 = node?.copy()
-      val backup1 = d
-      // '-' 
-      val result0 =  d.__terminal('-')
-      d = result0.derivation
-      result = result0.joinErrors(result, true)
-      node = backup0
-      d = backup1
+    var Result<?> result = null
+    var MinMaxRange node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val backup0 = node?.copy()
+    val backup1 = d
+    val result0 =  d.__terminal('-')
+    d = result0.derivation
+    result = result0
+    info.join(result0, true)
+    node = backup0
+    d = backup1
+    if (result.node != null) {
+      result = BREAK
+      info.join(result, true)
+    } else {
+      result = CONTINUE
+      info.join(result, true)
+    }
+    
+    if (result.node != null) {
+      // min=. 
+      // .
+      val result1 =  d.__any()
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
       if (result.node != null) {
-        result = BREAK.joinErrors(result, true)
+        if (node == null) {
+          node = new MinMaxRange
+        }
+        node.setMin(result1.node)
+      }
+    }
+    
+    if (result.node != null) {
+      val result2 =  d.__terminal('-')
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
+    }
+    
+    if (result.node != null) {
+      val backup2 = node?.copy()
+      val backup3 = d
+      val result3 =  d.__terminal('-')
+      d = result3.derivation
+      result = result3
+      info.join(result3, true)
+      node = backup2
+      d = backup3
+      if (result.node != null) {
+        result = BREAK
+        info.join(result, true)
       } else {
-        result = CONTINUE.joinErrors(result, true)
+        result = CONTINUE
+        info.join(result, true)
       }
-      
+    }
+    
+    if (result.node != null) {
+      // max=.\u000a
+      // .
+      val result4 =  d.__any()
+      d = result4.derivation
+      result = result4
+      info.join(result4, false)
       if (result.node != null) {
-        // min=. 
-        // .
-        val result1 =  d.__any()
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-        if (result.node != null) {
-          node.setMin(result1.node)
+        if (node == null) {
+          node = new MinMaxRange
         }
+        node.setMax(result4.node)
       }
-      
-      if (result.node != null) {
-        // '-' 
-        val result2 =  d.__terminal('-')
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new MinMaxRange()
       }
-      
-      if (result.node != null) {
-        val backup2 = node?.copy()
-        val backup3 = d
-        // '-' 
-        val result3 =  d.__terminal('-')
-        d = result3.derivation
-        result = result3.joinErrors(result, true)
-        node = backup2
-        d = backup3
-        if (result.node != null) {
-          result = BREAK.joinErrors(result, true)
-        } else {
-          result = CONTINUE.joinErrors(result, true)
-        }
-      }
-      
-      if (result.node != null) {
-        // max=.\u000a
-        // .
-        val result4 =  d.__any()
-        d = result4.derivation
-        result = result4.joinErrors(result, false)
-        if (result.node != null) {
-          node.setMax(result4.node)
-        }
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<MinMaxRange>(node, d, result.info)
-      }
-      return new Result<MinMaxRange>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<MinMaxRange>(node, d, result.info)
+    }
+    return new Result<MinMaxRange>(null, derivation, result.info)
   }
   
   
@@ -1579,91 +2297,110 @@ package class CharRangeRule {
    * CharRange: '\\\\' char=']' | '\\\\' char='\\\\' | !'-' char=. ; 
    */
   package static def Result<? extends CharRange> matchCharRange(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new CharRange
-      var d = derivation
+    var Result<?> result = null
+    var CharRange node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // '\\\\' char=']'\u000a  | '\\\\' char='\\\\'\u000a  | !'-' char=.\u000a
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    val result0 =  d.__terminal('\\')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      // char=']'\u000a  
+      val result1 =  d.__terminal(']')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+      if (result.node != null) {
+        if (node == null) {
+          node = new CharRange
+        }
+        node.setChar(result1.node)
+      }
+    }
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
       
-      // '\\\\' char=']'\u000a  | '\\\\' char='\\\\'\u000a  | !'-' char=.\u000a
-      val backup0 = node?.copy()
-      val backup1 = d
-      
-      // '\\\\' 
-      val result0 =  d.__terminal('\\')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
+      val result2 =  d.__terminal('\\')
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
       
       if (result.node != null) {
-        // char=']'\u000a  
-        val result1 =  d.__terminal(']')
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+        // char='\\\\'\u000a  
+        val result3 =  d.__terminal('\\')
+        d = result3.derivation
+        result = result3
+        info.join(result3, false)
         if (result.node != null) {
-          node.setChar(result1.node)
+          if (node == null) {
+            node = new CharRange
+          }
+          node.setChar(result3.node)
         }
       }
       if (result.node == null) {
-        node = backup0
-        d = backup1
-        val backup2 = node?.copy()
-        val backup3 = d
+        node = backup2
+        d = backup3
+        val backup4 = node?.copy()
+        val backup5 = d
         
-        // '\\\\' 
-        val result2 =  d.__terminal('\\')
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
+        val backup6 = node?.copy()
+        val backup7 = d
+        val result4 =  d.__terminal('-')
+        d = result4.derivation
+        result = result4
+        info.join(result4, true)
+        node = backup6
+        d = backup7
+        if (result.node != null) {
+          result = BREAK
+          info.join(result, true)
+        } else {
+          result = CONTINUE
+          info.join(result, true)
+        }
         
         if (result.node != null) {
-          // char='\\\\'\u000a  
-          val result3 =  d.__terminal('\\')
-          d = result3.derivation
-          result = result3.joinErrors(result, false)
+          // char=.\u000a
+          // .
+          val result5 =  d.__any()
+          d = result5.derivation
+          result = result5
+          info.join(result5, false)
           if (result.node != null) {
-            node.setChar(result3.node)
+            if (node == null) {
+              node = new CharRange
+            }
+            node.setChar(result5.node)
           }
         }
         if (result.node == null) {
-          node = backup2
-          d = backup3
-          val backup4 = node?.copy()
-          val backup5 = d
-          
-          val backup6 = node?.copy()
-          val backup7 = d
-          // '-' 
-          val result4 =  d.__terminal('-')
-          d = result4.derivation
-          result = result4.joinErrors(result, true)
-          node = backup6
-          d = backup7
-          if (result.node != null) {
-            result = BREAK.joinErrors(result, true)
-          } else {
-            result = CONTINUE.joinErrors(result, true)
-          }
-          
-          if (result.node != null) {
-            // char=.\u000a
-            // .
-            val result5 =  d.__any()
-            d = result5.derivation
-            result = result5.joinErrors(result, false)
-            if (result.node != null) {
-              node.setChar(result5.node)
-            }
-          }
-          if (result.node == null) {
-            node = backup4
-            d = backup5
-          }
+          node = backup4
+          d = backup5
         }
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<CharRange>(node, d, result.info)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new CharRange()
       }
-      return new Result<CharRange>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<CharRange>(node, d, result.info)
+    }
+    return new Result<CharRange>(null, derivation, result.info)
   }
   
   
@@ -1674,24 +2411,33 @@ package class AnyCharExpressionRule {
    * AnyCharExpression returns Expression : char='.' ; 
    */
   package static def Result<? extends Expression> matchAnyCharExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new AnyCharExpression
-      var d = derivation
-      
-      // char='.'\u000a
-      val result0 =  d.__terminal('.')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      if (result.node != null) {
-        node.setChar(result0.node)
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // char='.'\u000a
+    val result0 =  d.__terminal('.')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new AnyCharExpression
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
+      (node as AnyCharExpression).setChar(result0.node)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new AnyCharExpression()
       }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -1702,31 +2448,40 @@ package class RuleReferenceExpressionRule {
    * RuleReferenceExpression returns Expression : name=ID _ ; 
    */
   package static def Result<? extends Expression> matchRuleReferenceExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new RuleReferenceExpression
-      var d = derivation
-      
-      // name=ID 
-      val result0 = d.dvID
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      if (result.node != null) {
-        node.setName(result0.node)
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // name=ID 
+    val result0 = d.dvID
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node != null) {
+      if (node == null) {
+        node = new RuleReferenceExpression
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result1 = d.dv_
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+      (node as RuleReferenceExpression).setName(result0.node)
+    }
+    
+    if (result.node != null) {
+      val result1 = d.dv_
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new RuleReferenceExpression()
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -1737,54 +2492,64 @@ package class TerminalExpressionRule {
    * TerminalExpression returns Expression : '\\'' value=InTerminalChar? '\\'' _ ; 
    */
   package static def Result<? extends Expression> matchTerminalExpression(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new TerminalExpression
-      var d = derivation
+    var Result<?> result = null
+    var Expression node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('\'')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      // value=InTerminalChar? 
+      val backup0 = node?.copy()
+      val backup1 = d
       
-      // '\\'' 
-      val result0 =  d.__terminal('\'')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
+      // value=InTerminalChar
+      val result1 = d.dvInTerminalChar
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
       if (result.node != null) {
-        // value=InTerminalChar? 
-        val backup0 = node?.copy()
-        val backup1 = d
-        
-        // value=InTerminalChar
-        val result1 = d.dvInTerminalChar
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
-        if (result.node != null) {
-          node.setValue(result1.node)
+        if (node == null) {
+          node = new TerminalExpression
         }
-        if (result.node == null) {
-          node = backup0
-          d = backup1
-          result = CONTINUE.joinErrors(result, false)
-        }
+        (node as TerminalExpression).setValue(result1.node)
       }
-      
-      if (result.node != null) {
-        // '\\'' 
-        val result2 =  d.__terminal('\'')
-        d = result2.derivation
-        result = result2.joinErrors(result, false)
+      if (result.node == null) {
+        node = backup0
+        d = backup1
+        result = CONTINUE
+        info.join(result, false)
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result3 = d.dv_
-        d = result3.derivation
-        result = result3.joinErrors(result, false)
+    }
+    
+    if (result.node != null) {
+      val result2 =  d.__terminal('\'')
+      d = result2.derivation
+      result = result2
+      info.join(result2, false)
+    }
+    
+    if (result.node != null) {
+      val result3 = d.dv_
+      d = result3.derivation
+      result = result3
+      info.join(result3, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new TerminalExpression()
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Expression>(node, d, result.info)
-      }
-      return new Result<Expression>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Expression>(node, d, result.info)
+    }
+    return new Result<Expression>(null, derivation, result.info)
   }
   
   
@@ -1795,102 +2560,109 @@ package class InTerminalCharRule {
    * InTerminalChar: ('\\\\' '\\'' | '\\\\' '\\\\' | !'\\'' .)+ ; 
    */
   package static def Result<? extends InTerminalChar> matchInTerminalChar(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new InTerminalChar
-      var d = derivation
+    var Result<?> result = null
+    var InTerminalChar node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // ('\\\\' '\\'' | '\\\\' '\\\\' | !'\\'' .)+\u000a
+    var backup0 = node?.copy()
+    var backup1 = d
+    var loop0 = false
+    
+    do {
+      // '\\\\' '\\'' | '\\\\' '\\\\' | !'\\'' .
+      val backup2 = node?.copy()
+      val backup3 = d
       
-      // ('\\\\' '\\'' | '\\\\' '\\\\' | !'\\'' .)+\u000a
-      var backup0 = node?.copy()
-      var backup1 = d
-      var loop0 = false
+      val result0 =  d.__terminal('\\')
+      d = result0.derivation
+      result = result0
+      info.join(result0, false)
       
-      do {
-        // ('\\\\' '\\'' | '\\\\' '\\\\' | !'\\'' .)
-        // '\\\\' '\\'' | '\\\\' '\\\\' | !'\\'' .
-        val backup2 = node?.copy()
-        val backup3 = d
+      if (result.node != null) {
+        val result1 =  d.__terminal('\'')
+        d = result1.derivation
+        result = result1
+        info.join(result1, false)
+      }
+      if (result.node == null) {
+        node = backup2
+        d = backup3
+        val backup4 = node?.copy()
+        val backup5 = d
         
-        // '\\\\' 
-        val result0 =  d.__terminal('\\')
-        d = result0.derivation
-        result = result0.joinErrors(result, false)
+        val result2 =  d.__terminal('\\')
+        d = result2.derivation
+        result = result2
+        info.join(result2, false)
         
         if (result.node != null) {
-          // '\\'' 
-          val result1 =  d.__terminal('\'')
-          d = result1.derivation
-          result = result1.joinErrors(result, false)
+          val result3 =  d.__terminal('\\')
+          d = result3.derivation
+          result = result3
+          info.join(result3, false)
         }
         if (result.node == null) {
-          node = backup2
-          d = backup3
-          val backup4 = node?.copy()
-          val backup5 = d
+          node = backup4
+          d = backup5
+          val backup6 = node?.copy()
+          val backup7 = d
           
-          // '\\\\' 
-          val result2 =  d.__terminal('\\')
-          d = result2.derivation
-          result = result2.joinErrors(result, false)
+          val backup8 = node?.copy()
+          val backup9 = d
+          val result4 =  d.__terminal('\'')
+          d = result4.derivation
+          result = result4
+          info.join(result4, true)
+          node = backup8
+          d = backup9
+          if (result.node != null) {
+            result = BREAK
+            info.join(result, true)
+          } else {
+            result = CONTINUE
+            info.join(result, true)
+          }
           
           if (result.node != null) {
-            // '\\\\' 
-            val result3 =  d.__terminal('\\')
-            d = result3.derivation
-            result = result3.joinErrors(result, false)
+            // .
+            val result5 =  d.__any()
+            d = result5.derivation
+            result = result5
+            info.join(result5, false)
           }
           if (result.node == null) {
-            node = backup4
-            d = backup5
-            val backup6 = node?.copy()
-            val backup7 = d
-            
-            val backup8 = node?.copy()
-            val backup9 = d
-            // '\\'' 
-            val result4 =  d.__terminal('\'')
-            d = result4.derivation
-            result = result4.joinErrors(result, true)
-            node = backup8
-            d = backup9
-            if (result.node != null) {
-              result = BREAK.joinErrors(result, true)
-            } else {
-              result = CONTINUE.joinErrors(result, true)
-            }
-            
-            if (result.node != null) {
-              // .
-              // .
-              val result5 =  d.__any()
-              d = result5.derivation
-              result = result5.joinErrors(result, false)
-            }
-            if (result.node == null) {
-              node = backup6
-              d = backup7
-            }
+            node = backup6
+            d = backup7
           }
         }
-        
-        if (result.node != null) {
-          loop0 = true
-          backup0 = node?.copy()
-          backup1 = d
-        }
-      } while(result.node != null)
-      if (!loop0) {
-        node = backup0
-        d = backup1
-      } else {
-        result = CONTINUE.joinErrors(result, false)
       }
       
       if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<InTerminalChar>(node, d, result.info)
+        loop0 = true
+        backup0 = node?.copy()
+        backup1 = d
       }
-      return new Result<InTerminalChar>(null, derivation, result.info)
+    } while(result.node != null)
+    if (!loop0) {
+      node = backup0
+      d = backup1
+    } else {
+      result = CONTINUE
+      info.join(result, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new InTerminalChar()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<InTerminalChar>(node, d, result.info)
+    }
+    return new Result<InTerminalChar>(null, derivation, result.info)
   }
   
   
@@ -1901,83 +2673,90 @@ package class CommentRule {
    * Comment : '//' (!('\\r'? '\\n') .)* _ ; 
    */
   package static def Result<? extends Comment> matchComment(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new Comment
-      var d = derivation
+    var Result<?> result = null
+    var Comment node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val result0 =  d.__terminal('//')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      // (!('\\r'? '\\n') .)* 
+      var backup0 = node?.copy()
+      var backup1 = d
       
-      // '//' 
-      val result0 =  d.__terminal('//')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
-      if (result.node != null) {
-        // (!('\\r'? '\\n') .)* 
-        var backup0 = node?.copy()
-        var backup1 = d
+      do {
+        val backup2 = node?.copy()
+        val backup3 = d
+        // '\\r'? 
+        val backup4 = node?.copy()
+        val backup5 = d
         
-        do {
-          // (!('\\r'? '\\n') .)
-          val backup2 = node?.copy()
-          val backup3 = d
-          // ('\\r'? '\\n') 
-          // '\\r'? 
-          val backup4 = node?.copy()
-          val backup5 = d
-          
-          // '\\r'
-          val result1 =  d.__terminal('\r')
-          d = result1.derivation
-          result = result1.joinErrors(result, true)
-          if (result.node == null) {
-            node = backup4
-            d = backup5
-            result = CONTINUE.joinErrors(result, true)
-          }
-          
-          if (result.node != null) {
-            // '\\n'
-            val result2 =  d.__terminal('\n')
-            d = result2.derivation
-            result = result2.joinErrors(result, true)
-          }
-          node = backup2
-          d = backup3
-          if (result.node != null) {
-            result = BREAK.joinErrors(result, true)
-          } else {
-            result = CONTINUE.joinErrors(result, true)
-          }
-          
-          if (result.node != null) {
-            // .
-            // .
-            val result3 =  d.__any()
-            d = result3.derivation
-            result = result3.joinErrors(result, false)
-          }
-          if (result.node != null) {
-            backup0 = node?.copy()
-            backup1 = d
-          }
-        } while (result.node != null)
-        node = backup0
-        d = backup1
-        result = CONTINUE.joinErrors(result, false)
+        val result1 =  d.__terminal('\r')
+        d = result1.derivation
+        result = result1
+        info.join(result1, true)
+        if (result.node == null) {
+          node = backup4
+          d = backup5
+          result = CONTINUE
+          info.join(result, true)
+        }
+        
+        if (result.node != null) {
+          val result2 =  d.__terminal('\n')
+          d = result2.derivation
+          result = result2
+          info.join(result2, true)
+        }
+        node = backup2
+        d = backup3
+        if (result.node != null) {
+          result = BREAK
+          info.join(result, true)
+        } else {
+          result = CONTINUE
+          info.join(result, true)
+        }
+        
+        if (result.node != null) {
+          // .
+          val result3 =  d.__any()
+          d = result3.derivation
+          result = result3
+          info.join(result3, false)
+        }
+        if (result.node != null) {
+          backup0 = node?.copy()
+          backup1 = d
+        }
+      } while (result.node != null)
+      node = backup0
+      d = backup1
+      result = CONTINUE
+      info.join(result, false)
+    }
+    
+    if (result.node != null) {
+      val result4 = d.dv_
+      d = result4.derivation
+      result = result4
+      info.join(result4, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new Comment()
       }
-      
-      if (result.node != null) {
-        // _\u000a
-        val result4 = d.dv_
-        d = result4.derivation
-        result = result4.joinErrors(result, false)
-      }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<Comment>(node, d, result.info)
-      }
-      return new Result<Comment>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<Comment>(node, d, result.info)
+    }
+    return new Result<Comment>(null, derivation, result.info)
   }
   
   
@@ -1988,32 +2767,38 @@ package class EOIRule {
    * EOI: !(.) ; 
    */
   package static def Result<? extends EOI> matchEOI(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new EOI
-      var d = derivation
-      
-      val backup0 = node?.copy()
-      val backup1 = d
-      // (.)\u000a
-      // .
-      // .
-      val result0 =  d.__any()
-      d = result0.derivation
-      result = result0.joinErrors(result, true)
-      node = backup0
-      d = backup1
-      if (result.node != null) {
-        result = BREAK.joinErrors(result, true)
-      } else {
-        result = CONTINUE.joinErrors(result, true)
+    var Result<?> result = null
+    var EOI node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    val backup0 = node?.copy()
+    val backup1 = d
+    // .
+    val result0 =  d.__any()
+    d = result0.derivation
+    result = result0
+    info.join(result0, true)
+    node = backup0
+    d = backup1
+    if (result.node != null) {
+      result = BREAK
+      info.join(result, true)
+    } else {
+      result = CONTINUE
+      info.join(result, true)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new EOI()
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<EOI>(node, d, result.info)
-      }
-      return new Result<EOI>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<EOI>(node, d, result.info)
+    }
+    return new Result<EOI>(null, derivation, result.info)
   }
   
   
@@ -2024,47 +2809,53 @@ package class IDRule {
    * ID: [a-zA-Z_] [a-zA-Z0-9_]* ; 
    */
   package static def Result<? extends ID> matchID(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new ID
-      var d = derivation
+    var Result<?> result = null
+    var ID node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // [a-zA-Z_] 
+    val result0 = d.__oneOfThese(
+      ('a'..'z') + ('A'..'Z') + '_'
+      )
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    
+    if (result.node != null) {
+      // [a-zA-Z0-9_]*\u000a
+      var backup0 = node?.copy()
+      var backup1 = d
       
-      // [a-zA-Z_] 
-      // [a-zA-Z_] 
-      val result0 = d.__oneOfThese(
-        ('a'..'z') + ('A'..'Z') + '_'
-        )
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
-      
-      if (result.node != null) {
-        // [a-zA-Z0-9_]*\u000a
-        var backup0 = node?.copy()
-        var backup1 = d
-        
-        do {
-          // [a-zA-Z0-9_]
-          // [a-zA-Z0-9_]
-          val result1 = d.__oneOfThese(
-            ('a'..'z') + ('A'..'Z') + ('0'..'9') + '_'
-            )
-          d = result1.derivation
-          result = result1.joinErrors(result, false)
-          if (result.node != null) {
-            backup0 = node?.copy()
-            backup1 = d
-          }
-        } while (result.node != null)
-        node = backup0
-        d = backup1
-        result = CONTINUE.joinErrors(result, false)
+      do {
+        // [a-zA-Z0-9_]
+        val result1 = d.__oneOfThese(
+          ('a'..'z') + ('A'..'Z') + ('0'..'9') + '_'
+          )
+        d = result1.derivation
+        result = result1
+        info.join(result1, false)
+        if (result.node != null) {
+          backup0 = node?.copy()
+          backup1 = d
+        }
+      } while (result.node != null)
+      node = backup0
+      d = backup1
+      result = CONTINUE
+      info.join(result, false)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new ID()
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<ID>(node, d, result.info)
-      }
-      return new Result<ID>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<ID>(node, d, result.info)
+    }
+    return new Result<ID>(null, derivation, result.info)
   }
   
   
@@ -2075,62 +2866,67 @@ package class WSRule {
    * WS : ' ' | '\\n' | '\\t' | '\\r' ; 
    */
   package static def Result<? extends WS> matchWS(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new WS
-      var d = derivation
+    var Result<?> result = null
+    var WS node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // ' ' | '\\n' | '\\t' | '\\r'\u000a
+    val backup0 = node?.copy()
+    val backup1 = d
+    
+    val result0 =  d.__terminal(' ')
+    d = result0.derivation
+    result = result0
+    info.join(result0, false)
+    if (result.node == null) {
+      node = backup0
+      d = backup1
+      val backup2 = node?.copy()
+      val backup3 = d
       
-      // ' ' | '\\n' | '\\t' | '\\r'\u000a
-      val backup0 = node?.copy()
-      val backup1 = d
-      
-      // ' ' 
-      val result0 =  d.__terminal(' ')
-      d = result0.derivation
-      result = result0.joinErrors(result, false)
+      val result1 =  d.__terminal('\n')
+      d = result1.derivation
+      result = result1
+      info.join(result1, false)
       if (result.node == null) {
-        node = backup0
-        d = backup1
-        val backup2 = node?.copy()
-        val backup3 = d
+        node = backup2
+        d = backup3
+        val backup4 = node?.copy()
+        val backup5 = d
         
-        // '\\n' 
-        val result1 =  d.__terminal('\n')
-        d = result1.derivation
-        result = result1.joinErrors(result, false)
+        val result2 =  d.__terminal('\t')
+        d = result2.derivation
+        result = result2
+        info.join(result2, false)
         if (result.node == null) {
-          node = backup2
-          d = backup3
-          val backup4 = node?.copy()
-          val backup5 = d
+          node = backup4
+          d = backup5
+          val backup6 = node?.copy()
+          val backup7 = d
           
-          // '\\t' 
-          val result2 =  d.__terminal('\t')
-          d = result2.derivation
-          result = result2.joinErrors(result, false)
+          val result3 =  d.__terminal('\r')
+          d = result3.derivation
+          result = result3
+          info.join(result3, false)
           if (result.node == null) {
-            node = backup4
-            d = backup5
-            val backup6 = node?.copy()
-            val backup7 = d
-            
-            // '\\r'\u000a
-            val result3 =  d.__terminal('\r')
-            d = result3.derivation
-            result = result3.joinErrors(result, false)
-            if (result.node == null) {
-              node = backup6
-              d = backup7
-            }
+            node = backup6
+            d = backup7
           }
         }
       }
-      
-      if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<WS>(node, d, result.info)
+    }
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new WS()
       }
-      return new Result<WS>(null, derivation, result.info)
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<WS>(node, d, result.info)
+    }
+    return new Result<WS>(null, derivation, result.info)
   }
   
   
@@ -2141,34 +2937,40 @@ package class _Rule {
    * _ : WS* ; 
    */
   package static def Result<? extends _> match_(Parser parser, Derivation derivation) {
-      var Result<?> result = null
-      var node = new _
-      var d = derivation
-      
-      // WS* \u000a
-      var backup0 = node?.copy()
-      var backup1 = d
-      
-      do {
-        // WS
-        val result0 = d.dvWS
-        d = result0.derivation
-        result = result0.joinErrors(result, false)
-        if (result.node != null) {
-          backup0 = node?.copy()
-          backup1 = d
-        }
-      } while (result.node != null)
-      node = backup0
-      d = backup1
-      result = CONTINUE.joinErrors(result, false)
-      
+    var Result<?> result = null
+    var _ node = null
+    var d = derivation
+    val ParseInfo info = new ParseInfo(derivation.index)
+    
+    // WS* \u000a
+    var backup0 = node?.copy()
+    var backup1 = d
+    
+    do {
+      val result0 = d.dvWS
+      d = result0.derivation
+      result = result0
+      info.join(result0, false)
       if (result.node != null) {
-        node.index = derivation.index
-        node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-        return new Result<_>(node, d, result.info)
+        backup0 = node?.copy()
+        backup1 = d
       }
-      return new Result<_>(null, derivation, result.info)
+    } while (result.node != null)
+    node = backup0
+    d = backup1
+    result = CONTINUE
+    info.join(result, false)
+    
+    result.info = info
+    if (result.node != null) {
+      if (node == null) {
+        node = new _()
+      }
+      node.index = derivation.index
+      node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
+      return new Result<_>(node, d, result.info)
+    }
+    return new Result<_>(null, derivation, result.info)
   }
   
   
@@ -2186,15 +2988,19 @@ package class Derivation {
   Result<? extends Rule> dvRule
   Result<? extends RuleReturns> dvRuleReturns
   Result<? extends Body> dvBody
+  Result<? extends Expression> dvExpression
   Result<? extends Expression> dvChoiceExpression
   Result<? extends Expression> dvSequenceExpression
+  Result<? extends Expression> dvSequenceExpressionExpressions
   Result<? extends Expression> dvActionExpression
+  Result<? extends ActionOperator> dvActionOperator
   Result<? extends Expression> dvAndPredicateExpression
   Result<? extends Expression> dvNotPredicateExpression
   Result<? extends Expression> dvOneOrMoreExpression
   Result<? extends Expression> dvZeroOrMoreExpression
   Result<? extends Expression> dvOptionalExpression
   Result<? extends Expression> dvAssignableExpression
+  Result<? extends Expression> dvAssignableExpressionExpressions
   Result<? extends AssignmentOperator> dvAssignmentOperator
   Result<? extends Expression> dvSubExpression
   Result<? extends Expression> dvRangeExpression
@@ -2257,6 +3063,15 @@ package class Derivation {
     return dvBody
   }
   
+  def getDvExpression() {
+    if (dvExpression == null) {
+      // Fail LR upfront
+      dvExpression = new Result<Expression>(null, this, new ParseInfo(index, 'Detected left-recursion in Expression'))
+      dvExpression = ExpressionRule.matchExpression(parser, this)
+    }
+    return dvExpression
+  }
+  
   def getDvChoiceExpression() {
     if (dvChoiceExpression == null) {
       // Fail LR upfront
@@ -2275,6 +3090,15 @@ package class Derivation {
     return dvSequenceExpression
   }
   
+  def getDvSequenceExpressionExpressions() {
+    if (dvSequenceExpressionExpressions == null) {
+      // Fail LR upfront
+      dvSequenceExpressionExpressions = new Result<SequenceExpressionExpressions>(null, this, new ParseInfo(index, 'Detected left-recursion in SequenceExpressionExpressions'))
+      dvSequenceExpressionExpressions = SequenceExpressionExpressionsRule.matchSequenceExpressionExpressions(parser, this)
+    }
+    return dvSequenceExpressionExpressions
+  }
+  
   def getDvActionExpression() {
     if (dvActionExpression == null) {
       // Fail LR upfront
@@ -2282,6 +3106,15 @@ package class Derivation {
       dvActionExpression = ActionExpressionRule.matchActionExpression(parser, this)
     }
     return dvActionExpression
+  }
+  
+  def getDvActionOperator() {
+    if (dvActionOperator == null) {
+      // Fail LR upfront
+      dvActionOperator = new Result<ActionOperator>(null, this, new ParseInfo(index, 'Detected left-recursion in ActionOperator'))
+      dvActionOperator = ActionOperatorRule.matchActionOperator(parser, this)
+    }
+    return dvActionOperator
   }
   
   def getDvAndPredicateExpression() {
@@ -2336,6 +3169,15 @@ package class Derivation {
       dvAssignableExpression = AssignableExpressionRule.matchAssignableExpression(parser, this)
     }
     return dvAssignableExpression
+  }
+  
+  def getDvAssignableExpressionExpressions() {
+    if (dvAssignableExpressionExpressions == null) {
+      // Fail LR upfront
+      dvAssignableExpressionExpressions = new Result<AssignableExpressionExpressions>(null, this, new ParseInfo(index, 'Detected left-recursion in AssignableExpressionExpressions'))
+      dvAssignableExpressionExpressions = AssignableExpressionExpressionsRule.matchAssignableExpressionExpressions(parser, this)
+    }
+    return dvAssignableExpressionExpressions
   }
   
   def getDvAssignmentOperator() {
@@ -2557,20 +3399,6 @@ package class Result<T> {
   def getInfo() { info }
   def setInfo(ParseInfo info) { this.info = info }
   
-  def Result<?> joinErrors(Result<?> r2, boolean inPredicate) {
-    if (r2 != null) {
-      if (inPredicate) {
-        info = r2.info
-      } else {
-        info = 
-          if (info.position > r2.info.position || r2.info.messages == null) info
-          else if (info.position < r2.info.position || info.messages == null) r2.info
-          else new ParseInfo(info.position, info.messages + r2.info.messages)
-      }
-    }
-    return this
-  }
-  
   override toString() {
     'Result[' + (if (node != null) 'MATCH' else 'NO MATCH') + ']'
   }
@@ -2579,13 +3407,8 @@ package class Result<T> {
 
 package class SpecialResult extends Result<Object> {
   new(Object o) { super(o, null, null) }
-  override joinErrors(Result<?> r2, boolean inPredicate) { 
-    info = r2.info
-    return this
-  }
 }
 
-@Data
 package class ParseInfo {
   
   int position
@@ -2601,8 +3424,24 @@ package class ParseInfo {
   }
   
   new(int position, Iterable<String> messages) {
-    this._position = position
-    this._messages = messages?.toSet
+    this.position = position
+    this.messages = messages?.toSet
+  }
+  
+  def getPosition() { position }
+  def getMessages() { messages }
+  
+  def join(Result<?> r, boolean inPredicate) {
+    if (!inPredicate && r != null && r.info != null) {
+      if (position > r.info.position || r.info.messages == null) {
+        // Do nothing
+      } else if (position < r.info.position || messages == null) {
+        position = r.info.position
+        messages = r.info.messages
+      } else {
+        messages += r.info.messages
+      }
+    }
   }
   
 }

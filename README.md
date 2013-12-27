@@ -10,9 +10,5 @@ and extend like Warth, Douglass and Millstein described (http://www.cs.ucla.edu/
 TODO
 ====
 * support left-recursion
-* Action expressions
-* 'current' assignment
 * unordered groups
-* Lazy return type creation
-* unassigned rule calls
 * Cross-References (maybe)

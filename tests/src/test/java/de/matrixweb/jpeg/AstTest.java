@@ -3,12 +3,13 @@ package de.matrixweb.jpeg;
 import java.io.File;
 import java.io.IOException;
 
-import jpeg.Expression;
+import jpeg.ChoiceExpression;
 import jpeg.Jpeg;
 import jpeg.ParseException;
 import jpeg.Parser;
 import jpeg.Rule;
-import jpeg.SequenceExpression;
+import jpeg.RuleReferenceExpression;
+import jpeg.TerminalExpression;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +68,8 @@ public class AstTest {
   public void testParseError() {
     this.exception.expect(ParseException.class);
     this.exception.expectMessage("ParseException[1,9]");
-    this.exception.expectMessage("Expected ';'");
+    this.exception.expectMessage("Expected");
+    this.exception.expectMessage("';'");
 
     this.parser.Jpeg("Rule: []];");
   }
@@ -76,7 +78,8 @@ public class AstTest {
   public void testUnclosedRangeExpression() {
     this.exception.expect(ParseException.class);
     this.exception.expectMessage("ParseException[1,4]");
-    this.exception.expectMessage("Expected ']'");
+    this.exception.expectMessage("Expected");
+    this.exception.expectMessage("']'");
 
     this.parser.RangeExpression("[abc");
   }
@@ -94,13 +97,12 @@ public class AstTest {
 
     assertThat(jpeg, is(notNullValue()));
     final Rule rule = jpeg.getRules().get(0);
-    // Expect one sequence exp
-    assertThat(rule.getBody().getExpressions().size(), is(1));
+    // Expect two terminal exp
+    assertThat(rule.getBody().getExpressions().size(), is(2));
     assertThat(rule.getBody().getExpressions().get(0),
-        is(instanceOf(SequenceExpression.class)));
-    final SequenceExpression seq = (SequenceExpression) rule.getBody()
-        .getExpressions().get(0);
-    assertThat(seq.getExpressions().size(), is(2));
+        is(instanceOf(TerminalExpression.class)));
+    assertThat(rule.getBody().getExpressions().get(1),
+        is(instanceOf(TerminalExpression.class)));
   }
 
   @Test
@@ -109,9 +111,16 @@ public class AstTest {
 
     assertThat(jpeg, is(notNullValue()));
     assertThat(jpeg.getRules().get(0).getBody().getExpressions().size(), is(1));
-    final Expression expr = jpeg.getRules().get(0).getBody().getExpressions()
-        .get(0);
-    System.out.println(expr);
+    assertThat(jpeg.getRules().get(0).getBody().getExpressions().get(0),
+        is(instanceOf(ChoiceExpression.class)));
+    final ChoiceExpression expr = (ChoiceExpression) jpeg.getRules().get(0)
+        .getBody().getExpressions().get(0);
+    assertThat(expr.getChoices().size(), is(2));
+    // Expect two rule-ref exp
+    assertThat(expr.getChoices().get(0),
+        is(instanceOf(RuleReferenceExpression.class)));
+    assertThat(expr.getChoices().get(1),
+        is(instanceOf(RuleReferenceExpression.class)));
   }
 
   @Test

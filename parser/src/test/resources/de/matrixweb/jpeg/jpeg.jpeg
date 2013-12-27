@@ -50,30 +50,41 @@ Expression :
 // -----------------------------------------------------------------------------
 
 ChoiceExpression returns Expression :
-  choices+=SequenceExpression ('|' _ choices+=SequenceExpression)*
+  SequenceExpression ( &'|' {ChoiceExpression.choices+=current} ('|' _ choices+=SequenceExpression)* )?
 ;
 
 // -----------------------------------------------------------------------------
 
 SequenceExpression returns Expression :
+  Comment*
+  SequenceExpressionExpressions
   (
+    &SequenceExpressionExpressions
+    {SequenceExpression.expressions+=current}
     Comment*
-    expressions+=( ActionExpression
-                 | AndPredicateExpression
-                 | NotPredicateExpression
-                 | OneOrMoreExpression
-                 | ZeroOrMoreExpression
-                 | OptionalExpression
-                 | AssignableExpression
-                 )
+    expressions+=SequenceExpressionExpressions
     _
-  )+
+  )*
+;
+
+SequenceExpressionExpressions returns Expression :
+    ActionExpression
+  | AndPredicateExpression
+  | NotPredicateExpression
+  | OneOrMoreExpression
+  | ZeroOrMoreExpression
+  | OptionalExpression
+  | AssignableExpression
 ;
 
 // -----------------------------------------------------------------------------
 
 ActionExpression returns Expression :
-  '{' _ (property=ID _ op=AssignmentOperator ('current' | name=ID) _) '}'
+  '{' _ ( type=ID _ ('.' property=ID _ op=ActionOperator _ 'current' _)? ) '}' _
+;
+
+ActionOperator:
+  multi?='+=' | single?='='
 ;
 
 // -----------------------------------------------------------------------------
@@ -109,15 +120,18 @@ OptionalExpression returns Expression :
 // -----------------------------------------------------------------------------
 
 AssignableExpression returns Expression :
-  (property=ID _ op=AssignmentOperator)?
-  expr=
-  ( SubExpression
+  (  property=ID _ op=AssignmentOperator _ expr=AssignableExpressionExpressions
+  | AssignableExpressionExpressions
+  )
+  _
+;
+
+AssignableExpressionExpressions returns Expression :
+    SubExpression
   | RangeExpression
   | TerminalExpression
   | AnyCharExpression
   | RuleReferenceExpression
-  )
-  _
 ;
 
 // -----------------------------------------------------------------------------
