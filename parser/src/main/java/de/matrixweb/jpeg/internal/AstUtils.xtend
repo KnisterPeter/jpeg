@@ -7,7 +7,7 @@ import static extension de.matrixweb.jpeg.internal.AstNodeHelper.*
 import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
 import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
 
-class TypeGenerator {
+class AstToTypeConverter {
 
   static def createTypes(Jpeg jpeg) {
     val map = newHashMap
@@ -23,7 +23,7 @@ class TypeGenerator {
     jpeg.rules.forEach [
       val type = map.get(name.parsed)
       type.attributes = getAttributes(jpeg, map)
-      type.supertype = map.get(returns?.name?.parsed ?: 'Node')
+      type.supertype = map.get(returns?.parsed ?: 'Node')
     ]
     return map
   }
@@ -32,7 +32,7 @@ class TypeGenerator {
     val object = new JType
     object.internal = true
     object.generate = false
-    object.name = 'Object'
+    object.name = Object.simpleName
     object.supertype = null
     list += object
 
@@ -62,7 +62,7 @@ class TypeGenerator {
         a.type.name = 'boolean'
       } else if (op.multi) {
         a.type = new JType
-        a.type.name = 'java.util.List'
+        a.type.name = List.name
         a.typeParameter = expr.evaluateType(jpeg, map)
       } else {
         a.type = expr.evaluateType(jpeg, map)
@@ -124,7 +124,7 @@ class AstNodeHelper {
     return list
   }
 
-  private static def dispatch Iterable<?> findNodes(SubExpression expr, Class<?> clazz) {
+  private static def dispatch Iterable<?> findNodes(GroupExpression expr, Class<?> clazz) {
     expr.expr.findNodes(clazz)
   }
 
@@ -164,7 +164,7 @@ class ExpressionTypeEvaluator {
     val rule = jpeg.rules.findFirst[it.name.parsed == expr.name.parsed]
 
     // Required to use returns type to widening the resulting attribute type
-    return map.get(rule?.returns?.name?.parsed ?: rule.name.parsed)
+    return map.get(rule?.returns?.parsed ?: rule.name.parsed)
   }
 
   def static dispatch JType evaluateType(SequenceExpression expr, Jpeg jpeg, Map<String, JType> map) {
@@ -192,7 +192,7 @@ class ExpressionTypeEvaluator {
     return false
   }
 
-  def static dispatch JType evaluateType(SubExpression expr, Jpeg jpeg, Map<String, JType> map) {
+  def static dispatch JType evaluateType(GroupExpression expr, Jpeg jpeg, Map<String, JType> map) {
     expr.expr.evaluateType(jpeg, map)
   }
 
@@ -265,7 +265,7 @@ class GeneratorHelper {
    * a more widening type).
    */
   static def getResultType(Rule rule, Map<String, JType> types) {
-    types.get(rule?.returns?.name?.parsed ?: rule.name.parsed)
+    types.get(rule?.returns?.parsed ?: rule.name.parsed)
   }
 
   static def String unescaped(String str) {
@@ -274,7 +274,7 @@ class GeneratorHelper {
     
     val buf = str.toCharArray
     val len = buf.length
-    val sb = new StringBuilder
+    val sb = new StringBuilder(str.length)
     var i = 0
     while (i < len) {
       var c = buf.get(i)
@@ -291,6 +291,16 @@ class GeneratorHelper {
     return sb.toString()
   }
 
+  static def String escapedTerminal(String str) {
+    val sb = new StringBuilder(str.length)
+    for (char c : str.toCharArray()) {
+      if (c.printable)
+        sb.append(c) 
+      else
+        sb.append(c.unicodeEscaped)
+    }
+    return sb.toString()
+  }
 
   static def String escaped(String str) {
     val escape = '\\'.charAt(0)
@@ -307,6 +317,10 @@ class GeneratorHelper {
     return sb.toString()
   }
 
+  /**
+   * Returns true if the given character is defined as printable which means its
+   * between ascii codes 32 (space) and 127 (del).
+   */
   static def boolean isPrintable(char ch) {
       return ch >= 32 && ch < 127;
   }

@@ -3,211 +3,90 @@
 // The JPEG grammar
 // 
 // -----------------------------------------------------------------------------
-// 
-// This is the main entry point into the JPEG grammar.
-// 
-Jpeg :
-  (rules+=Rule | Comment)+ EOI
+
+Jpeg <- _ rules+=Rule+ EOI;
+Rule <- name=ID _ ('[' _ returns=ID _ ']' _)? '<-' _ body=Body ';' _;
+Body <- (expressions+=ChoiceExpression _)+;
+
+// -- Expressions --------------------------------------------------------------
+
+Expression <- ActionExpression
+            / AndPredicateExpression
+            / AnyCharExpression
+            / AssignableExpression
+            / ChoiceExpression
+            / NotPredicateExpression
+            / OneOrMoreExpression
+            / OptionalExpression
+            / RangeExpression
+            / RuleReferenceExpression
+            / SequenceExpression
+            / GroupExpression
+            / TerminalExpression
+            / ZeroOrMoreExpression
 ;
-
-// -----------------------------------------------------------------------------
-
-Rule :
-  name=ID _ returns=RuleReturns? ':' _ body=Body ';' _
+ChoiceExpression[Expression] <- SequenceExpression 
+                                (
+                                  &'/' {ChoiceExpression.choices+=current} 
+                                  ('/' _ choices+=SequenceExpression)* 
+                                )?
 ;
-
-RuleReturns :
-  'returns' _ name=ID _
+SequenceExpression[Expression] <- SequenceExpressionExpressions
+                                  _
+                                  (
+                                    &SequenceExpressionExpressions
+                                    {SequenceExpression.expressions+=current}
+                                    expressions+=SequenceExpressionExpressions
+                                    _
+                                  )*
 ;
-
-// -----------------------------------------------------------------------------
-
-Body :
-  (expressions+=ChoiceExpression _)+
+SequenceExpressionExpressions[Expression] <-  ActionExpression
+                                            / AndPredicateExpression
+                                            / NotPredicateExpression
+                                            / OneOrMoreExpression
+                                            / ZeroOrMoreExpression
+                                            / OptionalExpression
+                                            / AssignableExpression
 ;
-
-// -----------------------------------------------------------------------------
-//
-// Just syntactic common base class definition
-
-Expression :
-    ActionExpression
-  | AndPredicateExpression
-  | AnyCharExpression
-  | AssignableExpression
-  | ChoiceExpression
-  | NotPredicateExpression
-  | OneOrMoreExpression
-  | OptionalExpression
-  | RangeExpression
-  | RuleReferenceExpression
-  | SequenceExpression
-  | SubExpression
-  | TerminalExpression
-  | ZeroOrMoreExpression
-;
-
-// -----------------------------------------------------------------------------
-
-ChoiceExpression returns Expression :
-  SequenceExpression ( &'|' {ChoiceExpression.choices+=current} ('|' _ choices+=SequenceExpression)* )?
-;
-
-// -----------------------------------------------------------------------------
-
-SequenceExpression returns Expression :
-  Comment*
-  SequenceExpressionExpressions
-  (
-    &SequenceExpressionExpressions
-    {SequenceExpression.expressions+=current}
-    Comment*
-    expressions+=SequenceExpressionExpressions
-    _
-  )*
-;
-
-SequenceExpressionExpressions returns Expression :
-    ActionExpression
-  | AndPredicateExpression
-  | NotPredicateExpression
-  | OneOrMoreExpression
-  | ZeroOrMoreExpression
-  | OptionalExpression
-  | AssignableExpression
-;
-
-// -----------------------------------------------------------------------------
-
-ActionExpression returns Expression :
-  '{' _ ( type=ID _ ('.' property=ID _ op=ActionOperator _ 'current' _)? ) '}' _
-;
-
-ActionOperator:
-  multi?='+=' | single?='='
-;
-
-// -----------------------------------------------------------------------------
-
-AndPredicateExpression returns Expression :
-  '&' _ expr=AssignableExpression
-;
-
-// -----------------------------------------------------------------------------
-
-NotPredicateExpression returns Expression :
-  '!' _ expr=AssignableExpression
-;
-
-// -----------------------------------------------------------------------------
-
-OneOrMoreExpression returns Expression :
-  expr=AssignableExpression '+' _
-;
-
-// -----------------------------------------------------------------------------
-
-ZeroOrMoreExpression returns Expression :
-  expr=AssignableExpression '*' _
-;
-
-// -----------------------------------------------------------------------------
-
-OptionalExpression returns Expression :
-  expr=AssignableExpression '?' _
-;
-
-// -----------------------------------------------------------------------------
-
-AssignableExpression returns Expression :
+ActionExpression[Expression] <- '{' _ type=ID _ ('.' property=ID _ op=ActionOperator _ 'current' _)? '}' _;
+ActionOperator <- multi?='+=' / single?='=';
+AndPredicateExpression[Expression] <- '&' _ expr=AssignableExpression;
+NotPredicateExpression[Expression] <- '!' _ expr=AssignableExpression;
+OneOrMoreExpression[Expression] <- expr=AssignableExpression '+' _;
+ZeroOrMoreExpression[Expression] <- expr=AssignableExpression '*' _;
+OptionalExpression[Expression] <- expr=AssignableExpression '?' _;
+AssignableExpression[Expression] <-
   (  property=ID _ op=AssignmentOperator _ expr=AssignableExpressionExpressions
-  | AssignableExpressionExpressions
+  / AssignableExpressionExpressions
   )
   _
 ;
-
-AssignableExpressionExpressions returns Expression :
-    SubExpression
-  | RangeExpression
-  | TerminalExpression
-  | AnyCharExpression
-  | RuleReferenceExpression
+AssignableExpressionExpressions[Expression] <-  GroupExpression
+                                              / RangeExpression
+                                              / TerminalExpression
+                                              / AnyCharExpression
+                                              / RuleReferenceExpression
 ;
-
-// -----------------------------------------------------------------------------
-
-AssignmentOperator :
-  (single?='=' | multi?='+=' | bool?='?=')
-  _
+AssignmentOperator <- (single?='=' / multi?='+=' / bool?='?=') _;
+GroupExpression[Expression] <- '(' _ expr=ChoiceExpression ')' _;
+RangeExpression[Expression] <- '[' dash='-'? (!']' ranges+=(MinMaxRange / CharRange))* ']' _;
+MinMaxRange <- !'-' min=. '-' !'-' max=.;
+CharRange <-  '\\' char=']'
+            / '\\' char='\\'
+            / !'-' char=.
 ;
+AnyCharExpression[Expression] <- char='.';
+RuleReferenceExpression[Expression] <- name=ID _;
+TerminalExpression[Expression] <- '\'' value=InTerminalChar? '\'' _;
+InTerminalChar <- ('\\' '\'' / '\\' '\\' / !'\'' .)+;
 
-// -----------------------------------------------------------------------------
+// -- Primitives ---------------------------------------------------------------
 
-SubExpression returns Expression :
-  '(' _ expr=ChoiceExpression ')' _
-;
+ID <- [a-zA-Z_] [a-zA-Z0-9_]*;
+EOI <- !(.);
 
-// -----------------------------------------------------------------------------
+// -- Whitespaces and Comments -------------------------------------------------
 
-RangeExpression returns Expression : 
-  '[' dash='-'? (!']' ranges+=(MinMaxRange | CharRange))* ']' _
-;
-
-MinMaxRange:
-  !'-' min=. '-' !'-' max=.
-;
-
-CharRange:
-    '\\' char=']'
-  | '\\' char='\\'
-  | !'-' char=.
-;
-
-// -----------------------------------------------------------------------------
-
-AnyCharExpression returns Expression :
-  char='.'
-;
-
-// -----------------------------------------------------------------------------
-
-RuleReferenceExpression returns Expression :
-  name=ID _
-;
-
-// -----------------------------------------------------------------------------
-
-TerminalExpression returns Expression :
-  '\'' value=InTerminalChar? '\'' _
-;
-
-InTerminalChar:
-  ('\\' '\'' | '\\' '\\' | !'\'' .)+
-;
-
-// -----------------------------------------------------------------------------
-
-Comment :
-  '//' (!('\r'? '\n') .)* _
-;
-
-// -----------------------------------------------------------------------------
-
-EOI:
-  !(.)
-;
-
-// 
-// An ID name must start with an letter or underscore and be followed
-// by letters, digits or underscores.
-// 
-ID:
-  [a-zA-Z_] [a-zA-Z0-9_]*
-;
-
-WS : 
-  ' ' | '\n' | '\t' | '\r'
-;
-_ : 
-  WS* 
-;
+Comment <- '//' (!('\r'? '\n') .)* _;
+WS <- ' ' / '\n' / '\t' / '\r';
+_ <- (Comment / WS)*;

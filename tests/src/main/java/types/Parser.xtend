@@ -21,19 +21,18 @@ class Parser {
   }
   
   package def getLineAndColumn(int idx) {
+    val nl = '\n'.charAt(0)
+    
     var line = 1
     var column = 0
-    var n = 0
-    val nl = '\n'.charAt(0)
-    while (n < idx) {
-      if (chars.get(n) === nl) { line = line + 1; column = 0 }
-      else column = column + 1
-      n = n + 1
-    }
+    if (idx > 0) 
+      for (n : 0..(idx - 1))
+        if (chars.get(n) === nl) { line = line + 1; column = 0 }
+        else column = column + 1
     return line -> column
   }
   
-  static def Result<Terminal> __terminal(Derivation derivation, String str) {
+  package static def Result<Terminal> __terminal(Derivation derivation, String str) {
     var n = 0
     var d = derivation
     while (n < str.length) {
@@ -47,18 +46,18 @@ class Parser {
     new Result<Terminal>(new Terminal(str), d, new ParseInfo(d.index))
   }
   
-  static def Result<Terminal> __oneOfThese(Derivation derivation, CharacterRange range) {
+  package static def Result<Terminal> __oneOfThese(Derivation derivation, CharacterRange range) {
     val r = derivation.dvChar
     return 
       if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
       else new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, "'" + range + "'"))
   }
 
-  static def Result<Terminal> __oneOfThese(Derivation derivation, String range) {
+  package static def Result<Terminal> __oneOfThese(Derivation derivation, String range) {
     derivation.__oneOfThese(new CharacterRange(range))
   }
 
-  static def Result<Terminal> __any(Derivation derivation) {
+  package static def Result<Terminal> __any(Derivation derivation) {
     val r = derivation.dvChar
     return
       if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
@@ -67,7 +66,7 @@ class Parser {
 
   def Rule Rule(String in) {
     this.chars = in.toCharArray()
-    val result = RuleRule.matchRule(this, parse(0))
+    val result = parse(0).dvRule
     return
       if (result.derivation.dvChar.node == null) result.node
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -75,7 +74,7 @@ class Parser {
   
   def Expr Expr(String in) {
     this.chars = in.toCharArray()
-    val result = ExprRule.matchExpr(this, parse(0))
+    val result = parse(0).dvExpr
     return
       if (result.derivation.dvChar.node == null) result.node
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -83,7 +82,7 @@ class Parser {
   
   def Expr ExprA(String in) {
     this.chars = in.toCharArray()
-    val result = ExprARule.matchExprA(this, parse(0))
+    val result = parse(0).dvExprA
     return
       if (result.derivation.dvChar.node == null) result.node
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -91,7 +90,7 @@ class Parser {
   
   def Expr ExprB(String in) {
     this.chars = in.toCharArray()
-    val result = ExprBRule.matchExprB(this, parse(0))
+    val result = parse(0).dvExprB
     return
       if (result.derivation.dvChar.node == null) result.node
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -103,7 +102,7 @@ class Parser {
 package class RuleRule {
 
   /**
-   * Rule: expr+=(ExprA | ExprB) ; 
+   * Rule <- expr+=(ExprA / ExprB); 
    */
   package static def Result<? extends Rule> matchRule(Parser parser, Derivation derivation) {
     var Result<?> result = null
@@ -111,7 +110,7 @@ package class RuleRule {
     var d = derivation
     val ParseInfo info = new ParseInfo(derivation.index)
     
-    // expr+=(ExprA | ExprB)\u000a
+    // expr+=(ExprA / ExprB)
     val result2 = d.sub0MatchRule(parser)
     d = result2.derivation
     result = result2
@@ -141,7 +140,7 @@ package class RuleRule {
       var d = derivation
       val ParseInfo info = new ParseInfo(derivation.index)
       
-      // ExprA | ExprB
+      // ExprA / ExprB
       val backup0 = node?.copy()
       val backup1 = d
       
@@ -173,7 +172,7 @@ package class RuleRule {
 package class ExprRule {
 
   /**
-   * Expr: ExprA | ExprB ; 
+   * Expr <- ExprA / ExprB; 
    */
   package static def Result<? extends Expr> matchExpr(Parser parser, Derivation derivation) {
     var Result<?> result = null
@@ -181,7 +180,7 @@ package class ExprRule {
     var d = derivation
     val ParseInfo info = new ParseInfo(derivation.index)
     
-    // ExprA | ExprB\u000a
+    // ExprA / ExprB
     val backup0 = node?.copy()
     val backup1 = d
     
@@ -228,7 +227,7 @@ package class ExprRule {
 package class ExprARule {
 
   /**
-   * ExprA returns Expr: 'a' ; 
+   * ExprA[Expr] <- 'a'; 
    */
   package static def Result<? extends Expr> matchExprA(Parser parser, Derivation derivation) {
     var Result<?> result = null
@@ -258,7 +257,7 @@ package class ExprARule {
 package class ExprBRule {
 
   /**
-   * ExprB returns Expr: 'b' ; 
+   * ExprB[Expr] <- 'b'; 
    */
   package static def Result<? extends Expr> matchExprB(Parser parser, Derivation derivation) {
     var Result<?> result = null
@@ -312,38 +311,90 @@ package class Derivation {
   
   def getDvRule() {
     if (dvRule == null) {
-      // Fail LR upfront
-      dvRule = new Result<Rule>(null, this, new ParseInfo(index, 'Detected left-recursion in Rule'))
+      val lr = new Result<Rule>(false, this, new ParseInfo(index, "Detected non-terminating left-recursion in 'Rule'"))
+      dvRule = lr
       dvRule = RuleRule.matchRule(parser, this)
+      if (lr.leftRecursive && dvRule.node != null) {
+        growDvRule()
+      }
+    } if (dvRule.leftRecursive != null) {
+      dvRule.setLeftRecursive()
     }
     return dvRule
   }
   
+  private def growDvRule() {
+    while(true) {
+      val temp = RuleRule.matchRule(parser, this)
+      if (temp.node == null || temp.derivation.idx <= dvRule.derivation.idx) return
+      else dvRule = temp
+    }
+  }
+  
   def getDvExpr() {
     if (dvExpr == null) {
-      // Fail LR upfront
-      dvExpr = new Result<Expr>(null, this, new ParseInfo(index, 'Detected left-recursion in Expr'))
+      val lr = new Result<Expr>(false, this, new ParseInfo(index, "Detected non-terminating left-recursion in 'Expr'"))
+      dvExpr = lr
       dvExpr = ExprRule.matchExpr(parser, this)
+      if (lr.leftRecursive && dvExpr.node != null) {
+        growDvExpr()
+      }
+    } if (dvExpr.leftRecursive != null) {
+      dvExpr.setLeftRecursive()
     }
     return dvExpr
   }
   
+  private def growDvExpr() {
+    while(true) {
+      val temp = ExprRule.matchExpr(parser, this)
+      if (temp.node == null || temp.derivation.idx <= dvExpr.derivation.idx) return
+      else dvExpr = temp
+    }
+  }
+  
   def getDvExprA() {
     if (dvExprA == null) {
-      // Fail LR upfront
-      dvExprA = new Result<ExprA>(null, this, new ParseInfo(index, 'Detected left-recursion in ExprA'))
+      val lr = new Result<ExprA>(false, this, new ParseInfo(index, "Detected non-terminating left-recursion in 'ExprA'"))
+      dvExprA = lr
       dvExprA = ExprARule.matchExprA(parser, this)
+      if (lr.leftRecursive && dvExprA.node != null) {
+        growDvExprA()
+      }
+    } if (dvExprA.leftRecursive != null) {
+      dvExprA.setLeftRecursive()
     }
     return dvExprA
   }
   
+  private def growDvExprA() {
+    while(true) {
+      val temp = ExprARule.matchExprA(parser, this)
+      if (temp.node == null || temp.derivation.idx <= dvExprA.derivation.idx) return
+      else dvExprA = temp
+    }
+  }
+  
   def getDvExprB() {
     if (dvExprB == null) {
-      // Fail LR upfront
-      dvExprB = new Result<ExprB>(null, this, new ParseInfo(index, 'Detected left-recursion in ExprB'))
+      val lr = new Result<ExprB>(false, this, new ParseInfo(index, "Detected non-terminating left-recursion in 'ExprB'"))
+      dvExprB = lr
       dvExprB = ExprBRule.matchExprB(parser, this)
+      if (lr.leftRecursive && dvExprB.node != null) {
+        growDvExprB()
+      }
+    } if (dvExprB.leftRecursive != null) {
+      dvExprB.setLeftRecursive()
     }
     return dvExprB
+  }
+  
+  private def growDvExprB() {
+    while(true) {
+      val temp = ExprBRule.matchExprB(parser, this)
+      if (temp.node == null || temp.derivation.idx <= dvExprB.derivation.idx) return
+      else dvExprB = temp
+    }
   }
   
   
@@ -397,7 +448,7 @@ package class CharacterRange {
       throw new IllegalArgumentException('lower is great than upper bound')
     }
 
-    val sb = new StringBuilder
+    val sb = new StringBuilder(upper - lower)
     var c = lower
     while (c <= upper) {
       sb.append(c)
@@ -424,6 +475,8 @@ package class Result<T> {
   
   T node
   
+  Boolean leftRecursion = null
+  
   Derivation derivation
   
   ParseInfo info
@@ -434,10 +487,17 @@ package class Result<T> {
     this.info = info
   }
   
+  new(boolean leftRecursion, Derivation derivation, ParseInfo info) {
+    this(null, derivation, info)
+    this.leftRecursion = leftRecursion
+  }
+  
   def getNode() { node }
   def getDerivation() { derivation }
   def getInfo() { info }
   def setInfo(ParseInfo info) { this.info = info }
+  def isLeftRecursive() { leftRecursion }
+  def setLeftRecursive() { leftRecursion = true }
   
   override toString() {
     'Result[' + (if (node != null) 'MATCH' else 'NO MATCH') + ']'

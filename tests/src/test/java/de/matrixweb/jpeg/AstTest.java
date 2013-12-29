@@ -9,6 +9,7 @@ import jpeg.ParseException;
 import jpeg.Parser;
 import jpeg.Rule;
 import jpeg.RuleReferenceExpression;
+import jpeg.SequenceExpression;
 import jpeg.TerminalExpression;
 
 import org.junit.Before;
@@ -49,7 +50,7 @@ public class AstTest {
 
   @Test
   public void testParse() {
-    final Jpeg r = this.parser.Jpeg("Rule:'a';");
+    final Jpeg r = this.parser.Jpeg("Rule <- 'a';");
 
     assertThat(r, is(notNullValue()));
     assertThat(r.getRules().size(), is(1));
@@ -58,7 +59,7 @@ public class AstTest {
 
   @Test
   public void testParse2() {
-    final Jpeg r = this.parser.Jpeg("Rule:Rule2|'a';\nRule2:'b';");
+    final Jpeg r = this.parser.Jpeg("Rule <- Rule2 / 'a';\nRule2 <- 'b';");
 
     assertThat(r, is(notNullValue()));
     assertThat(r.getRules().size(), is(2));
@@ -67,11 +68,11 @@ public class AstTest {
   @Test
   public void testParseError() {
     this.exception.expect(ParseException.class);
-    this.exception.expectMessage("ParseException[1,9]");
+    this.exception.expectMessage("ParseException[1,11]");
     this.exception.expectMessage("Expected");
     this.exception.expectMessage("';'");
 
-    this.parser.Jpeg("Rule: []];");
+    this.parser.Jpeg("Rule <- []];");
   }
 
   @Test
@@ -86,28 +87,34 @@ public class AstTest {
 
   @Test
   public void testParseRange() {
-    final Jpeg r = this.parser.Jpeg("Rule: [\\]];");
+    final Jpeg r = this.parser.Jpeg("Rule <- [\\]];");
 
     assertThat(r, is(notNullValue()));
   }
 
   @Test
-  public void testCommentInSequnce() {
-    final Jpeg jpeg = this.parser.Jpeg("Rule: 'a' //'b' \n  'c';");
+  public void testCommentInSequence() {
+    final Jpeg jpeg = this.parser.Jpeg("Rule <- 'a' //'b' \n  'c';");
 
     assertThat(jpeg, is(notNullValue()));
     final Rule rule = jpeg.getRules().get(0);
-    // Expect two terminal exp
-    assertThat(rule.getBody().getExpressions().size(), is(2));
+    // Expect one sequence
+    assertThat(rule.getBody().getExpressions().size(), is(1));
     assertThat(rule.getBody().getExpressions().get(0),
+        is(instanceOf(SequenceExpression.class)));
+    final SequenceExpression seq = (SequenceExpression) rule.getBody()
+        .getExpressions().get(0);
+    // Expect two terminal exp
+    assertThat(seq.getExpressions().size(), is(2));
+    assertThat(seq.getExpressions().get(0),
         is(instanceOf(TerminalExpression.class)));
-    assertThat(rule.getBody().getExpressions().get(1),
+    assertThat(seq.getExpressions().get(1),
         is(instanceOf(TerminalExpression.class)));
   }
 
   @Test
   public void testSimpleRule() {
-    final Jpeg jpeg = this.parser.Jpeg("A: B | C;");
+    final Jpeg jpeg = this.parser.Jpeg("A <- B / C;");
 
     assertThat(jpeg, is(notNullValue()));
     assertThat(jpeg.getRules().get(0).getBody().getExpressions().size(), is(1));

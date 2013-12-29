@@ -267,9 +267,17 @@ class Terminal extends Node {
   
 }
 
-abstract class Expression extends Node {
+ class Expression extends Node {
   
-  override Expression copy()
+  override Expression copy() {
+    new Expression().copyAttributes()
+  }
+  
+  protected def copyAttributes(Expression type) {
+    super.copyAttributes(type)
+    return type
+  }
+  
   
 }
 
@@ -452,26 +460,6 @@ abstract class Expression extends Node {
   
 }
 
- class SubExpression extends Expression {
-  
-  Expression attrExpr
-  
-  def getExpr() { attrExpr }
-  def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
-  
-  override SubExpression copy() {
-    new SubExpression().copyAttributes()
-  }
-  
-  protected def copyAttributes(SubExpression type) {
-    super.copyAttributes(type)
-    type.attrExpr = this.attrExpr
-    return type
-  }
-  
-  
-}
-
  class Rule extends Node {
   
   ID attrName
@@ -479,10 +467,10 @@ abstract class Expression extends Node {
   def getName() { attrName }
   def setName(ID attrName) { this.attrName = attrName }
   
-  RuleReturns attrReturns
+  ID attrReturns
   
   def getReturns() { attrReturns }
-  def setReturns(RuleReturns attrReturns) { this.attrReturns = attrReturns }
+  def setReturns(ID attrReturns) { this.attrReturns = attrReturns }
   
   Body attrBody
   
@@ -504,20 +492,20 @@ abstract class Expression extends Node {
   
 }
 
- class RuleReturns extends Node {
+ class GroupExpression extends Expression {
   
-  ID attrName
+  Expression attrExpr
   
-  def getName() { attrName }
-  def setName(ID attrName) { this.attrName = attrName }
+  def getExpr() { attrExpr }
+  def setExpr(Expression attrExpr) { this.attrExpr = attrExpr }
   
-  override RuleReturns copy() {
-    new RuleReturns().copyAttributes()
+  override GroupExpression copy() {
+    new GroupExpression().copyAttributes()
   }
   
-  protected def copyAttributes(RuleReturns type) {
+  protected def copyAttributes(GroupExpression type) {
     super.copyAttributes(type)
-    type.attrName = this.attrName
+    type.attrExpr = this.attrExpr
     return type
   }
   

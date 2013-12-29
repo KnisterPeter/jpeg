@@ -37,19 +37,18 @@ class Generator {
       }
       
       package def getLineAndColumn(int idx) {
+        val nl = '\n'.charAt(0)
+        
         var line = 1
         var column = 0
-        var n = 0
-        val nl = '\n'.charAt(0)
-        while (n < idx) {
-          if (chars.get(n) === nl) { line = line + 1; column = 0 }
-          else column = column + 1
-          n = n + 1
-        }
+        if (idx > 0) 
+          for (n : 0..(idx - 1))
+            if (chars.get(n) === nl) { line = line + 1; column = 0 }
+            else column = column + 1
         return line -> column
       }
       
-      static def Result<Terminal> __terminal(Derivation derivation, String str) {
+      package static def Result<Terminal> __terminal(Derivation derivation, String str) {
         var n = 0
         var d = derivation
         while (n < str.length) {
@@ -63,18 +62,18 @@ class Generator {
         new Result<Terminal>(new Terminal(str), d, new ParseInfo(d.index))
       }
       
-      static def Result<Terminal> __oneOfThese(Derivation derivation, CharacterRange range) {
+      package static def Result<Terminal> __oneOfThese(Derivation derivation, CharacterRange range) {
         val r = derivation.dvChar
         return 
           if (r.node != null && range.contains(r.node)) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
           else new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, "'" + range + "'"))
       }
     
-      static def Result<Terminal> __oneOfThese(Derivation derivation, String range) {
+      package static def Result<Terminal> __oneOfThese(Derivation derivation, String range) {
         derivation.__oneOfThese(new CharacterRange(range))
       }
     
-      static def Result<Terminal> __any(Derivation derivation) {
+      package static def Result<Terminal> __any(Derivation derivation) {
         val r = derivation.dvChar
         return
           if (r.node != null) new Result<Terminal>(new Terminal(r.node), r.derivation, new ParseInfo(r.derivation.index))
@@ -118,11 +117,24 @@ class Generator {
         «val uname = rule.name.parsed.toFirstUpper»
         def getDv«uname»() {
           if (dv«uname» == null) {
-            // Fail LR upfront
-            dv«uname» = new Result<«uname»>(null, this, new ParseInfo(index, 'Detected left-recursion in «uname»'))
+            val lr = new Result<«uname»>(false, this, new ParseInfo(index, "Detected non-terminating left-recursion in '«uname»'"))
+            dv«uname» = lr
             dv«uname» = «uname»Rule.match«uname»(parser, this)
+            if (lr.leftRecursive && dv«uname».node != null) {
+              growDv«uname»()
+            }
+          } if (dv«uname».leftRecursive != null) {
+            dv«uname».setLeftRecursive()
           }
           return dv«uname»
+        }
+        
+        private def growDv«uname»() {
+          while(true) {
+            val temp = «uname»Rule.match«uname»(parser, this)
+            if (temp.node == null || temp.derivation.idx <= dv«uname».derivation.idx) return
+            else dv«uname» = temp
+          }
         }
         
       «ENDFOR»
@@ -177,7 +189,7 @@ class Generator {
           throw new IllegalArgumentException('lower is great than upper bound')
         }
     
-        val sb = new StringBuilder
+        val sb = new StringBuilder(upper - lower)
         var c = lower
         while (c <= upper) {
           sb.append(c)
@@ -204,6 +216,8 @@ class Generator {
       
       T node
       
+      Boolean leftRecursion = null
+      
       Derivation derivation
       
       ParseInfo info
@@ -214,10 +228,17 @@ class Generator {
         this.info = info
       }
       
+      new(boolean leftRecursion, Derivation derivation, ParseInfo info) {
+        this(null, derivation, info)
+        this.leftRecursion = leftRecursion
+      }
+      
       def getNode() { node }
       def getDerivation() { derivation }
       def getInfo() { info }
       def setInfo(ParseInfo info) { this.info = info }
+      def isLeftRecursive() { leftRecursion }
+      def setLeftRecursive() { leftRecursion = true }
       
       override toString() {
         'Result[' + (if (node != null) 'MATCH' else 'NO MATCH') + ']'
@@ -323,25 +344,35 @@ class Generator {
     }
     
     «FOR type : types»
-      «type.generateType()»
+      «new TypeGenerator(type).generateType()»
     «ENDFOR»
   '''
+
+}
+
+class TypeGenerator {
   
-  private static def generateType(JType type) '''
+  JType type
+  
+  new(JType type) {
+    this.type = type
+  }
+  
+  package def generateType() '''
     «IF type.generate»
       «IF type.internal»abstract«ENDIF» class «type.name»«IF type.supertype != null» extends «type.supertype.name»«ENDIF» {
         
         «FOR attribute : type.attributes»
-          «attribute.generateAttribute(type)»
+          «attribute.generateAttribute()»
         «ENDFOR»
-        «type.attributes.generateAttributeMethods(type)»
+        «type.attributes.generateAttributeMethods()»
         
       }
       
     «ENDIF»
   '''
   
-  private static def generateAttribute(JAttribute attribute, JType type) '''
+  private def generateAttribute(JAttribute attribute) '''
     «val name = attribute.name.toFirstUpper»
     «val typeName = attribute.type.name + if (attribute.typeParameter != null) '<' + attribute.typeParameter.name + '>' else ''»
     «typeName» attr«name»
@@ -363,7 +394,7 @@ class Generator {
     «ENDIF»
   '''
   
-  private static def generateAttributeMethods(List<JAttribute> attributes, JType type) '''
+  private def generateAttributeMethods(List<JAttribute> attributes) '''
     «IF type.internal»
       override «type.name» copy()
     «ELSE»
@@ -374,7 +405,8 @@ class Generator {
       protected def copyAttributes(«type.name» type) {
         super.copyAttributes(type)
         «FOR attribute : attributes»
-          type.attr«attribute.name.toFirstUpper» = this.attr«attribute.name.toFirstUpper»
+          «val attrName = attribute.name.toFirstUpper»
+          type.attr«attrName» = this.attr«attrName»
         «ENDFOR»
         return type
       }
@@ -423,7 +455,7 @@ class RuleGenerator {
   def generateRuleMethod() '''
     def «resultType.name» «name.toFirstUpper»(String in) {
       this.chars = in.toCharArray()
-      val result = «name.toFirstUpper»Rule.match«name.toFirstUpper»(this, parse(0))
+      val result = parse(0).dv«name.toFirstUpper»
       return
         if (result.derivation.dvChar.node == null) result.node
         else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -462,7 +494,7 @@ class RuleGenerator {
     }
   '''
   
-  private def escapeJavadoc(Rule rule) {
+  private def escapeJavadoc(Object o) {
     rule.toString().replace('*/', '*&#47;')
   }
   
@@ -612,9 +644,9 @@ class RuleGenerator {
     // «expr.parsed.escaped»
     «IF expr.property != null»
       «if (isAssignment = true) '' else ''»
-      «IF expr.expr instanceof SubExpression»
+      «IF expr.expr instanceof GroupExpression»
         «val currentSubFunction = nextSubFunction + 'Match' + name.toFirstUpper»
-        «if(subFunctions += (expr.expr as SubExpression).createAssignedSubExpressionFunction(currentSubFunction)) '' else ''»
+        «if(subFunctions += (expr.expr as GroupExpression).createAssignedGroupExpressionFunction(currentSubFunction)) '' else ''»
         val «nextResult» = d.«currentSubFunction»(parser)
         d = «result».derivation
         result = «result»
@@ -641,7 +673,7 @@ class RuleGenerator {
     «ENDIF»
   '''
   
-  private def String createAssignedSubExpressionFunction(SubExpression expr, String subFunction) '''
+  private def String createAssignedGroupExpressionFunction(GroupExpression expr, String subFunction) '''
     «val resultType = expr.evaluateType(jpeg, types)»
     private static def Result<? extends «resultType.name»> «subFunction»(Derivation derivation, Parser parser) {
         var Result<? extends «resultType.name»> result = null
@@ -656,7 +688,7 @@ class RuleGenerator {
     }
   '''
   
-  def dispatch CharSequence create(SubExpression expr) '''
+  def dispatch CharSequence create(GroupExpression expr) '''
     «expr.expr.create()»
   '''
   
@@ -734,7 +766,7 @@ class RuleGenerator {
   '''
   
   def dispatch CharSequence create(TerminalExpression expr) '''
-    val «nextResult» =  d.__terminal('«expr.value.parsed»')
+    val «nextResult» =  d.__terminal('«expr.value.parsed.escapedTerminal»')
     d = «result».derivation
     result = «result»
     info.join(«result», «inPredicate»)

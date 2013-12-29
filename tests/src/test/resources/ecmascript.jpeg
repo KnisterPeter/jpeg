@@ -353,8 +353,7 @@ PostfixExpression :
 // -- 11.4 Unary Operators -----------------------------------------------------
 
 UnaryExpression :
-    PostfixExpression
-  | 'delete' UnaryExpression
+    'delete' UnaryExpression
   | 'void' UnaryExpression
   | 'typeof' UnaryExpression
   | '++' UnaryExpression
@@ -363,6 +362,7 @@ UnaryExpression :
   | '-' UnaryExpression
   | '~' UnaryExpression
   | '!' UnaryExpression
+  | PostfixExpression
 ;
 
 // -- 11.5 Multiplicative Operators --------------------------------------------
@@ -572,7 +572,7 @@ VariableDeclarationListNoIn :
 ;
 
 VariableDeclaration :
-  identifier=Identifier initialiser=Initialiser?
+  identifier=Identifier __ initialiser=Initialiser?
 ;
 
 VariableDeclarationNoIn :
@@ -580,11 +580,11 @@ VariableDeclarationNoIn :
 ;
 
 Initialiser :
-  '=' assignmentExpression=AssignmentExpression
+  '=' __ assignmentExpression=AssignmentExpression
 ;
 
 InitialiserNoIn :
-  '=' assignmentExpressionNoIn=AssignmentExpressionNoIn
+  '=' __ assignmentExpressionNoIn=AssignmentExpressionNoIn
 ;
 
 //-- 12.3 Empty Statement ------------------------------------------------------
@@ -717,13 +717,15 @@ FormalParameterList :
 ;
 
 FunctionBody :
-  sourceElements=SourceElements?
+  //sourceElements=SourceElements?
+  sourceElements+=SourceElements*
 ;
 
 //-- 14 Program ----------------------------------------------------------------
 
 Program :
-  __ sourceElements=SourceElements? __
+  //__ sourceElements=SourceElements? __
+  __ sourceElements+=SourceElements* __
 ;
 
 SourceElements :

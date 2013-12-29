@@ -21,25 +21,35 @@ public class GeneratedGrammarTest extends AbstractCompilationTest {
   public ExpectedException exception = ExpectedException.none();
 
   @Test
-  public void testFailLeftRecursion() throws Throwable {
-    this.exception.expectMessage("Detected left-recursion");
+  public void testLeftRecursion() throws Throwable {
+    compileAndRun("Rule <- Rule 'a' / 'a';", "Rule", "aaaa");
+  }
 
-    compileAndRun("Rule: Rule 'a';", "Rule", "aaa");
+  @Test
+  public void testFailLeftRecursion() throws Throwable {
+    this.exception.expectMessage("Detected non-terminating left-recursion");
+    compileAndRun("Rule <- Rule 'a';", "Rule", "aaaa");
+  }
+
+  @Ignore
+  @Test
+  public void testIndirectLeftRecursion() throws Throwable {
+    compileAndRun("X <- Expr; Expr <- X '-' '1'|'1';", "X", "1-1");
   }
 
   @Test
   public void testEscapedBracketInRangeExpression() throws Throwable {
-    compileAndRun("Rule: [\\]];", "Rule", "]");
+    compileAndRun("Rule <- [\\]];", "Rule", "]");
   }
 
   @Test
   public void testEscapedUnicodeInRangeExpression() throws Throwable {
-    compileAndRun("Rule: [\\u000A];", "Rule", "\n");
+    compileAndRun("Rule <- [\\u000A];", "Rule", "\n");
   }
 
   @Test
   public void testEscapedBackslashInRangeExpression() throws Throwable {
-    compileAndRun("Rule: [\\\\];", "Rule", "\\");
+    compileAndRun("Rule <- [\\\\];", "Rule", "\\");
   }
 
   @Ignore
@@ -54,9 +64,11 @@ public class GeneratedGrammarTest extends AbstractCompilationTest {
   @Ignore
   @Test
   public void testEcmaScriptGrammarRunOnly() throws Throwable {
-    final testEcmaScriptGrammar.Parser parser = new testEcmaScriptGrammar.Parser();
-    parser.Program(Files.toString(new File("src/test/resources/underscore.js"),
-        Charsets.UTF_8));
+    // final testEcmaScriptGrammar.Parser parser = new
+    // testEcmaScriptGrammar.Parser();
+    // parser.Program(Files.toString(new
+    // File("src/test/resources/underscore.js"),
+    // Charsets.UTF_8));
   }
 
 }
