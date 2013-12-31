@@ -3,13 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>de.matrixweb.jpeg</groupId>
-    <artifactId>jpeg-root</artifactId>
+    <groupId>de.matrixweb.djeypeg</groupId>
+    <artifactId>djeypeg-root</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>jpeg</artifactId>
+  <artifactId>djeypeg</artifactId>
 
-  <name>JPEG Parser</name>
+  <name>djeypeg parser</name>
 
   <build>
     <plugins>
@@ -29,7 +29,7 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>de.matrixweb.jpeg.JPEG</mainClass>
+              <mainClass>de.matrixweb.djeypeg.DJEYPEG</mainClass>
             </manifest>
           </archive>
         </configuration>

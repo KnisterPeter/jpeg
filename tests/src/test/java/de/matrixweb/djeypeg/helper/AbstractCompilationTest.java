@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg.helper;
+package de.matrixweb.djeypeg.helper;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +16,8 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.io.Files;
 
-import de.matrixweb.jpeg.JPEG;
-import de.matrixweb.jpeg.helper.XtendCompilerUtil.CompilerCallback;
+import de.matrixweb.djeypeg.DJEYPEG;
+import de.matrixweb.djeypeg.helper.XtendCompilerUtil.CompilerCallback;
 
 import static org.junit.Assert.*;
 
@@ -59,7 +59,8 @@ public abstract class AbstractCompilationTest {
     final String packageName = this.name.getMethodName();
     System.out.println("Starting generation, compilation and execution of "
         + packageName);
-    final Map<String, CharSequence> files = JPEG.generate(grammar, packageName);
+    final Map<String, CharSequence> files = DJEYPEG.generate(grammar,
+        packageName);
     System.out.println("\t...generated parser");
     final File file = new File("src/main/java/", packageName);
     if (printSource) {

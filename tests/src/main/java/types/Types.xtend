@@ -18,7 +18,7 @@ package class Node {
     return node
   }
   
-  def dispatch void add(Node node) {
+  def void add(Node node) {
   }
   
   override toString() {

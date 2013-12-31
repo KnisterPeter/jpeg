@@ -1,19 +1,19 @@
-package de.matrixweb.jpeg.internal
+package de.matrixweb.djeypeg.internal
 
 import java.util.Collection
 import java.util.List
 import java.util.Map
 
-import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
-import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
+import static extension de.matrixweb.djeypeg.internal.ExpressionTypeEvaluator.*
+import static extension de.matrixweb.djeypeg.internal.GeneratorHelper.*
 
 /**
  * @author markusw
  */
 class Generator {
   
-  static def generateParser(Jpeg jpeg, Map<String, JType> types, String packageName) '''
-    «val rules = jpeg.rules.filter[!types.get(name.parsed).internal]»
+  static def generateParser(Djeypeg djeypeg, Map<String, JType> types, String packageName) '''
+    «val rules = djeypeg.rules.filter[!types.get(name.parsed).internal]»
     package «packageName»
     
     import java.util.Set
@@ -81,13 +81,13 @@ class Generator {
       }
 
       «FOR rule : rules»
-        «new RuleGenerator(rule, jpeg, types).generateRuleMethod()»
+        «new RuleGenerator(rule, djeypeg, types).generateRuleMethod()»
       «ENDFOR»
       
     }
     
     «FOR rule : rules»
-      «new RuleGenerator(rule, jpeg, types).generateRuleClass()»
+      «new RuleGenerator(rule, djeypeg, types).generateRuleClass()»
     «ENDFOR»
       
     package class Derivation {
@@ -310,7 +310,7 @@ class Generator {
         return node
       }
       
-      def dispatch void add(Node node) {
+      def void add(Node node) {
       }
       
       override toString() {
@@ -382,11 +382,7 @@ class TypeGenerator {
     
     «val typeParameter = attribute.typeParameter»
     «IF typeParameter != null»
-      «IF typeParameter.name == 'Node'»
-        override dispatch void add(«typeParameter.name» __«typeParameter.name.toFirstLower») {
-      «ELSE»
-        def dispatch void add(«typeParameter.name» __«typeParameter.name.toFirstLower») {
-      «ENDIF»
+      def dispatch void add(«typeParameter.name» __«typeParameter.name.toFirstLower») {
         this.attr«name» = this.attr«name» ?: newArrayList
         this.attr«name» += __«typeParameter.name.toFirstLower»
       }
@@ -426,7 +422,7 @@ class RuleGenerator {
   
   JType nodeType
   
-  Jpeg jpeg
+  Djeypeg djeypeg
   
   Map<String, JType> types
   
@@ -444,11 +440,11 @@ class RuleGenerator {
   
   boolean isAssignment = false
   
-  new(Rule rule, Jpeg jpeg, Map<String, JType> types) {
+  new(Rule rule, Djeypeg djeypeg, Map<String, JType> types) {
     this.rule = rule
     this.type = rule.getType(types)
     this.resultType = rule.getResultType(types)
-    this.jpeg = jpeg
+    this.djeypeg = djeypeg
     this.types = types
   }
   
@@ -674,7 +670,7 @@ class RuleGenerator {
   '''
   
   private def String createAssignedGroupExpressionFunction(GroupExpression expr, String subFunction) '''
-    «val resultType = expr.evaluateType(jpeg, types)»
+    «val resultType = expr.evaluateType(djeypeg, types)»
     private static def Result<? extends «resultType.name»> «subFunction»(Derivation derivation, Parser parser) {
         var Result<? extends «resultType.name»> result = null
         var «resultType.name» node = «IF resultType.internal»null«ELSE»new «resultType.name»«ENDIF»
@@ -693,7 +689,7 @@ class RuleGenerator {
   '''
   
   def dispatch CharSequence create(RuleReferenceExpression expr) '''
-    «val ruleRefResultType = expr.evaluateType(jpeg, types)»
+    «val ruleRefResultType = expr.evaluateType(djeypeg, types)»
     val «nextResult» = d.dv«expr.name.parsed.toFirstUpper»
     d = «result».derivation
     «IF !isAssignment && ruleRefResultType.isAssignableTo(resultType, types)»

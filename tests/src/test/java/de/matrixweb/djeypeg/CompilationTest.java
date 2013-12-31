@@ -1,10 +1,10 @@
-package de.matrixweb.jpeg;
+package de.matrixweb.djeypeg;
 
 import java.io.IOException;
 
 import org.junit.Test;
 
-import de.matrixweb.jpeg.helper.AbstractCompilationTest;
+import de.matrixweb.djeypeg.helper.AbstractCompilationTest;
 
 /**
  * @author markusw
@@ -13,8 +13,8 @@ import de.matrixweb.jpeg.helper.AbstractCompilationTest;
 public class CompilationTest extends AbstractCompilationTest {
 
   @Test
-  public void testCompileJpeg() throws IOException {
-    compile("jpeg", "Parser.xtend", "Types.xtend");
+  public void testCompileDjeypeg() throws IOException {
+    compile("djeypeg", "Parser.xtend", "Types.xtend");
   }
 
   @Test

@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg.internal;
+package de.matrixweb.djeypeg.internal;
 
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -30,10 +30,10 @@ public class AstValidatorTest {
     final Rule rule = new Rule();
     rule.setName(name);
     rule.setBody(body);
-    final Jpeg jpeg = new Jpeg();
-    jpeg.add(rule);
+    final Djeypeg djeypeg = new Djeypeg();
+    djeypeg.add(rule);
 
-    AstValidator.validate(jpeg, parser);
+    AstValidator.validate(djeypeg, parser);
   }
 
 }

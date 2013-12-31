@@ -3,18 +3,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>de.matrixweb.jpeg</groupId>
-    <artifactId>jpeg-root</artifactId>
+    <groupId>de.matrixweb.djeypeg</groupId>
+    <artifactId>djeypeg-root</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>jpeg-tests</artifactId>
+  <artifactId>djeypeg-tests</artifactId>
 
-  <name>JPEG Tests</name>
+  <name>djeypeg tests</name>
 
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>jpeg</artifactId>
+      <artifactId>djeypeg</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

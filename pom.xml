@@ -7,15 +7,15 @@
     <artifactId>oss-parent</artifactId>
     <version>7</version>
   </parent>
-  <groupId>de.matrixweb.jpeg</groupId>
-  <artifactId>jpeg-root</artifactId>
+  <groupId>de.matrixweb.djeypeg</groupId>
+  <artifactId>djeypeg-root</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>JPEG Root</name>
+  <name>djeypeg root</name>
 
   <description>
-    JPEG is a packrat parser written in Java generating parsers for different
+    djeypeg is a packrat parser written in Java generating parsers for different
     target languages. The first supported target language is Java.
   </description>
   <url>https://github.com/KnisterPeter/Smaller</url>
@@ -37,9 +37,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git@github.com:KnisterPeter/jpeg.git</connection>
-    <developerConnection>scm:git:git@github.com:KnisterPeter/jpeg.git</developerConnection>
-    <url>https://github.com/KnisterPeter/jpeg</url>
+    <connection>scm:git:git@github.com:KnisterPeter/djeypeg.git</connection>
+    <developerConnection>scm:git:git@github.com:KnisterPeter/djeypeg.git</developerConnection>
+    <url>https://github.com/KnisterPeter/djeypeg</url>
   </scm>
 
   <modules>

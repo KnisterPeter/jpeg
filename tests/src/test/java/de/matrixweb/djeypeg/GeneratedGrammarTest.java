@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg;
+package de.matrixweb.djeypeg;
 
 import java.io.File;
 
@@ -9,7 +9,7 @@ import org.junit.rules.ExpectedException;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
-import de.matrixweb.jpeg.helper.AbstractCompilationTest;
+import de.matrixweb.djeypeg.helper.AbstractCompilationTest;
 
 /**
  * @author markusw
@@ -55,9 +55,9 @@ public class GeneratedGrammarTest extends AbstractCompilationTest {
   @Ignore
   @Test
   public void testEcmaScriptGrammar() throws Throwable {
-    compileAndRun(Files.toString(
-        new File("src/test/resources/ecmascript.jpeg"), Charsets.UTF_8),
-        "Program", Files.toString(new File("src/test/resources/underscore.js"),
+    compileAndRun(Files.toString(new File(
+        "src/test/resources/ecmascript.djeypeg"), Charsets.UTF_8), "Program",
+        Files.toString(new File("src/test/resources/underscore.js"),
             Charsets.UTF_8), true);
   }
 

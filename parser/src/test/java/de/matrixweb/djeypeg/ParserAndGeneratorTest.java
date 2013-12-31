@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg;
+package de.matrixweb.djeypeg;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,20 +18,20 @@ public class ParserAndGeneratorTest {
 
   @Test
   public void testParseAndGenerate() throws IOException {
-    generate("de/matrixweb/jpeg/jpeg.jpeg", "jpeg", "jpeg");
+    generate("de/matrixweb/djeypeg/djeypeg.djeypeg", "djeypeg", "djeypeg");
   }
 
   @Test
   public void testTypeEvaluation() throws IOException {
-    generate("de/matrixweb/jpeg/types.jpeg", "types", "types");
+    generate("de/matrixweb/djeypeg/types.djeypeg", "types", "types");
   }
 
   private void generate(final String input, final String packageName,
       final String output) throws IOException {
-    final Map<String, CharSequence> files = JPEG.generate(new File(
+    final Map<String, CharSequence> files = DJEYPEG.generate(new File(
         "src/test/resources", input), packageName);
     final File target = new File("../tests/src/main/java", output);
-    target.getParentFile().mkdirs();
+    target.mkdirs();
     for (final Entry<String, CharSequence> file : files.entrySet()) {
       Files.write(file.getValue(), new File(target, file.getKey()),
           Charsets.UTF_8);

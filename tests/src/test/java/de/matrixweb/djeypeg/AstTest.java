@@ -1,16 +1,7 @@
-package de.matrixweb.jpeg;
+package de.matrixweb.djeypeg;
 
 import java.io.File;
 import java.io.IOException;
-
-import jpeg.ChoiceExpression;
-import jpeg.Jpeg;
-import jpeg.ParseException;
-import jpeg.Parser;
-import jpeg.Rule;
-import jpeg.RuleReferenceExpression;
-import jpeg.SequenceExpression;
-import jpeg.TerminalExpression;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +11,15 @@ import org.junit.rules.TestName;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
-import de.matrixweb.jpeg.helper.StopwatchRule;
+import de.matrixweb.djeypeg.helper.StopwatchRule;
+import djeypeg.ChoiceExpression;
+import djeypeg.Djeypeg;
+import djeypeg.ParseException;
+import djeypeg.Parser;
+import djeypeg.Rule;
+import djeypeg.RuleReferenceExpression;
+import djeypeg.SequenceExpression;
+import djeypeg.TerminalExpression;
 
 import static org.junit.Assert.*;
 
@@ -50,7 +49,7 @@ public class AstTest {
 
   @Test
   public void testParse() {
-    final Jpeg r = this.parser.Jpeg("Rule <- 'a';");
+    final Djeypeg r = this.parser.Djeypeg("Rule <- 'a';");
 
     assertThat(r, is(notNullValue()));
     assertThat(r.getRules().size(), is(1));
@@ -59,7 +58,8 @@ public class AstTest {
 
   @Test
   public void testParse2() {
-    final Jpeg r = this.parser.Jpeg("Rule <- Rule2 / 'a';\nRule2 <- 'b';");
+    final Djeypeg r = this.parser
+        .Djeypeg("Rule <- Rule2 / 'a';\nRule2 <- 'b';");
 
     assertThat(r, is(notNullValue()));
     assertThat(r.getRules().size(), is(2));
@@ -72,7 +72,7 @@ public class AstTest {
     this.exception.expectMessage("Expected");
     this.exception.expectMessage("';'");
 
-    this.parser.Jpeg("Rule <- []];");
+    this.parser.Djeypeg("Rule <- []];");
   }
 
   @Test
@@ -87,17 +87,17 @@ public class AstTest {
 
   @Test
   public void testParseRange() {
-    final Jpeg r = this.parser.Jpeg("Rule <- [\\]];");
+    final Djeypeg r = this.parser.Djeypeg("Rule <- [\\]];");
 
     assertThat(r, is(notNullValue()));
   }
 
   @Test
   public void testCommentInSequence() {
-    final Jpeg jpeg = this.parser.Jpeg("Rule <- 'a' //'b' \n  'c';");
+    final Djeypeg djeypeg = this.parser.Djeypeg("Rule <- 'a' //'b' \n  'c';");
 
-    assertThat(jpeg, is(notNullValue()));
-    final Rule rule = jpeg.getRules().get(0);
+    assertThat(djeypeg, is(notNullValue()));
+    final Rule rule = djeypeg.getRules().get(0);
     // Expect one sequence
     assertThat(rule.getBody().getExpressions().size(), is(1));
     assertThat(rule.getBody().getExpressions().get(0),
@@ -114,13 +114,14 @@ public class AstTest {
 
   @Test
   public void testSimpleRule() {
-    final Jpeg jpeg = this.parser.Jpeg("A <- B / C;");
+    final Djeypeg djeypeg = this.parser.Djeypeg("A <- B / C;");
 
-    assertThat(jpeg, is(notNullValue()));
-    assertThat(jpeg.getRules().get(0).getBody().getExpressions().size(), is(1));
-    assertThat(jpeg.getRules().get(0).getBody().getExpressions().get(0),
+    assertThat(djeypeg, is(notNullValue()));
+    assertThat(djeypeg.getRules().get(0).getBody().getExpressions().size(),
+        is(1));
+    assertThat(djeypeg.getRules().get(0).getBody().getExpressions().get(0),
         is(instanceOf(ChoiceExpression.class)));
-    final ChoiceExpression expr = (ChoiceExpression) jpeg.getRules().get(0)
+    final ChoiceExpression expr = (ChoiceExpression) djeypeg.getRules().get(0)
         .getBody().getExpressions().get(0);
     assertThat(expr.getChoices().size(), is(2));
     // Expect two rule-ref exp
@@ -131,9 +132,9 @@ public class AstTest {
   }
 
   @Test
-  public void testJpegGrammar() throws IOException {
-    final Jpeg r = this.parser.Jpeg(Files.toString(new File(
-        "../parser/src/test/resources/de/matrixweb/jpeg/jpeg.jpeg"),
+  public void testDjeypegGrammar() throws IOException {
+    final Djeypeg r = this.parser.Djeypeg(Files.toString(new File(
+        "../parser/src/test/resources/de/matrixweb/djeypeg/djeypeg.djeypeg"),
         Charsets.UTF_8));
 
     assertThat(r, is(notNullValue()));

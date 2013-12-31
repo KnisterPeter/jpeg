@@ -1,10 +1,10 @@
 // -----------------------------------------------------------------------------
 // 
-// The JPEG grammar
+// The djeypeg grammar
 // 
 // -----------------------------------------------------------------------------
 
-Jpeg <- _ rules+=Rule+ EOI;
+Djeypeg <- _ rules+=Rule+ EOI;
 Rule <- name=ID _ ('[' _ returns=ID _ ']' _)? '<-' _ body=Body ';' _;
 Body <- (expressions+=ChoiceExpression _)+;
 

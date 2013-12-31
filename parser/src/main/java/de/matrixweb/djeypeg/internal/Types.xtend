@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg.internal
+package de.matrixweb.djeypeg.internal
 
 package class Node {
   
@@ -18,7 +18,7 @@ package class Node {
     return node
   }
   
-  def dispatch void add(Node node) {
+  def void add(Node node) {
   }
   
   override toString() {
@@ -48,6 +48,31 @@ class Terminal extends Node {
     super.copyAttributes(terminal)
     return terminal
   }
+  
+}
+
+ class Djeypeg extends Node {
+  
+  java.util.List<Rule> attrRules
+  
+  def getRules() { attrRules }
+  def setRules(java.util.List<Rule> attrRules) { this.attrRules = attrRules }
+  
+  def dispatch void add(Rule __rule) {
+    this.attrRules = this.attrRules ?: newArrayList
+    this.attrRules += __rule
+  }
+  
+  override Djeypeg copy() {
+    new Djeypeg().copyAttributes()
+  }
+  
+  protected def copyAttributes(Djeypeg type) {
+    super.copyAttributes(type)
+    type.attrRules = this.attrRules
+    return type
+  }
+  
   
 }
 
@@ -186,7 +211,7 @@ class Terminal extends Node {
   def getRanges() { attrRanges }
   def setRanges(java.util.List<Node> attrRanges) { this.attrRanges = attrRanges }
   
-  override dispatch void add(Node __node) {
+  def dispatch void add(Node __node) {
     this.attrRanges = this.attrRanges ?: newArrayList
     this.attrRanges += __node
   }
@@ -598,31 +623,6 @@ class Terminal extends Node {
     super.copyAttributes(type)
     type.attrMulti = this.attrMulti
     type.attrSingle = this.attrSingle
-    return type
-  }
-  
-  
-}
-
- class Jpeg extends Node {
-  
-  java.util.List<Rule> attrRules
-  
-  def getRules() { attrRules }
-  def setRules(java.util.List<Rule> attrRules) { this.attrRules = attrRules }
-  
-  def dispatch void add(Rule __rule) {
-    this.attrRules = this.attrRules ?: newArrayList
-    this.attrRules += __rule
-  }
-  
-  override Jpeg copy() {
-    new Jpeg().copyAttributes()
-  }
-  
-  protected def copyAttributes(Jpeg type) {
-    super.copyAttributes(type)
-    type.attrRules = this.attrRules
     return type
   }
   

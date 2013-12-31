@@ -1,9 +1,9 @@
-package jpeg
+package djeypeg
 
 import java.util.Set
 
-import static extension jpeg.CharacterRange.*
-import static extension jpeg.Parser.*
+import static extension djeypeg.CharacterRange.*
+import static extension djeypeg.Parser.*
 
 class Parser {
   
@@ -64,9 +64,9 @@ class Parser {
       else  new Result<Terminal>(null, derivation, new ParseInfo(r.derivation.index, 'end of input'))
   }
 
-  def Jpeg Jpeg(String in) {
+  def Djeypeg Djeypeg(String in) {
     this.chars = in.toCharArray()
-    val result = parse(0).dvJpeg
+    val result = parse(0).dvDjeypeg
     return
       if (result.derivation.dvChar.node == null) result.node
       else throw new ParseException(result.info.position.lineAndColumn, result.info.messages)
@@ -307,14 +307,14 @@ class Parser {
   
 }
 
-package class JpegRule {
+package class DjeypegRule {
 
   /**
-   * Jpeg <- _ rules+=Rule+ EOI; 
+   * Djeypeg <- _ rules+=Rule+ EOI; 
    */
-  package static def Result<? extends Jpeg> matchJpeg(Parser parser, Derivation derivation) {
+  package static def Result<? extends Djeypeg> matchDjeypeg(Parser parser, Derivation derivation) {
     var Result<?> result = null
-    var Jpeg node = null
+    var Djeypeg node = null
     var d = derivation
     val ParseInfo info = new ParseInfo(derivation.index)
     
@@ -337,7 +337,7 @@ package class JpegRule {
         info.join(result1, false)
         if (result.node != null) {
           if (node == null) {
-            node = new Jpeg
+            node = new Djeypeg
           }
           node.add(result1.node)
         }
@@ -367,13 +367,13 @@ package class JpegRule {
     result.info = info
     if (result.node != null) {
       if (node == null) {
-        node = new Jpeg()
+        node = new Djeypeg()
       }
       node.index = derivation.index
       node.parsed = new String(parser.chars, derivation.index, d.index - derivation.index);
-      return new Result<Jpeg>(node, d, result.info)
+      return new Result<Djeypeg>(node, d, result.info)
     }
-    return new Result<Jpeg>(null, derivation, result.info)
+    return new Result<Djeypeg>(null, derivation, result.info)
   }
   
   
@@ -1151,7 +1151,7 @@ package class SequenceExpressionExpressionsRule {
 package class ActionExpressionRule {
 
   /**
-   * ActionExpression[Expression] <- '{' _ ( type=ID _ ('.' property=ID _ op=ActionOperator _ 'current' _)? ) '}' _; 
+   * ActionExpression[Expression] <- '{' _ type=ID _ ('.' property=ID _ op=ActionOperator _ 'current' _)? '}' _; 
    */
   package static def Result<? extends Expression> matchActionExpression(Parser parser, Derivation derivation) {
     var Result<?> result = null
@@ -1183,85 +1183,85 @@ package class ActionExpressionRule {
         }
         (node as ActionExpression).setType(result2.node)
       }
+    }
+    
+    if (result.node != null) {
+      val result3 = d.dv_
+      d = result3.derivation
+      result = result3
+      info.join(result3, false)
+    }
+    
+    if (result.node != null) {
+      // ('.' property=ID _ op=ActionOperator _ 'current' _)? 
+      val backup0 = node?.copy()
+      val backup1 = d
+      
+      val result4 =  d.__terminal('.')
+      d = result4.derivation
+      result = result4
+      info.join(result4, false)
       
       if (result.node != null) {
-        val result3 = d.dv_
-        d = result3.derivation
-        result = result3
-        info.join(result3, false)
+        // property=ID 
+        val result5 = d.dvID
+        d = result5.derivation
+        result = result5
+        info.join(result5, false)
+        if (result.node != null) {
+          if (node == null) {
+            node = new ActionExpression
+          }
+          (node as ActionExpression).setProperty(result5.node)
+        }
       }
       
       if (result.node != null) {
-        // ('.' property=ID _ op=ActionOperator _ 'current' _)? 
-        val backup0 = node?.copy()
-        val backup1 = d
-        
-        val result4 =  d.__terminal('.')
-        d = result4.derivation
-        result = result4
-        info.join(result4, false)
-        
+        val result6 = d.dv_
+        d = result6.derivation
+        result = result6
+        info.join(result6, false)
+      }
+      
+      if (result.node != null) {
+        // op=ActionOperator 
+        val result7 = d.dvActionOperator
+        d = result7.derivation
+        result = result7
+        info.join(result7, false)
         if (result.node != null) {
-          // property=ID 
-          val result5 = d.dvID
-          d = result5.derivation
-          result = result5
-          info.join(result5, false)
-          if (result.node != null) {
-            if (node == null) {
-              node = new ActionExpression
-            }
-            (node as ActionExpression).setProperty(result5.node)
+          if (node == null) {
+            node = new ActionExpression
           }
+          (node as ActionExpression).setOp(result7.node)
         }
-        
-        if (result.node != null) {
-          val result6 = d.dv_
-          d = result6.derivation
-          result = result6
-          info.join(result6, false)
-        }
-        
-        if (result.node != null) {
-          // op=ActionOperator 
-          val result7 = d.dvActionOperator
-          d = result7.derivation
-          result = result7
-          info.join(result7, false)
-          if (result.node != null) {
-            if (node == null) {
-              node = new ActionExpression
-            }
-            (node as ActionExpression).setOp(result7.node)
-          }
-        }
-        
-        if (result.node != null) {
-          val result8 = d.dv_
-          d = result8.derivation
-          result = result8
-          info.join(result8, false)
-        }
-        
-        if (result.node != null) {
-          val result9 =  d.__terminal('current')
-          d = result9.derivation
-          result = result9
-          info.join(result9, false)
-        }
-        
-        if (result.node != null) {
-          val result10 = d.dv_
-          d = result10.derivation
-          result = result10
-          info.join(result10, false)
-        }
-        if (result.node == null) {
-          node = backup0
-          d = backup1
-          result = CONTINUE
-          info.join(result, false)
-        }
+      }
+      
+      if (result.node != null) {
+        val result8 = d.dv_
+        d = result8.derivation
+        result = result8
+        info.join(result8, false)
+      }
+      
+      if (result.node != null) {
+        val result9 =  d.__terminal('current')
+        d = result9.derivation
+        result = result9
+        info.join(result9, false)
+      }
+      
+      if (result.node != null) {
+        val result10 = d.dv_
+        d = result10.derivation
+        result = result10
+        info.join(result10, false)
+      }
+      if (result.node == null) {
+        node = backup0
+        d = backup1
+        result = CONTINUE
+        info.join(result, false)
       }
     }
     
@@ -2924,7 +2924,7 @@ package class Derivation {
   
   val (Derivation)=>Result<Character> dvfChar
   
-  Result<? extends Jpeg> dvJpeg
+  Result<? extends Djeypeg> dvDjeypeg
   Result<? extends Rule> dvRule
   Result<? extends Body> dvBody
   Result<? extends Expression> dvExpression
@@ -2966,25 +2966,25 @@ package class Derivation {
     idx
   }
   
-  def getDvJpeg() {
-    if (dvJpeg == null) {
-      val lr = new Result<Jpeg>(false, this, new ParseInfo(index, "Detected non-terminating left-recursion in 'Jpeg'"))
-      dvJpeg = lr
-      dvJpeg = JpegRule.matchJpeg(parser, this)
-      if (lr.leftRecursive && dvJpeg.node != null) {
-        growDvJpeg()
+  def getDvDjeypeg() {
+    if (dvDjeypeg == null) {
+      val lr = new Result<Djeypeg>(false, this, new ParseInfo(index, "Detected non-terminating left-recursion in 'Djeypeg'"))
+      dvDjeypeg = lr
+      dvDjeypeg = DjeypegRule.matchDjeypeg(parser, this)
+      if (lr.leftRecursive && dvDjeypeg.node != null) {
+        growDvDjeypeg()
       }
-    } if (dvJpeg.leftRecursive != null) {
-      dvJpeg.setLeftRecursive()
+    } if (dvDjeypeg.leftRecursive != null) {
+      dvDjeypeg.setLeftRecursive()
     }
-    return dvJpeg
+    return dvDjeypeg
   }
   
-  private def growDvJpeg() {
+  private def growDvDjeypeg() {
     while(true) {
-      val temp = JpegRule.matchJpeg(parser, this)
-      if (temp.node == null || temp.derivation.idx <= dvJpeg.derivation.idx) return
-      else dvJpeg = temp
+      val temp = DjeypegRule.matchDjeypeg(parser, this)
+      if (temp.node == null || temp.derivation.idx <= dvDjeypeg.derivation.idx) return
+      else dvDjeypeg = temp
     }
   }
   

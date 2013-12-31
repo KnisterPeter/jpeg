@@ -1,4 +1,4 @@
-package de.matrixweb.jpeg.internal
+package de.matrixweb.djeypeg.internal
 
 import java.util.List
 

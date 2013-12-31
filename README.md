@@ -1,9 +1,9 @@
-jpeg
+djeypeg
 ====
 
 A PEG parser generator written in xtend.
 
-jpeg is based on the ideas of Ford (http://pdos.csail.mit.edu/~baford/packrat/thesis/)
+djeypeg is based on the ideas of Ford (http://pdos.csail.mit.edu/~baford/packrat/thesis/)
 and extend like Warth et al. described (http://www.cs.ucla.edu/~todd/research/pepm08.pdf) to support left-recursion.
 
 TODO

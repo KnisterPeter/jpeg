@@ -1,28 +1,28 @@
-package de.matrixweb.jpeg.internal
+package de.matrixweb.djeypeg.internal
 
 import java.util.List
 import java.util.Map
 
-import static extension de.matrixweb.jpeg.internal.AstNodeHelper.*
-import static extension de.matrixweb.jpeg.internal.ExpressionTypeEvaluator.*
-import static extension de.matrixweb.jpeg.internal.GeneratorHelper.*
+import static extension de.matrixweb.djeypeg.internal.AstNodeHelper.*
+import static extension de.matrixweb.djeypeg.internal.ExpressionTypeEvaluator.*
+import static extension de.matrixweb.djeypeg.internal.GeneratorHelper.*
 
 class AstToTypeConverter {
 
-  static def createTypes(Jpeg jpeg) {
+  static def createTypes(Djeypeg djeypeg) {
     val map = newHashMap
     val list = newArrayList
-    list += jpeg.rules.map [
+    list += djeypeg.rules.map [
       val t = new JType
-      t.internal = isInternal(jpeg)
+      t.internal = isInternal(djeypeg)
       t.generate = true
       t.name = name.parsed
       return t
     ]
     list.addPredefinedTypes().forEach[map.put(it.name, it)]
-    jpeg.rules.forEach [
+    djeypeg.rules.forEach [
       val type = map.get(name.parsed)
-      type.attributes = getAttributes(jpeg, map)
+      type.attributes = getAttributes(djeypeg, map)
       type.supertype = map.get(returns?.parsed ?: 'Node')
     ]
     return map
@@ -53,7 +53,7 @@ class AstToTypeConverter {
     return list
   }
 
-  private static def getAttributes(Rule rule, Jpeg jpeg, Map<String, JType> map) {
+  private static def getAttributes(Rule rule, Djeypeg djeypeg, Map<String, JType> map) {
     rule.findNodesByType(AssignableExpression).filter[property != null].toMap[property.parsed].values.map [
       val a = new JAttribute
       a.name = property.parsed
@@ -63,9 +63,9 @@ class AstToTypeConverter {
       } else if (op.multi) {
         a.type = new JType
         a.type.name = List.name
-        a.typeParameter = expr.evaluateType(jpeg, map)
+        a.typeParameter = expr.evaluateType(djeypeg, map)
       } else {
-        a.type = expr.evaluateType(jpeg, map)
+        a.type = expr.evaluateType(djeypeg, map)
       }
       return a
     ].toList
@@ -156,28 +156,28 @@ class AstNodeHelper {
 
 class ExpressionTypeEvaluator {
 
-  def static dispatch JType evaluateType(Object o, Jpeg jpeg, Map<String, JType> map) {
+  def static dispatch JType evaluateType(Object o, Djeypeg djeypeg, Map<String, JType> map) {
     map.get('Object')
   }
 
-  def static dispatch JType evaluateType(RuleReferenceExpression expr, Jpeg jpeg, Map<String, JType> map) {
-    val rule = jpeg.rules.findFirst[it.name.parsed == expr.name.parsed]
+  def static dispatch JType evaluateType(RuleReferenceExpression expr, Djeypeg djeypeg, Map<String, JType> map) {
+    val rule = djeypeg.rules.findFirst[it.name.parsed == expr.name.parsed]
 
     // Required to use returns type to widening the resulting attribute type
     return map.get(rule?.returns?.parsed ?: rule.name.parsed)
   }
 
-  def static dispatch JType evaluateType(SequenceExpression expr, Jpeg jpeg, Map<String, JType> map) {
-    if(expr.expressions.size == 1) return expr.expressions.head.evaluateType(jpeg, map)
-    if(expr.expressions.forall[evaluateType(jpeg, map).name == 'Terminal']) return map.get('Terminal')
+  def static dispatch JType evaluateType(SequenceExpression expr, Djeypeg djeypeg, Map<String, JType> map) {
+    if(expr.expressions.size == 1) return expr.expressions.head.evaluateType(djeypeg, map)
+    if(expr.expressions.forall[evaluateType(djeypeg, map).name == 'Terminal']) return map.get('Terminal')
     map.get('Node')
   }
 
-  def static dispatch JType evaluateType(ChoiceExpression expr, Jpeg jpeg, Map<String, JType> map) {
-    var type = expr.choices.head.evaluateType(jpeg, map)
+  def static dispatch JType evaluateType(ChoiceExpression expr, Djeypeg djeypeg, Map<String, JType> map) {
+    var type = expr.choices.head.evaluateType(djeypeg, map)
     while (type != null) {
       val finalType = type
-      if(expr.choices.forall[evaluateType(jpeg, map).isAssignableTo(finalType, map)]) return finalType
+      if(expr.choices.forall[evaluateType(djeypeg, map).isAssignableTo(finalType, map)]) return finalType
       type = map.get(type.supertype)
     }
     map.get('Node')
@@ -192,20 +192,20 @@ class ExpressionTypeEvaluator {
     return false
   }
 
-  def static dispatch JType evaluateType(GroupExpression expr, Jpeg jpeg, Map<String, JType> map) {
-    expr.expr.evaluateType(jpeg, map)
+  def static dispatch JType evaluateType(GroupExpression expr, Djeypeg djeypeg, Map<String, JType> map) {
+    expr.expr.evaluateType(djeypeg, map)
   }
 
-  def static dispatch JType evaluateType(TerminalExpression expr, Jpeg jpeg, Map<String, JType> map) {
+  def static dispatch JType evaluateType(TerminalExpression expr, Djeypeg djeypeg, Map<String, JType> map) {
     map.get('Terminal')
   }
 
-  def static dispatch JType evaluateType(AnyCharExpression expr, Jpeg jpeg, Map<String, JType> map) {
+  def static dispatch JType evaluateType(AnyCharExpression expr, Djeypeg djeypeg, Map<String, JType> map) {
     map.get('Terminal')
   }
 
-  def static dispatch JType evaluateType(AssignableExpression expr, Jpeg jpeg, Map<String, JType> map) {
-    expr.expr.evaluateType(jpeg, map)
+  def static dispatch JType evaluateType(AssignableExpression expr, Djeypeg djeypeg, Map<String, JType> map) {
+    expr.expr.evaluateType(djeypeg, map)
   }
 
 }
@@ -245,8 +245,8 @@ class GeneratorHelper {
    * <li>No other rule as a rule-reference to this rule</li>
    * </ul>
    */
-  static def isInternal(Rule rule, Jpeg jpeg) {
-    return rule.simpleRule && jpeg.rules.forall [
+  static def isInternal(Rule rule, Djeypeg djeypeg) {
+    return rule.simpleRule && djeypeg.rules.forall [
       body.expressions.map [
         findNodesByType(RuleReferenceExpression).map[name.parsed != rule.name.parsed]
       ].flatten.fold(true, [a, b|a && b])
@@ -337,10 +337,10 @@ class GeneratorHelper {
 
 class AstValidator {
 
-  static def validate(Jpeg jpeg, extension Parser parser) {
-    jpeg.rules.forEach [ rule |
+  static def validate(Djeypeg djeypeg, extension Parser parser) {
+    djeypeg.rules.forEach [ rule |
       rule.findNodesByType(RuleReferenceExpression).forEach [ ref |
-        if (!jpeg.rules.exists[name.parsed == ref.name.parsed]) {
+        if (!djeypeg.rules.exists[name.parsed == ref.name.parsed]) {
           throw new ParseException(ref.index.lineAndColumn, "Reference '" + ref.name.parsed + "' undefined")
         }
       ]
